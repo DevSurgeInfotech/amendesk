@@ -47,6 +47,7 @@ npm run check
    attribute. Use `<Component>{children}</Component>` instead.
 8. **`no-require-imports`** — Always use ES `import` syntax at the top of
    the file. Never use `require()` inside function bodies.
+9. **Live Git Push** — Once `npm run check` passes and changes are committed, the agent MUST push commits live to GitHub (`git push origin <branch>`). Work is never complete until pushed live to the remote repository.
 
 ## Pre-commit Hook
 
@@ -64,6 +65,20 @@ file has ESLint errors. You cannot bypass this without `--no-verify`.
 | `npm run check` | Full gate: typecheck + lint:strict |
 | `npm run prepare` | Re-installs Husky git hooks |
 <!-- END:code-quality-rules -->
+
+<!-- BEGIN:git-workflow-rules -->
+# Git Live Remote Sync — MANDATORY
+
+Every agent working on company projects MUST push changes to GitHub live at the end of every task execution, not only committing locally.
+
+## Rules
+
+1. **Remote Sync Required**: At the end of every task/feature execution, after quality gates pass (`npm run check`) and changes are committed, all commits MUST be pushed directly to GitHub (`git push origin main` or current branch).
+2. **Company Credentials**: Always use company GitHub identity:
+   - `user.name`: `Martin Cofie`
+   - `user.email`: `devsurgeinfotech@gmail.com`
+3. **No Unpushed Work**: An agent's task is NOT complete until all commits are live on the remote GitHub repository.
+<!-- END:git-workflow-rules -->
 
 <!-- BEGIN:project-conventions -->
 # Project Conventions — AmenDesk
