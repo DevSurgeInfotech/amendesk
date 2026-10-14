@@ -18,13 +18,13 @@ This guide takes ~20–30 minutes on day one and saves days of remediation.
 
 ## Checklist Overview
 
-- [ ] 1. TypeScript — strict mode
-- [ ] 2. ESLint — strict config
-- [ ] 3. Husky + lint-staged — pre-commit hook
-- [ ] 4. `package.json` — quality gate scripts
-- [ ] 5. `AGENTS.md` — agent instruction file
-- [ ] 6. `.gitignore` — sanity check
-- [ ] 7. Verify the full stack works
+- [x] 1. TypeScript — strict mode
+- [x] 2. ESLint — strict config
+- [x] 3. Husky + lint-staged — pre-commit hook
+- [x] 4. `package.json` — quality gate scripts
+- [x] 5. `AGENTS.md` — agent instruction file
+- [x] 6. `.gitignore` — sanity check
+- [x] 7. Verify the full stack works
 
 ---
 
