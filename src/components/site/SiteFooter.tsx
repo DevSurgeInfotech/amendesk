@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ShieldCheck, MapPin, Phone, Mail, Gavel, Car, Building2 } from 'lucide-react';
 
@@ -110,7 +112,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-slate-900 bg-slate-950 py-4 px-6 text-center text-[11px] text-slate-500">
-        &copy; {new Date().getFullYear()} Amen Mart Limited. All rights reserved. Developed by Dev Surge Infotech Ltd.
+        &copy; 2026 Amen Mart Limited. All rights reserved. Developed by Dev Surge Infotech Ltd.
       </div>
     </footer>
   );
