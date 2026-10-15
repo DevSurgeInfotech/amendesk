@@ -74,53 +74,53 @@ export default function HomePage() {
 
   return (
     <div className="space-y-16 pb-20">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 text-white pt-20 pb-28 px-6">
+      {/* Hero Section - Clean, High-Trust Light Theme */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 border-b border-slate-200/80 pt-16 pb-24 px-6">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs font-semibold backdrop-blur-xs">
-              <ShieldCheck className="h-4 w-4 text-indigo-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-semibold shadow-2xs">
+              <ShieldCheck className="h-4 w-4 text-indigo-600" />
               <span>Official Government &amp; Judicial Service Auctioneers</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-tight">
               Ghana&apos;s Foremost Asset Auction House &amp; Dealership Showroom
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed font-normal">
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
               Specialized disposal of court-ordered Judicial assets, official Government surplus fleet &amp; earthmoving machinery, direct luxury vehicle imports, and titled land parcels.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-4">
+            <div className="flex flex-wrap items-center gap-4 pt-2">
               <Link href="/auctions">
                 <Button size="lg" variant="primary" icon={<Gavel className="h-5 w-5" />}>
                   View Upcoming Auctions
                 </Button>
               </Link>
               <Link href="/showroom">
-                <Button size="lg" variant="secondary" icon={<Car className="h-5 w-5" />}>
+                <Button size="lg" variant="outline" icon={<Car className="h-5 w-5" />}>
                   Explore Car Showroom
                 </Button>
               </Link>
             </div>
 
             {/* Trust Metrics */}
-            <div className="pt-10 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-slate-800 text-left">
+            <div className="pt-10 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-slate-200 text-left">
               <div>
-                <p className="text-2xl font-black text-indigo-400 font-mono">3 Categories</p>
-                <p className="text-xs text-slate-400">Judicial &bull; Govt &bull; Private</p>
+                <p className="text-2xl font-black text-indigo-600 font-mono">3 Categories</p>
+                <p className="text-xs text-slate-600 font-medium">Judicial &bull; Govt &bull; Private</p>
               </div>
               <div>
-                <p className="text-2xl font-black text-indigo-400 font-mono">100%</p>
-                <p className="text-xs text-slate-400">Clear Title &amp; Court Certified</p>
+                <p className="text-2xl font-black text-indigo-600 font-mono">100%</p>
+                <p className="text-xs text-slate-600 font-medium">Clear Title &amp; Court Certified</p>
               </div>
               <div>
-                <p className="text-2xl font-black text-indigo-400 font-mono">GH₵ 45M+</p>
-                <p className="text-xs text-slate-400">Assets Disposed Under Hammer</p>
+                <p className="text-2xl font-black text-indigo-600 font-mono">GH₵ 45M+</p>
+                <p className="text-xs text-slate-600 font-medium">Assets Disposed Under Hammer</p>
               </div>
               <div>
-                <p className="text-2xl font-black text-indigo-400 font-mono">14 Days</p>
-                <p className="text-xs text-slate-400">Standard Balance Window</p>
+                <p className="text-2xl font-black text-indigo-600 font-mono">14 Days</p>
+                <p className="text-xs text-slate-600 font-medium">Standard Balance Window</p>
               </div>
             </div>
           </div>
@@ -403,15 +403,15 @@ export default function HomePage() {
 
       {/* Online Paystack Deposit Banner */}
       <section className="max-w-7xl mx-auto px-6">
-        <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 text-white rounded-3xl p-8 sm:p-12 shadow-lg flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-4 max-w-xl">
-            <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider">
+            <span className="inline-block px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
               Online Payments Powered by Paystack &amp; Hubtel
             </span>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
               Pay Vehicle &amp; Auction Reservation Deposits Online
             </h2>
-            <p className="text-sm text-indigo-200">
+            <p className="text-sm text-indigo-100">
               Secure your lot or showroom vehicle instantly with Ghana Cards, MTN/Vodafone MoMo, and Visa/Mastercard. All online payments route through Dev Surge-managed escrow with instant receipt generation.
             </p>
           </div>

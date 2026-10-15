@@ -2,15 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTheme } from '@/context/ThemeContext';
 import {
   Gavel,
   Car,
   MapPin,
   Building2,
   Phone,
-  Sun,
-  Moon,
   ShieldCheck,
   Lock,
 } from 'lucide-react';
@@ -27,25 +24,24 @@ const navLinks = [
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-      {/* Top Announcement Bar */}
-      <div className="bg-indigo-900 text-indigo-100 text-[11px] py-1.5 px-6">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+      {/* Top Announcement Bar - Clean Light Styling */}
+      <div className="bg-slate-100 text-slate-700 border-b border-slate-200 text-[11px] py-1.5 px-6 font-medium">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-3.5 w-3.5 text-indigo-400" />
-            <span className="font-semibold">
+            <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
+            <span className="font-semibold text-slate-800">
               Amen Mart — Government &amp; Judicial Service Registered Auctioneers
             </span>
           </div>
-          <div className="flex items-center gap-4 text-[10px] text-indigo-200">
+          <div className="flex items-center gap-4 text-[10px] text-slate-600">
             <span>Accra &bull; Tema Heavy Industrial Area</span>
             <span>Tel: +233 24 412 8990</span>
             <Link
               href="/desk"
-              className="text-white bg-indigo-700 hover:bg-indigo-600 px-2.5 py-0.5 rounded font-bold transition-colors flex items-center gap-1"
+              className="text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-0.5 rounded font-bold transition-colors flex items-center gap-1 shadow-xs"
             >
               <Lock className="h-3 w-3" />
               <span>Staff AmenDesk ERP</span>
@@ -62,10 +58,10 @@ export function SiteHeader() {
             AM
           </div>
           <div>
-            <span className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            <span className="text-xl font-black tracking-tight text-slate-900">
               AMEN MART
             </span>
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-600">
               Auctioneers &bull; Showroom &bull; Realty
             </span>
           </div>
@@ -82,8 +78,8 @@ export function SiteHeader() {
                 className={clsx(
                   'px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors',
                   isActive
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'text-indigo-600 bg-indigo-50 font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 )}
               >
                 {item.label}
@@ -92,20 +88,11 @@ export function SiteHeader() {
           })}
         </nav>
 
-        {/* Action button & Theme Toggle */}
+        {/* Action Button */}
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4 text-amber-400" />}
-          </button>
-
           <Link
             href="/showroom"
-            className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs transition-colors"
           >
             Explore Showroom
           </Link>
