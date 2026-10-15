@@ -62,11 +62,55 @@ const VALID_TABS: TabType[] = [
   'RECEIPTS',
 ];
 
+const tabMeta: Record<
+  TabType,
+  { label: string; desc: string; icon: typeof PieChart }
+> = {
+  OVERVIEW: {
+    label: 'Financial Overview & KPIs',
+    desc: 'Audit-ready Chart of Accounts, Double-Entry Journal Postings, Trial Balance, P&L, Balance Sheet, Invoicing, and Multi-Mode Cash Office.',
+    icon: PieChart,
+  },
+  CHART_OF_ACCOUNTS: {
+    label: 'Chart of Accounts (COA)',
+    desc: 'Standardized Ghana IFRS 4-digit general ledger master accounts spanning Assets, Liabilities, Equity, Revenue & Expenses.',
+    icon: BookOpen,
+  },
+  GENERAL_LEDGER: {
+    label: 'General Ledger & Double-Entry Journals',
+    desc: 'Immutable audit journal transactions where Total Debits strictly balance Total Credits with source document references.',
+    icon: FileCheck,
+  },
+  FINANCIAL_REPORTS: {
+    label: 'Financial Statements (P&L, Balance Sheet, GRA Tax)',
+    desc: 'Real-time financial position, income statement, multi-mode cash book, and Ghana Revenue Authority tax levy obligations.',
+    icon: Scale,
+  },
+  EXPENSES: {
+    label: 'Operating Expenses & Accounts Payable (AP)',
+    desc: 'Record and track yard rent, facility power, security, vehicle logistics, legal fees, and administrative operating expenses.',
+    icon: DollarSign,
+  },
+  INVOICES: {
+    label: 'Invoices & Commercial Billing',
+    desc: 'Issue official commercial & GRA tax invoices with standard statutory levies, direct payment linkage, and printable A4 formats.',
+    icon: FileText,
+  },
+  RECEIPTS: {
+    label: 'Cashier Receipts Ledger',
+    desc: 'Comprehensive audit registry of all payment receipts issued across physical Cash, Mobile Money, Bank Wire, and Card POS.',
+    icon: ReceiptIcon,
+  },
+};
+
 function AccountsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tabParam = searchParams.get('tab') as TabType | null;
   const activeTab: TabType = tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'OVERVIEW';
+
+  const currentMeta = tabMeta[activeTab];
+  const CurrentIcon = currentMeta.icon;
 
   const setActiveTab = (tab: TabType) => {
     router.push(`/desk/accounts?tab=${tab}`);
@@ -169,17 +213,18 @@ function AccountsContent() {
       {/* Header Banner */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              AmenDesk Accounting &amp; Finance
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+              <CurrentIcon className="h-3.5 w-3.5" />
+              <span>Accounting &bull; {currentMeta.label}</span>
             </span>
             <span className="text-xs text-slate-400">Ghana IFRS &bull; Multi-Mode GL &bull; GRA Tax Compliant</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            General Ledger &amp; Financial Accounting
+            {currentMeta.label}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Audit-ready Chart of Accounts, Double-Entry Journal Postings, Trial Balance, P&amp;L, Balance Sheet, Invoicing, and Multi-Mode Cash Office.
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-3xl mt-0.5">
+            {currentMeta.desc}
           </p>
         </div>
 
@@ -215,39 +260,6 @@ function AccountsContent() {
             Create Invoice
           </Button>
         </div>
-      </div>
-
-      {/* Navigation Sub-Tabs */}
-      <div className="flex overflow-x-auto gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-semibold">
-        {[
-          { id: 'OVERVIEW', label: 'Financial Overview', icon: PieChart },
-          { id: 'CHART_OF_ACCOUNTS', label: `Chart of Accounts (${accounts.length})`, icon: BookOpen },
-          { id: 'GENERAL_LEDGER', label: `General Ledger (${journalEntries.length})`, icon: FileCheck },
-          { id: 'FINANCIAL_REPORTS', label: 'Financial Statements (P&L, Balance Sheet)', icon: Scale },
-          { id: 'EXPENSES', label: `Operating Expenses (${expenses.length})`, icon: DollarSign },
-          { id: 'INVOICES', label: `Invoices & Billing (${invoices.length})`, icon: FileText },
-          { id: 'RECEIPTS', label: `Cashier Receipts Ledger (${receipts.length})`, icon: ReceiptIcon },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isSelected = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id as TabType);
-                setSearchQuery('');
-              }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap ${
-                isSelected
-                  ? 'bg-indigo-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
       </div>
 
       {/* TAB 1: OVERVIEW */}

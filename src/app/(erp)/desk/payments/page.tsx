@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type {
@@ -66,19 +66,37 @@ function generateGeneralRefId(): string {
 
 type PaymentView = 'terminal' | 'shift' | 'collections';
 
+const viewMeta: Record<
+  PaymentView,
+  { title: string; subtitle: string; badge: string; icon: typeof CreditCard }
+> = {
+  terminal: {
+    title: 'Record Payment Terminal (Multi-Mode POS)',
+    subtitle: 'Accept Cash, Mobile Money (Hubtel/MTN/Telecel), Bank Transfer & Card settlements for Auction lots, Vehicles, Land, Property & Invoices.',
+    badge: 'Front Desk Cash Office • Active Till',
+    icon: CreditCard,
+  },
+  shift: {
+    title: 'Cash Drawer & Till Shift Balancing',
+    subtitle: 'Audit reconciliation of physical cash float, mobile money, and electronic deposits with zero-variance shift closing.',
+    badge: 'Front Desk Till Reconciliation',
+    icon: Banknote,
+  },
+  collections: {
+    title: 'Recent Collections Ledger',
+    subtitle: 'Comprehensive audit registry of all payment receipts issued with instant 80mm thermal reprint & settlement history.',
+    badge: 'Audit Receipts Registry',
+    icon: Clock,
+  },
+};
+
 function RecordPaymentContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const viewParam = searchParams.get('view') as PaymentView | null;
   const activeView: PaymentView = viewParam && ['terminal', 'shift', 'collections'].includes(viewParam) ? viewParam : 'terminal';
 
-  const setActiveView = (v: PaymentView) => {
-    if (v === 'terminal') {
-      router.push('/desk/payments');
-    } else {
-      router.push(`/desk/payments?view=${v}`);
-    }
-  };
+  const currentMeta = viewMeta[activeView];
+  const CurrentIcon = currentMeta.icon;
 
   // Live queries
   const lots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
@@ -419,20 +437,21 @@ function RecordPaymentContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner & Till Shift Bar */}
+      {/* Header Banner */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              Front Desk Cash Office &bull; Active Till
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+              <CurrentIcon className="h-3.5 w-3.5" />
+              <span>{currentMeta.badge}</span>
             </span>
             <span className="text-xs text-slate-400">Cashier: {cashierName} &bull; {issuedLocation}</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Record Payment Terminal (Multi-Mode POS)
+            {currentMeta.title}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Accept Cash, Mobile Money (Hubtel/MTN/Telecel), Bank Transfer &amp; Card settlements for Auction lots, Vehicles, Land, Property &amp; Invoices.
+            {currentMeta.subtitle}
           </p>
         </div>
 
@@ -443,45 +462,6 @@ function RecordPaymentContent() {
             </Button>
           </Link>
         </div>
-      </div>
-
-      {/* Submodule View Switcher Tabs */}
-      <div className="flex overflow-x-auto gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-semibold">
-        <button
-          onClick={() => setActiveView('terminal')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap ${
-            activeView === 'terminal'
-              ? 'bg-emerald-600 text-white shadow-xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <CreditCard className="h-4 w-4" />
-          <span>Payment Terminal (POS)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveView('shift')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap ${
-            activeView === 'shift'
-              ? 'bg-emerald-600 text-white shadow-xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <Banknote className="h-4 w-4" />
-          <span>Till Shift &amp; Drawer Balancing</span>
-        </button>
-
-        <button
-          onClick={() => setActiveView('collections')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap ${
-            activeView === 'collections'
-              ? 'bg-emerald-600 text-white shadow-xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-          }`}
-        >
-          <Clock className="h-4 w-4" />
-          <span>Recent Collections Ledger ({receipts.length})</span>
-        </button>
       </div>
 
       {/* Till Shift Summary Strip */}
