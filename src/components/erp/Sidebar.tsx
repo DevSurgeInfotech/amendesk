@@ -15,6 +15,7 @@ import {
   Globe,
   ShieldCheck,
   Building,
+  Database,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -28,6 +29,7 @@ const navItems = [
   { label: 'Property Units', href: '/desk/property', icon: Building2 },
   { label: 'Inventory & Yard', href: '/desk/inventory', icon: Warehouse },
   { label: 'CRM & KYC', href: '/desk/crm', icon: Users },
+  { label: 'Data Migration & Backup', href: '/desk/migration', icon: Database },
 ];
 
 export function Sidebar() {
