@@ -1,9 +1,14 @@
 import Dexie, { type Table } from 'dexie';
 import type {
+  Account,
   AuctionLot,
+  CashShift,
   Customer,
   DealershipVehicle,
+  Expense,
   InventoryItem,
+  Invoice,
+  JournalEntry,
   LandParcel,
   PaymentPlan,
   PropertyUnit,
@@ -13,7 +18,24 @@ import type {
   SyncOutboxItem,
   Waybill,
 } from '@/lib/types';
-import { initialCustomers, initialLots, initialVehicles, initialLandParcels, initialProperties, initialInventoryItems, initialStockMovements, initialPaymentPlans, initialReceipts, initialWaybills, initialSaleTransferDocs } from './seed';
+import {
+  initialAccounts,
+  initialCustomers,
+  initialExpenses,
+  initialInvoices,
+  initialJournalEntries,
+  initialLots,
+  initialVehicles,
+  initialLandParcels,
+  initialProperties,
+  initialInventoryItems,
+  initialStockMovements,
+  initialPaymentPlans,
+  initialReceipts,
+  initialWaybills,
+  initialSaleTransferDocs,
+  initialCashShifts,
+} from './seed';
 
 export class AmenDeskDB extends Dexie {
   customers!: Table<Customer, string>;
@@ -29,9 +51,16 @@ export class AmenDeskDB extends Dexie {
   stockMovements!: Table<StockMovement, string>;
   syncOutbox!: Table<SyncOutboxItem, string>;
 
+  // Accounting & Financial Management
+  accounts!: Table<Account, string>;
+  journalEntries!: Table<JournalEntry, string>;
+  expenses!: Table<Expense, string>;
+  invoices!: Table<Invoice, string>;
+  cashShifts!: Table<CashShift, string>;
+
   constructor() {
     super('AmenDeskLocalDB');
-    this.version(1).stores({
+    this.version(2).stores({
       customers: 'id, fullName, phone, ghanaCardNumber, kycVerified, customerType',
       auctionLots: 'id, eventId, lotNumber, category, assetType, status, balanceDueDate, winningBidderId, currentBidGhs',
       paymentPlans: 'id, referenceType, referenceId, customerId, status, currentDueDate',
@@ -44,6 +73,11 @@ export class AmenDeskDB extends Dexie {
       inventoryItems: 'id, sku, name, location, category, condition',
       stockMovements: 'id, itemId, timestamp, fromLocation, toLocation',
       syncOutbox: 'id, entity, status, timestamp',
+      accounts: 'id, code, type, category, isSystem',
+      journalEntries: 'id, entryNumber, date, reference, status',
+      expenses: 'id, expenseNumber, category, status, date',
+      invoices: 'id, invoiceNumber, customerId, status, dueDate',
+      cashShifts: 'id, shiftNumber, cashierName, status, shiftDate',
     });
   }
 
@@ -62,6 +96,15 @@ export class AmenDeskDB extends Dexie {
       await this.inventoryItems.bulkAdd(initialInventoryItems);
       await this.stockMovements.bulkAdd(initialStockMovements);
     }
+
+    const accountCount = await this.accounts.count();
+    if (accountCount === 0) {
+      await this.accounts.bulkAdd(initialAccounts);
+      await this.journalEntries.bulkAdd(initialJournalEntries);
+      await this.expenses.bulkAdd(initialExpenses);
+      await this.invoices.bulkAdd(initialInvoices);
+      await this.cashShifts.bulkAdd(initialCashShifts);
+    }
   }
 
   async resetToSeedData(): Promise<void> {
@@ -77,8 +120,14 @@ export class AmenDeskDB extends Dexie {
     await this.inventoryItems.clear();
     await this.stockMovements.clear();
     await this.syncOutbox.clear();
+    await this.accounts.clear();
+    await this.journalEntries.clear();
+    await this.expenses.clear();
+    await this.invoices.clear();
+    await this.cashShifts.clear();
     await this.populateIfEmpty();
   }
 }
 
 export const db = new AmenDeskDB();
+

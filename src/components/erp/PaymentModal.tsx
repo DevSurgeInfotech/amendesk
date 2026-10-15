@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { ThermalReceipt } from '@/components/erp/ThermalReceipt';
 import { formatGHS } from '@/lib/utils/currency';
 import { CreditCard, Smartphone, Banknote, Building } from 'lucide-react';
+import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -110,6 +111,22 @@ export function PaymentModal({
       }
 
       await syncEngine.queueMutation('receipts', receipt.id, 'CREATE', receipt);
+
+      // Post balanced double-entry to General Ledger
+      try {
+        await postPaymentReceiptLedger(
+          receipt.receiptNumber,
+          receipt.customerName,
+          receipt.referenceTitle,
+          receipt.referenceType,
+          receipt.amountPaidGhs,
+          receipt.paymentMethod,
+          receipt.cashierName,
+          receipt.momoNetwork
+        );
+      } catch (postErr) {
+        console.warn('GL automated posting note:', postErr);
+      }
 
       setCreatedReceipt(receipt);
       onSuccess();

@@ -117,7 +117,7 @@ export interface Receipt {
   id: string;
   receiptNumber: string; // e.g. AM-RCP-2026-0012
   paymentPlanId?: string;
-  referenceType: 'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY';
+  referenceType: 'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY' | 'GENERAL';
   referenceId: string;
   referenceTitle: string;
 
@@ -133,6 +133,8 @@ export interface Receipt {
   totalPaidToDateGhs: number;
   balanceRemainingGhs: number;
   balanceDueDate?: string;
+
+  splitPayments?: PaymentSplit[];
 
   cashierName: string;
   issuedLocation: string;
@@ -289,3 +291,158 @@ export interface SyncOutboxItem {
   timestamp: string;
   status: 'PENDING' | 'SYNCED' | 'FAILED';
 }
+
+// ==========================================
+// ACCOUNTING & FINANCIAL MANAGEMENT TYPES
+// ==========================================
+
+export type AccountType = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+
+export type AccountCategory =
+  | 'CURRENT_ASSET'
+  | 'NON_CURRENT_ASSET'
+  | 'CURRENT_LIABILITY'
+  | 'LONG_TERM_LIABILITY'
+  | 'EQUITY'
+  | 'OPERATING_REVENUE'
+  | 'OTHER_REVENUE'
+  | 'COST_OF_SALES'
+  | 'OPERATING_EXPENSE'
+  | 'ADMIN_EXPENSE'
+  | 'FINANCIAL_EXPENSE';
+
+export interface Account {
+  id: string;
+  code: string; // e.g. "1010", "1030", "1050", "2010", "4010", "6010"
+  name: string;
+  type: AccountType;
+  category: AccountCategory;
+  balanceGhs: number;
+  description: string;
+  isSystem: boolean;
+  currency: 'GHS';
+  createdAt: string;
+}
+
+export interface JournalEntryLine {
+  id: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debitGhs: number;
+  creditGhs: number;
+  memo?: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  entryNumber: string; // e.g. "JE-2026-0001"
+  date: string;
+  reference: string; // Receipt number, Expense number, or manual memo
+  description: string;
+  lines: JournalEntryLine[];
+  totalAmountGhs: number;
+  createdBy: string;
+  status: 'POSTED' | 'DRAFT';
+  createdAt: string;
+  syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';
+}
+
+export type ExpenseCategory =
+  | 'YARD_OPERATIONS'
+  | 'SECURITY'
+  | 'JUDICIAL_LEGAL'
+  | 'TOWING_LOGISTICS'
+  | 'MARKETING'
+  | 'UTILITIES'
+  | 'TELECOMS'
+  | 'PAYROLL_CASUAL'
+  | 'FEES_COMMISSIONS'
+  | 'REPAIRS_MAINTENANCE'
+  | 'OTHER';
+
+export interface Expense {
+  id: string;
+  expenseNumber: string; // e.g. "EXP-2026-0001"
+  date: string;
+  category: ExpenseCategory;
+  expenseAccountId: string;
+  expenseAccountName: string;
+  payee: string;
+  amountGhs: number;
+  paymentMethod: PaymentMethod;
+  paidFromAccountId: string;
+  paidFromAccountName: string;
+  referenceNumber?: string;
+  description: string;
+  recordedBy: string;
+  approvedBy?: string;
+  status: 'PAID' | 'PENDING_APPROVAL';
+  receiptDocUrl?: string;
+  createdAt: string;
+  syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';
+}
+
+export interface InvoiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPriceGhs: number;
+  totalGhs: number;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string; // e.g. "INV-2026-0001"
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  customerGhanaCard?: string;
+  referenceType: 'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY' | 'GENERAL';
+  referenceId?: string;
+  referenceTitle?: string;
+  issueDate: string;
+  dueDate: string;
+  items: InvoiceItem[];
+  subtotalGhs: number;
+  vatGhs: number; // 15%
+  nhilGhs: number; // 2.5%
+  getfundGhs: number; // 2.5%
+  covidGhs: number; // 1%
+  totalAmountGhs: number;
+  amountPaidGhs: number;
+  balanceDueGhs: number;
+  status: 'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE';
+  notes?: string;
+  createdAt: string;
+  syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';
+}
+
+export interface CashShift {
+  id: string;
+  shiftNumber: string;
+  cashierName: string;
+  facilityLocation: string;
+  shiftDate: string;
+  openingFloatGhs: number;
+  cashCollectionsGhs: number;
+  momoCollectionsGhs: number;
+  bankCollectionsGhs: number;
+  cardCollectionsGhs: number;
+  cashDisbursementsGhs: number;
+  expectedCashInDrawerGhs: number;
+  actualCashInDrawerGhs: number;
+  varianceGhs: number;
+  notes?: string;
+  status: 'OPEN' | 'BALANCED' | 'CLOSED';
+  closedAt?: string;
+}
+
+export interface PaymentSplit {
+  method: PaymentMethod;
+  amountGhs: number;
+  momoNetwork?: MoMoNetwork;
+  bankName?: string;
+  transactionReference?: string;
+}
+

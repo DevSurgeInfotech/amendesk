@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -12,16 +12,30 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('amendesk_theme') as Theme | null;
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        return savedTheme;
-      }
-    }
+function subscribeTheme(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener('amendesk-theme-change', callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('amendesk-theme-change', callback);
+  };
+}
+
+function getThemeSnapshot(): Theme {
+  try {
+    const saved = localStorage.getItem('amendesk_theme');
+    return saved === 'dark' ? 'dark' : 'light';
+  } catch {
     return 'light';
-  });
+  }
+}
+
+function getServerThemeSnapshot(): Theme {
+  return 'light';
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getServerThemeSnapshot);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -32,8 +46,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem('amendesk_theme', newTheme);
+    try {
+      localStorage.setItem('amendesk_theme', newTheme);
+      window.dispatchEvent(new Event('amendesk-theme-change'));
+    } catch {
+      // ignore
+    }
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

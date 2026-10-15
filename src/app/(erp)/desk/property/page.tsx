@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import { PlusCircle, MapPin, Bed, Bath } from 'lucide-react';
+import Link from 'next/link';
+import { PlusCircle, MapPin, Bed, Bath, CreditCard } from 'lucide-react';
 
 export default function PropertyPage() {
   const properties = useLiveQuery(() => db.propertyUnits.toArray(), []) || [];
@@ -164,29 +165,39 @@ export default function PropertyPage() {
               </div>
             </div>
 
-            <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
-              <div>
-                <span className="text-[11px] text-slate-400">Asking Price:</span>
-                <p className="text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono">
-                  {formatGHS(prop.priceGhs)}
-                </p>
+            <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-400">Asking Price:</span>
+                  <p className="text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                    {formatGHS(prop.priceGhs)}
+                  </p>
+                </div>
+
+                <div className="flex gap-1.5">
+                  {(['AVAILABLE', 'RESERVED', 'SOLD'] as const).map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => void handleToggleStatus(prop, st)}
+                      className={`px-2 py-1 text-[10px] font-bold rounded ${
+                        prop.status === st
+                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200'
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex gap-1.5">
-                {(['AVAILABLE', 'RESERVED', 'SOLD'] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => void handleToggleStatus(prop, st)}
-                    className={`px-2 py-1 text-[10px] font-bold rounded ${
-                      prop.status === st
-                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200'
-                    }`}
-                  >
-                    {st}
-                  </button>
-                ))}
-              </div>
+              {prop.status !== 'SOLD' && (
+                <Link href="/desk/payments" className="block w-full">
+                  <Button size="sm" variant="outline" className="w-full" icon={<CreditCard className="h-3.5 w-3.5" />}>
+                    Record Sale Payment
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         ))}

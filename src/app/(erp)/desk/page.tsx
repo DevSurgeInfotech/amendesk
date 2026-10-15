@@ -66,19 +66,24 @@ export default function DeskDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Link href="/desk/auctions/intake">
-            <Button size="sm" variant="primary" icon={<PlusCircle className="h-4 w-4" />}>
-              Lot Intake Wizard
-            </Button>
-          </Link>
-          <Link href="/desk/auctions">
-            <Button size="sm" variant="secondary" icon={<Gavel className="h-4 w-4" />}>
-              Auction Yard
+          <Link href="/desk/payments">
+            <Button size="sm" variant="primary" icon={<CreditCard className="h-4 w-4" />}>
+              Record Payment
             </Button>
           </Link>
           <Link href="/desk/accounts">
-            <Button size="sm" variant="outline" icon={<Receipt className="h-4 w-4" />}>
-              Cashier Ledger
+            <Button size="sm" variant="secondary" icon={<Receipt className="h-4 w-4" />}>
+              Accounting &amp; GL
+            </Button>
+          </Link>
+          <Link href="/desk/auctions/intake">
+            <Button size="sm" variant="outline" icon={<PlusCircle className="h-4 w-4" />}>
+              Lot Intake
+            </Button>
+          </Link>
+          <Link href="/desk/auctions">
+            <Button size="sm" variant="outline" icon={<Gavel className="h-4 w-4" />}>
+              Auction Yard
             </Button>
           </Link>
         </div>
