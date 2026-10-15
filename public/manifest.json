@@ -1,0 +1,16 @@
+{
+  "name": "AmenDesk — Amen Mart ERP & Showroom",
+  "short_name": "AmenDesk",
+  "description": "Offline-First ERP, Public Showroom and Multi-Category Auction Platform for Amen Mart, Ghana",
+  "start_url": "/desk",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
