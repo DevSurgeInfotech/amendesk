@@ -128,7 +128,7 @@ export default function PublicLandPage() {
         {filteredParcels.map((parcel) => (
           <div
             key={parcel.id}
-            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between"
+            className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">

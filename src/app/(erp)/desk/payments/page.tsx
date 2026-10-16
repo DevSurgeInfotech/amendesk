@@ -636,7 +636,7 @@ function RecordPaymentContent() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
@@ -664,13 +664,13 @@ function RecordPaymentContent() {
 
       {/* Till Shift Summary Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Today&apos;s Total Collections</span>
           <p className="mt-1 text-xl font-black font-mono text-slate-900 dark:text-slate-100">{formatGHS(todayTotal)}</p>
           <p className="text-[11px] text-slate-400">{todayReceipts.length} receipts issued today</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Drawer Cash Till</span>
             <Banknote className="h-4 w-4 text-emerald-500" />
@@ -679,7 +679,7 @@ function RecordPaymentContent() {
           <p className="text-[11px] text-emerald-600 font-medium">Physical notes &amp; coins in till</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mobile Money (MoMo)</span>
             <Smartphone className="h-4 w-4 text-amber-500" />
@@ -688,7 +688,7 @@ function RecordPaymentContent() {
           <p className="text-[11px] text-amber-600 font-medium">MTN &bull; Telecel &bull; Hubtel</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bank Wires &amp; Drafts</span>
             <Building className="h-4 w-4 text-blue-500" />
@@ -702,7 +702,7 @@ function RecordPaymentContent() {
       {activeView === 'terminal' && (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Form: Terminal (7 cols) */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+        <div className="surface-card lg:col-span-7 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <h2 className="font-bold text-base text-slate-900 dark:text-slate-100">
               New Payment Transaction
@@ -1291,7 +1291,7 @@ function RecordPaymentContent() {
               <ThermalReceipt receipt={createdReceipt} onClose={() => setCreatedReceipt(null)} />
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
               <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
                 Front-Desk Till Reconciliation (Shift)
               </h3>
@@ -1339,7 +1339,7 @@ function RecordPaymentContent() {
       {/* SHIFT VIEW: Till Shift & Drawer Balancing Console */}
       {activeView === 'shift' && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
             {shiftSuccessMsg && (
               <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />

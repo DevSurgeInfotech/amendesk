@@ -547,19 +547,19 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
           AmenDesk Data Migration &amp; Portability Protocol
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 text-xs text-slate-600 dark:text-slate-300">
-          <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="surface-card bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
             <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">1. Legacy Ingestion</p>
             <p>
               Import past auction records, client contacts, and vehicle stock from Excel spreadsheets directly into Dexie IndexedDB with format validation.
             </p>
           </div>
-          <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="surface-card bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
             <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">2. Zero-Net Device Cloning</p>
             <p>
               Use the JSON snapshot to provision a replacement tablet or cash-office PC in the yard in under 30 seconds with 100% offline data integrity.
             </p>
           </div>
-          <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="surface-card bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
             <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">3. Complete Accounting Portability</p>
             <p>
               Chart of Accounts, General Ledger journal entries, tax invoices, and cash shift reconciliations are fully preserved across all device backups.
@@ -569,7 +569,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
       </div>
 
       {/* CSV Bulk Ingestion Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-xs">
+      <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -700,7 +700,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
       </div>
 
       {/* Database Diagnostics Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+      <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <HardDrive className="h-4 w-4 text-indigo-600" />

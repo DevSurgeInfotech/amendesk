@@ -10,7 +10,7 @@ export default function DeskLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen bg-[var(--background)]">
       <div className="no-print">
         <Suspense fallback={<aside className="w-72 shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" />}>
           <Sidebar />

@@ -3,10 +3,13 @@
 @custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 
 :root {
-  --background: #f8fafc;
+  /* LandingGo slate canvas (#e9eff5) - provides crisp contrast for pure white surface cards */
+  --background: #e9eff5;
   --foreground: #0f172a;
   --primary: #4f46e5;
   --primary-hover: #4338ca;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
 }
 
 .dark {
@@ -14,11 +17,15 @@
   --foreground: #f1f5f9;
   --primary: #6366f1;
   --primary-hover: #4f46e5;
+  --card-bg: #0f172a;
+  --card-border: #1e293b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
 }
 
 body {
@@ -26,6 +33,34 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
+}
+
+/* LandingGo Surface Card Hover Indigo System */
+.surface-card {
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.surface-card:hover {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 2px #4f46e5, 0 10px 25px -4px rgba(79, 70, 229, 0.14) !important;
+}
+
+.dark .surface-card:hover {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px #6366f1, 0 10px 25px -4px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Featured / Active card highlight (matching the Pro card in LandingGo) */
+.surface-card-active {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 2px #4f46e5, 0 8px 20px -4px rgba(79, 70, 229, 0.12) !important;
+}
+
+.dark .surface-card-active {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px #6366f1, 0 8px 20px -4px rgba(99, 102, 241, 0.22) !important;
 }
 
 /* Print Styling for Front Desk 80mm Thermal Rolls and A4 Invoices/Waybills */

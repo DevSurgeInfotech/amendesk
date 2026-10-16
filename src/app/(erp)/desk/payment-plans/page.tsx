@@ -54,7 +54,7 @@ function PaymentPlansContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
@@ -73,7 +73,7 @@ function PaymentPlansContent() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Total Outstanding Balance
           </span>
@@ -83,7 +83,7 @@ function PaymentPlansContent() {
           <p className="text-xs text-slate-500">{plans.length} total payment plans</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Active Within 14-Day Window
           </span>
@@ -93,7 +93,7 @@ function PaymentPlansContent() {
           <p className="text-xs text-slate-500">Scheduled for balance settlement</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Overdue / Needs Extension
           </span>
@@ -141,7 +141,7 @@ function PaymentPlansContent() {
           return (
             <div
               key={plan.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6"
+              className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2">

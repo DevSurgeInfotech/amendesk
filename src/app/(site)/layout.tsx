@@ -8,7 +8,7 @@ export default function SiteLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="light flex flex-col min-h-screen bg-white text-slate-900">
+    <div className="flex flex-col min-h-screen bg-[var(--background)] text-slate-900 dark:text-slate-100">
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />

@@ -72,7 +72,7 @@ export default function ContactPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
         {/* Info Column */}
         <div className="space-y-8">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+          <div className="surface-card bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
               Corporate Headquarters &amp; Heavy Auction Yard
             </h2>
@@ -155,7 +155,7 @@ export default function ContactPage() {
         </div>
 
         {/* Form Column */}
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="surface-card bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
             Send an Inquiry
           </h2>

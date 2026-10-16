@@ -129,7 +129,7 @@ export default function PublicPropertiesPage() {
         {filteredProperties.map((prop) => (
           <div
             key={prop.id}
-            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all flex flex-col justify-between"
+            className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
           >
             <div>
               <div className="relative h-64 bg-slate-200 dark:bg-slate-800">

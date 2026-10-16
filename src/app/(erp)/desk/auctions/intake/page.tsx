@@ -216,7 +216,7 @@ export default function LotIntakePage() {
         </span>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 shadow-xs">
+      <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 shadow-xs">
         <div className="border-b border-slate-200 dark:border-slate-800 pb-5 mb-6">
           <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Lot Intake Wizard

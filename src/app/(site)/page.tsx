@@ -171,7 +171,7 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Pillar 1: Judicial */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <div className="h-12 w-12 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center font-bold">
               <ShieldAlert className="h-6 w-6" />
             </div>
@@ -191,7 +191,7 @@ export default function HomePage() {
           </div>
 
           {/* Pillar 2: Government */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <div className="h-12 w-12 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center font-bold">
               <Gavel className="h-6 w-6" />
             </div>
@@ -211,7 +211,7 @@ export default function HomePage() {
           </div>
 
           {/* Pillar 3: Dealership */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <div className="h-12 w-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center font-bold">
               <Car className="h-6 w-6" />
             </div>
@@ -231,7 +231,7 @@ export default function HomePage() {
           </div>
 
           {/* Pillar 4: Land & Property */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <div className="h-12 w-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold">
               <MapPin className="h-6 w-6" />
             </div>
@@ -253,7 +253,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Showroom Section */}
-      <section className="bg-slate-100 dark:bg-slate-900/60 py-16 px-6">
+      <section className="py-16 px-6">
         <div className="max-w-7xl mx-auto space-y-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -278,7 +278,7 @@ export default function HomePage() {
             {featuredCars.map((car) => (
               <div
                 key={car.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all flex flex-col justify-between"
+                className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
               >
                 <div>
                   <div className="relative h-52 bg-slate-200 dark:bg-slate-800">
@@ -363,7 +363,7 @@ export default function HomePage() {
           {featuredLots.map((lot) => (
             <div
               key={lot.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all flex flex-col justify-between"
+              className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
             >
               <div>
                 <div className="relative h-52 bg-slate-200 dark:bg-slate-800">

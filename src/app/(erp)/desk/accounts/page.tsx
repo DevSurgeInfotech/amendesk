@@ -225,7 +225,7 @@ function AccountsContent() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
@@ -304,7 +304,7 @@ function AccountsContent() {
         <div className="space-y-6">
           {/* KPI Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Total Liquid Funds
@@ -319,7 +319,7 @@ function AccountsContent() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Accounts Receivable (AR)
@@ -334,7 +334,7 @@ function AccountsContent() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Payables &amp; Judicial Escrow
@@ -349,7 +349,7 @@ function AccountsContent() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Net Operating Margin
@@ -367,7 +367,7 @@ function AccountsContent() {
 
           {/* Multi-Mode Channels Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                 <span>Cash on Hand (Tills)</span>
                 <Banknote className="h-4 w-4 text-emerald-500" />
@@ -378,7 +378,7 @@ function AccountsContent() {
               <p className="text-[11px] text-slate-400">Tema Yard &amp; Spintex Showroom</p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                 <span>Mobile Money (MoMo)</span>
                 <Smartphone className="h-4 w-4 text-amber-500" />
@@ -389,7 +389,7 @@ function AccountsContent() {
               <p className="text-[11px] text-amber-600 font-medium">MTN &bull; Telecel &bull; Hubtel Float</p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                 <span>Bank Deposits / Wire</span>
                 <Building className="h-4 w-4 text-blue-500" />
@@ -400,7 +400,7 @@ function AccountsContent() {
               <p className="text-[11px] text-blue-600 font-medium">GCB &bull; Stanbic &bull; Ecobank Escrow</p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                 <span>Paystack / Card</span>
                 <CreditCard className="h-4 w-4 text-purple-500" />
