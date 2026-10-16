@@ -139,12 +139,6 @@ function AccountsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statementSubTab, setStatementSubTab] = useState<'TRIAL_BALANCE' | 'PNL' | 'BALANCE_SHEET' | 'CASH_BOOK' | 'GRA_TAX'>('TRIAL_BALANCE');
 
-  // Key Totals
-  const momoTotal = receipts.filter((r) => r.paymentMethod === 'MOMO').reduce((acc, r) => acc + r.amountPaidGhs, 0);
-  const cashTotal = receipts.filter((r) => r.paymentMethod === 'CASH').reduce((acc, r) => acc + r.amountPaidGhs, 0);
-  const bankTotal = receipts.filter((r) => r.paymentMethod === 'BANK_TRANSFER').reduce((acc, r) => acc + r.amountPaidGhs, 0);
-  const cardTotal = receipts.filter((r) => r.paymentMethod === 'CARD_PAYSTACK').reduce((acc, r) => acc + r.amountPaidGhs, 0);
-
   // Liquidity Accounts (Cash, MoMo, Bank)
   const liquidAccounts = accounts.filter(
     (a) => a.type === 'ASSET' && (a.code.startsWith('10') || a.category === 'CURRENT_ASSET') && a.code !== '1200' && !a.code.startsWith('13')
@@ -311,41 +305,6 @@ function AccountsContent() {
               value={formatGHS(netOperatingProfit)}
               subtitle={`Revenue ${formatGHS(totalRevenue)} − Opex ${formatGHS(totalOperatingExpenses)}`}
               iconName="profit"
-            />
-          </div>
-
-          {/* Multi-Mode Channels Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <GlassCard
-              theme={0}
-              title="Cash on Hand (Tills)"
-              value={formatGHS(cashTotal)}
-              subtitle="Tema Yard &amp; Spintex Showroom"
-              iconName="cash"
-            />
-
-            <GlassCard
-              theme={1}
-              title="Mobile Money (MoMo)"
-              value={formatGHS(momoTotal)}
-              subtitle="MTN &bull; Telecel &bull; Hubtel Float"
-              iconName="momo"
-            />
-
-            <GlassCard
-              theme={2}
-              title="Bank Deposits / Wire"
-              value={formatGHS(bankTotal)}
-              subtitle="GCB &bull; Stanbic &bull; Ecobank Escrow"
-              iconName="bank"
-            />
-
-            <GlassCard
-              theme={3}
-              title="Paystack / Card"
-              value={formatGHS(cardTotal)}
-              subtitle="Visa &bull; Mastercard &bull; Gh-Link"
-              iconName="card"
             />
           </div>
 
