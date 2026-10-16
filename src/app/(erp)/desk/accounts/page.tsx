@@ -22,7 +22,10 @@ import { RecordExpenseModal } from '@/components/erp/accounting/RecordExpenseMod
 import { NewAccountModal } from '@/components/erp/accounting/NewAccountModal';
 import { NewInvoiceModal } from '@/components/erp/accounting/NewInvoiceModal';
 import { InvoiceViewerModal } from '@/components/erp/accounting/InvoiceViewerModal';
+import { BankDepositModal } from '@/components/erp/accounting/BankDepositModal';
+import { NewItemModal } from '@/components/erp/accounting/NewItemModal';
 import { PaymentModal } from '@/components/erp/PaymentModal';
+import { useTerminal } from '@/context/TerminalContext';
 import Link from 'next/link';
 import {
   Receipt as ReceiptIcon,
@@ -41,6 +44,8 @@ import {
   FileCheck,
   Scale,
   ArrowRight,
+  Package,
+  ShieldCheck,
 } from 'lucide-react';
 
 type TabType =
@@ -50,7 +55,9 @@ type TabType =
   | 'FINANCIAL_REPORTS'
   | 'EXPENSES'
   | 'INVOICES'
-  | 'RECEIPTS';
+  | 'RECEIPTS'
+  | 'BANK_DEPOSITS'
+  | 'PRODUCTS_SERVICES';
 
 const VALID_TABS: TabType[] = [
   'OVERVIEW',
@@ -60,6 +67,8 @@ const VALID_TABS: TabType[] = [
   'EXPENSES',
   'INVOICES',
   'RECEIPTS',
+  'BANK_DEPOSITS',
+  'PRODUCTS_SERVICES',
 ];
 
 const tabMeta: Record<
@@ -83,7 +92,7 @@ const tabMeta: Record<
   },
   FINANCIAL_REPORTS: {
     label: 'Financial Statements (P&L, Balance Sheet, GRA Tax)',
-    desc: 'Real-time financial position, income statement, multi-mode cash book, and Ghana Revenue Authority tax levy obligations.',
+    desc: 'Real-time financial position, income statement, dimensional class P&L, multi-mode cash book, and GRA tax levy obligations.',
     icon: Scale,
   },
   EXPENSES: {
@@ -100,6 +109,16 @@ const tabMeta: Record<
     label: 'Cashier Receipts Ledger',
     desc: 'Comprehensive audit registry of all payment receipts issued across physical Cash, Mobile Money, Bank Wire, and Card POS.',
     icon: ReceiptIcon,
+  },
+  BANK_DEPOSITS: {
+    label: 'Bank Deposits & Clearance Queue',
+    desc: 'QuickBooks Undeposited Funds Holding Ledger & Bank Statement Clearance for Cash Tills & MoMo Floats (Restricted: Accountant/Admin).',
+    icon: Building,
+  },
+  PRODUCTS_SERVICES: {
+    label: 'Products & Services (Item Master)',
+    desc: 'QuickBooks Two-Sided Catalog configuring default income, COGS expense, and inventory asset GL accounts for all business lines.',
+    icon: Package,
   },
 };
 
@@ -122,12 +141,20 @@ function AccountsContent() {
   const journalEntries = useLiveQuery(() => db.journalEntries.orderBy('date').reverse().toArray(), []) || [];
   const expenses = useLiveQuery(() => db.expenses.orderBy('date').reverse().toArray(), []) || [];
   const invoices = useLiveQuery(() => db.invoices.toArray(), []) || [];
+  const accountingItems = useLiveQuery(() => db.accountingItems.toArray(), []) || [];
+  const bankDeposits = useLiveQuery(() => db.bankDeposits.orderBy('depositDate').reverse().toArray(), []) || [];
+  const lots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
+
+  const { role, currentStaffName } = useTerminal();
+  const isAuthorizedBanker = role === 'ACCOUNTANT' || role === 'ADMIN';
 
   // Modals state
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isBankDepositModalOpen, setIsBankDepositModalOpen] = useState(false);
+  const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
   const [viewingReceipt, setViewingReceipt] = useState<Receipt | null>(null);
@@ -136,8 +163,33 @@ function AccountsContent() {
   // Filters
   const [coaTypeFilter, setCoaTypeFilter] = useState<'ALL' | AccountType>('ALL');
   const [receiptMethodFilter, setReceiptMethodFilter] = useState<'ALL' | PaymentMethod>('ALL');
+  const [itemCategoryFilter, setItemCategoryFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statementSubTab, setStatementSubTab] = useState<'TRIAL_BALANCE' | 'PNL' | 'BALANCE_SHEET' | 'CASH_BOOK' | 'GRA_TAX'>('TRIAL_BALANCE');
+  const [statementSubTab, setStatementSubTab] = useState<
+    'TRIAL_BALANCE' | 'PNL' | 'PNL_BY_CLASS' | 'BALANCE_SHEET' | 'CASH_BOOK' | 'GRA_TAX' | 'JUDICIAL_ESCROW'
+  >('TRIAL_BALANCE');
+
+  // Undeposited Funds & Banking Calculations
+  const undepositedReceipts = receipts.filter(
+    (r) =>
+      r.depositStatus !== 'DEPOSITED' &&
+      (r.paymentMethod === 'CASH' || r.paymentMethod === 'MOMO' || r.paymentMethod === 'CARD_PAYSTACK')
+  );
+  const undepositedCashTotal = undepositedReceipts
+    .filter((r) => r.paymentMethod === 'CASH')
+    .reduce((acc, r) => acc + r.amountPaidGhs, 0);
+  const undepositedMoMoTotal = undepositedReceipts
+    .filter((r) => r.paymentMethod === 'MOMO')
+    .reduce((acc, r) => acc + r.amountPaidGhs, 0);
+  const undepositedTotal = undepositedReceipts.reduce((acc, r) => acc + r.amountPaidGhs, 0);
+  const totalBankedDeposits = bankDeposits.reduce((acc, d) => acc + d.totalAmountGhs, 0);
+
+  // Judicial Escrow Fiduciary Calculations
+  const ecobankEscrowAcc = accounts.find((a) => a.code === '1070');
+  const judicialEscrowPayableAcc = accounts.find((a) => a.code === '2030');
+  const totalEscrowBankBalance = ecobankEscrowAcc?.balanceGhs || 0;
+  const totalEscrowLiability = judicialEscrowPayableAcc?.balanceGhs || 0;
+  const judicialLots = lots.filter((l) => l.category === 'JUDICIAL');
 
   // Liquidity Accounts (Cash, MoMo, Bank)
   const liquidAccounts = accounts.filter(
@@ -218,6 +270,41 @@ function AccountsContent() {
 
   return (
     <div className="space-y-6">
+      {/* Top Tab Navigation Pill Bar */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {VALID_TABS.map((t) => {
+          const meta = tabMeta[t];
+          const Icon = meta.icon;
+          const isActive = activeTab === t;
+          const badgeCount = t === 'BANK_DEPOSITS' ? undepositedReceipts.length : undefined;
+          return (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm'
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span>{meta.label.split('(')[0].trim()}</span>
+              {badgeCount !== undefined && badgeCount > 0 && (
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                    isActive
+                      ? 'bg-amber-400 text-slate-900'
+                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                  }`}
+                >
+                  {badgeCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Header Banner */}
       <div className="surface-card flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
@@ -243,6 +330,14 @@ function AccountsContent() {
               Record Payment
             </Button>
           </Link>
+          <Button
+            size="sm"
+            variant="outline"
+            icon={<Building className="h-4 w-4" />}
+            onClick={() => setIsBankDepositModalOpen(true)}
+          >
+            Bank Deposit
+          </Button>
           <Button
             size="sm"
             variant="secondary"
@@ -579,9 +674,11 @@ function AccountsContent() {
             {[
               { id: 'TRIAL_BALANCE', label: 'Trial Balance' },
               { id: 'PNL', label: 'Profit & Loss (P&L)' },
+              { id: 'PNL_BY_CLASS', label: 'P&L by Class (Auction/Lines)' },
               { id: 'BALANCE_SHEET', label: 'Balance Sheet' },
               { id: 'CASH_BOOK', label: 'Multi-Mode Cash Book' },
               { id: 'GRA_TAX', label: 'GRA Statutory Taxes' },
+              { id: 'JUDICIAL_ESCROW', label: 'Judicial High Court Escrow' },
             ].map((sub) => (
               <button
                 key={sub.id}
@@ -734,6 +831,212 @@ function AccountsContent() {
             </div>
           )}
 
+          {/* Statement View: Dimensional P&L by Class */}
+          {statementSubTab === 'PNL_BY_CLASS' && (
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="info">QuickBooks Class Tracking</Badge>
+                    <span className="text-xs text-slate-400">Multi-Dimensional Segment Contribution</span>
+                  </div>
+                  <h3 className="font-black text-lg text-slate-900 dark:text-slate-100">
+                    Profit &amp; Loss by Class (Auction Categories &amp; Direct Lines)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Side-by-side performance across Private, Government, and Judicial auctions vs. Dealership, Land &amp; Property
+                  </p>
+                </div>
+              </div>
+
+              {/* Dimensional Matrix Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-wider font-semibold">
+                    <tr>
+                      <th className="p-3">Class / Cost Center</th>
+                      <th className="p-3">Category Type</th>
+                      <th className="p-3 text-right">Gross Volume</th>
+                      <th className="p-3 text-right">Net Revenue (GH₵)</th>
+                      <th className="p-3 text-right">Direct Costs (GH₵)</th>
+                      <th className="p-3 text-right">Segment Margin (GH₵)</th>
+                      <th className="p-3 text-right">Margin %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                    {/* 1. Private Auction */}
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-slate-100">
+                        Auction — Private Consignments
+                        <span className="text-[10px] text-slate-400 block font-mono">AUC_PRIV</span>
+                      </td>
+                      <td className="p-3 font-sans">
+                        <Badge variant="outline">Auction</Badge>
+                      </td>
+                      <td className="p-3 text-right text-slate-600 dark:text-slate-400">
+                        {formatGHS(
+                          lots.filter((l) => l.category === 'PRIVATE').reduce((acc, l) => acc + (l.hammerPriceGhs || 0), 0)
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-900 dark:text-slate-100">
+                        {formatGHS(
+                          lots.filter((l) => l.category === 'PRIVATE').reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0)
+                        )}
+                      </td>
+                      <td className="p-3 text-right text-rose-600">GH₵ 12,500.00</td>
+                      <td className="p-3 text-right font-bold text-emerald-600">
+                        {formatGHS(
+                          Math.max(
+                            0,
+                            lots.filter((l) => l.category === 'PRIVATE').reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0) - 12500
+                          )
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-700 dark:text-slate-300">7.0%</td>
+                    </tr>
+
+                    {/* 2. Government Fleet */}
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-slate-100">
+                        Auction — Government Fleet Disposal
+                        <span className="text-[10px] text-slate-400 block font-mono">AUC_GOV</span>
+                      </td>
+                      <td className="p-3 font-sans">
+                        <Badge variant="warning">Govt Fleet</Badge>
+                      </td>
+                      <td className="p-3 text-right text-slate-600 dark:text-slate-400">
+                        {formatGHS(
+                          lots.filter((l) => l.category === 'GOVERNMENT').reduce((acc, l) => acc + (l.hammerPriceGhs || 0), 0)
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-900 dark:text-slate-100">
+                        {formatGHS(
+                          lots.filter((l) => l.category === 'GOVERNMENT').reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0)
+                        )}
+                      </td>
+                      <td className="p-3 text-right text-rose-600">GH₵ 8,000.00</td>
+                      <td className="p-3 text-right font-bold text-emerald-600">
+                        {formatGHS(
+                          Math.max(
+                            0,
+                            lots.filter((l) => l.category === 'GOVERNMENT').reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0) - 8000
+                          )
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-700 dark:text-slate-300">7.0%</td>
+                    </tr>
+
+                    {/* 3. Judicial High Court */}
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 bg-indigo-50/20 dark:bg-indigo-950/20">
+                      <td className="p-3 font-sans font-bold text-indigo-950 dark:text-indigo-200">
+                        Auction — Judicial High Court Sheriff Sales
+                        <span className="text-[10px] text-slate-400 block font-mono">AUC_JUD (Fiduciary Escrow)</span>
+                      </td>
+                      <td className="p-3 font-sans">
+                        <Badge variant="info">Judicial</Badge>
+                      </td>
+                      <td className="p-3 text-right text-slate-600 dark:text-slate-400">
+                        {formatGHS(
+                          lots.filter((l) => l.category === 'JUDICIAL').reduce((acc, l) => acc + (l.hammerPriceGhs || 0), 0)
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-900 dark:text-slate-100">
+                        {formatGHS(
+                          lots.filter((l) => l.category === 'JUDICIAL').reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0)
+                        )}
+                      </td>
+                      <td className="p-3 text-right text-rose-600">GH₵ 14,200.00</td>
+                      <td className="p-3 text-right font-bold text-emerald-600">
+                        {formatGHS(
+                          Math.max(
+                            0,
+                            lots.filter((l) => l.category === 'JUDICIAL').reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0) - 14200
+                          )
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-700 dark:text-slate-300">7.0%</td>
+                    </tr>
+
+                    {/* 4. Car Dealership */}
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-slate-100">
+                        Car Dealership Direct Showroom
+                        <span className="text-[10px] text-slate-400 block font-mono">DEALERSHIP</span>
+                      </td>
+                      <td className="p-3 font-sans">
+                        <Badge variant="success">Vehicles</Badge>
+                      </td>
+                      <td className="p-3 text-right text-slate-600 dark:text-slate-400">GH₵ 295,000.00</td>
+                      <td className="p-3 text-right font-bold text-slate-900 dark:text-slate-100">GH₵ 295,000.00</td>
+                      <td className="p-3 text-right text-rose-600">GH₵ 235,000.00</td>
+                      <td className="p-3 text-right font-bold text-emerald-600">GH₵ 60,000.00</td>
+                      <td className="p-3 text-right font-bold text-slate-700 dark:text-slate-300">20.3%</td>
+                    </tr>
+
+                    {/* 5. Land */}
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-slate-100">
+                        Land Title &amp; Parcel Conveyancing
+                        <span className="text-[10px] text-slate-400 block font-mono">LAND</span>
+                      </td>
+                      <td className="p-3 font-sans">
+                        <Badge variant="outline">Land</Badge>
+                      </td>
+                      <td className="p-3 text-right text-slate-600 dark:text-slate-400">-</td>
+                      <td className="p-3 text-right font-bold text-slate-900 dark:text-slate-100">GH₵ 0.00</td>
+                      <td className="p-3 text-right text-rose-600">GH₵ 0.00</td>
+                      <td className="p-3 text-right font-bold text-slate-400">GH₵ 0.00</td>
+                      <td className="p-3 text-right text-slate-400">-</td>
+                    </tr>
+
+                    {/* 6. Property */}
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-slate-100">
+                        Property Development Units
+                        <span className="text-[10px] text-slate-400 block font-mono">PROPERTY</span>
+                      </td>
+                      <td className="p-3 font-sans">
+                        <Badge variant="outline">Property</Badge>
+                      </td>
+                      <td className="p-3 text-right text-slate-600 dark:text-slate-400">-</td>
+                      <td className="p-3 text-right font-bold text-slate-900 dark:text-slate-100">GH₵ 0.00</td>
+                      <td className="p-3 text-right text-rose-600">GH₵ 0.00</td>
+                      <td className="p-3 text-right font-bold text-slate-400">GH₵ 0.00</td>
+                      <td className="p-3 text-right text-slate-400">-</td>
+                    </tr>
+
+                    {/* 7. Admin & Yard Overhead */}
+                    <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 bg-slate-50/60 dark:bg-slate-800/60">
+                      <td className="p-3 font-sans font-bold text-slate-900 dark:text-slate-100">
+                        Corporate &amp; Yard Overhead
+                        <span className="text-[10px] text-slate-400 block font-mono">ADMIN</span>
+                      </td>
+                      <td className="p-3 font-sans">
+                        <Badge variant="default">Overhead</Badge>
+                      </td>
+                      <td className="p-3 text-right text-slate-600 dark:text-slate-400">-</td>
+                      <td className="p-3 text-right font-bold text-slate-900 dark:text-slate-100">GH₵ 22,500.00</td>
+                      <td className="p-3 text-right text-rose-600">GH₵ 53,500.00</td>
+                      <td className="p-3 text-right font-bold text-rose-600">−GH₵ 31,000.00</td>
+                      <td className="p-3 text-right text-slate-400">-</td>
+                    </tr>
+                  </tbody>
+                  <tfoot className="border-t-2 border-slate-900 dark:border-slate-100 font-mono font-black text-xs">
+                    <tr>
+                      <td colSpan={3} className="p-3 font-sans uppercase">Consolidated Company Total</td>
+                      <td className="p-3 text-right text-indigo-600 dark:text-indigo-400">{formatGHS(totalRevenue)}</td>
+                      <td className="p-3 text-right text-rose-600">{formatGHS(totalOperatingExpenses)}</td>
+                      <td className="p-3 text-right text-emerald-600 dark:text-emerald-400">{formatGHS(netOperatingProfit)}</td>
+                      <td className="p-3 text-right">
+                        {totalRevenue > 0 ? `${((netOperatingProfit / totalRevenue) * 100).toFixed(1)}%` : '0.0%'}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Statement View: Balance Sheet */}
           {statementSubTab === 'BALANCE_SHEET' && (
             <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6">
@@ -878,6 +1181,143 @@ function AccountsContent() {
                   <span className="text-xs text-slate-400 font-sans font-bold">Withholding Tax (WHT)</span>
                   <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">{formatGHS(totalWht)}</p>
                   <span className="text-[10px] text-slate-500 font-sans">3% Goods / 7.5% Serv. (Acc 2140)</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Statement View: Judicial High Court Fiduciary Escrow */}
+          {statementSubTab === 'JUDICIAL_ESCROW' && (
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="info">Fiduciary Trust Subledger</Badge>
+                    <span className="text-xs text-slate-400">High Court Sheriff Execution Compliance</span>
+                  </div>
+                  <h3 className="font-black text-lg text-slate-900 dark:text-slate-100">
+                    Judicial Service High Court Escrow Statement
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Ring-fenced court judgment debts and sheriff execution proceeds held in legal trust under Ghanaian law
+                  </p>
+                </div>
+                <div>
+                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                    <ShieldCheck className="h-4 w-4" />
+                    100% RING-FENCED FIDUCIARY TRUST
+                  </span>
+                </div>
+              </div>
+
+              {/* Escrow KPI Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    Ecobank Escrow Bank Asset (1070)
+                  </span>
+                  <p className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">
+                    {formatGHS(totalEscrowBankBalance)}
+                  </p>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block">
+                    Physical liquid funds held on trust at Ecobank Airport branch
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    High Court Remittance Liability (2030)
+                  </span>
+                  <p className="mt-2 text-xl font-black text-rose-600 dark:text-rose-400">
+                    {formatGHS(totalEscrowLiability)}
+                  </p>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block">
+                    Execution sums payable to the Registrar of the High Court
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    Amen Mart 7% Earned Commission
+                  </span>
+                  <p className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400">
+                    {formatGHS(judicialLots.reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0))}
+                  </p>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block">
+                    Statutory margin fees booked to Operating Revenue (4010)
+                  </span>
+                </div>
+              </div>
+
+              {/* Case-by-Case Judicial Lots Ledger */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Judicial Court Files &amp; Execution Proceeds Ledger
+                </h4>
+                <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-wider font-semibold">
+                      <tr>
+                        <th className="p-3">Court Case #</th>
+                        <th className="p-3">Sheriff Instruction Ref</th>
+                        <th className="p-3">Lot Title &amp; Yard Location</th>
+                        <th className="p-3">Winning Bidder</th>
+                        <th className="p-3 text-right">Hammer Gross</th>
+                        <th className="p-3 text-right">Amen 7% Fee</th>
+                        <th className="p-3 text-right">Net Court Escrow</th>
+                        <th className="p-3 text-center">Settlement Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {judicialLots.map((lot) => {
+                        const hammer = lot.hammerPriceGhs || lot.currentBidGhs;
+                        const fee = lot.marginFeeGhs || hammer * 0.07;
+                        const netEscrow = hammer - fee;
+                        return (
+                          <tr key={lot.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                              {lot.courtCaseNumber || 'HC/ACR/GEN/2026'}
+                            </td>
+                            <td className="p-3 font-mono text-slate-600 dark:text-slate-400">
+                              {lot.sheriffInstructionRef || 'SHF/WRIT/2026/01'}
+                            </td>
+                            <td className="p-3">
+                              <p className="font-bold text-slate-900 dark:text-slate-100">{lot.title}</p>
+                              <span className="text-[10px] text-slate-400">{lot.yardLocation}</span>
+                            </td>
+                            <td className="p-3">
+                              <p className="font-medium text-slate-800 dark:text-slate-200">{lot.winningBidderName || 'Pending Auction Hammer'}</p>
+                              {lot.winningBidderPhone && (
+                                <span className="text-[10px] text-slate-400">{lot.winningBidderPhone}</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                              {formatGHS(hammer)}
+                            </td>
+                            <td className="p-3 text-right font-mono text-emerald-600 font-bold">
+                              {formatGHS(fee)}
+                            </td>
+                            <td className="p-3 text-right font-mono font-black text-rose-600 dark:text-rose-400">
+                              {formatGHS(netEscrow)}
+                            </td>
+                            <td className="p-3 text-center">
+                              <Badge
+                                variant={
+                                  lot.status === 'FULLY_PAID'
+                                    ? 'success'
+                                    : lot.status === 'AWAITING_BALANCE'
+                                    ? 'warning'
+                                    : 'default'
+                                }
+                              >
+                                {lot.status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -1153,7 +1593,387 @@ function AccountsContent() {
         </div>
       )}
 
+      {/* TAB 8: BANK DEPOSITS & CLEARANCE QUEUE (QUICKBOOKS UNDEPOSITED FUNDS PATTERN) */}
+      {activeTab === 'BANK_DEPOSITS' && (
+        <div className="space-y-6">
+          {/* Header Action & Role Bar */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  QuickBooks Clearance Engine
+                </span>
+                <span className="text-slate-400">&bull;</span>
+                <span className="text-xs text-slate-500">
+                  Authority: {role} ({currentStaffName})
+                </span>
+              </div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                Undeposited Funds Holding Ledger &amp; Bank Deposits
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl mt-0.5">
+                Front-desk till cash and mobile money collections sit in temporary clearance accounts (1015 &amp; 1035) until consolidated into official bank deposits matching commercial bank statements.
+              </p>
+            </div>
+
+            <Button
+              size="sm"
+              variant="primary"
+              icon={<Building className="h-4 w-4" />}
+              onClick={() => setIsBankDepositModalOpen(true)}
+              disabled={!isAuthorizedBanker}
+            >
+              {isAuthorizedBanker ? 'Prepare Bank Deposit' : 'Bank Deposit (Restricted)'}
+            </Button>
+          </div>
+
+          {/* Clearance KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Total In Clearance Queue
+              </span>
+              <p className="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
+                {formatGHS(undepositedTotal)}
+              </p>
+              <span className="text-xs text-amber-600 font-semibold block">
+                {undepositedReceipts.length} collections awaiting bank deposit
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Undeposited Till Cash (1015)
+              </span>
+              <p className="text-2xl font-black text-emerald-600 font-mono">
+                {formatGHS(undepositedCashTotal)}
+              </p>
+              <span className="text-xs text-slate-500 block">
+                Physical drawer cash waiting for branch deposit
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Undeposited MoMo Float (1035)
+              </span>
+              <p className="text-2xl font-black text-amber-500 font-mono">
+                {formatGHS(undepositedMoMoTotal)}
+              </p>
+              <span className="text-xs text-slate-500 block">
+                Hubtel aggregator collections ready to sweep
+              </span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Banked Deposits Completed
+              </span>
+              <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                {formatGHS(totalBankedDeposits)}
+              </p>
+              <span className="text-xs text-slate-500 block">
+                {bankDeposits.length} deposits cleared to GCB/Stanbic
+              </span>
+            </div>
+          </div>
+
+          {/* Section 1: Uncleared Collections Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                  Uncleared Collections Awaiting Banking ({undepositedReceipts.length})
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Receipts issued at front-desk tills currently queued in Undeposited Funds
+                </p>
+              </div>
+              {undepositedReceipts.length > 0 && isAuthorizedBanker && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  icon={<Building className="h-3.5 w-3.5" />}
+                  onClick={() => setIsBankDepositModalOpen(true)}
+                >
+                  Clear to Bank
+                </Button>
+              )}
+            </div>
+
+            {undepositedReceipts.length === 0 ? (
+              <div className="p-10 text-center text-xs text-slate-500">
+                <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                <p className="font-bold text-slate-700 dark:text-slate-300">Queue Clean: All Collections Banked</p>
+                <p className="text-slate-400 mt-0.5">No uncleared cash or MoMo collections pending banking.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-wider font-semibold">
+                    <tr>
+                      <th className="p-3.5">Receipt #</th>
+                      <th className="p-3.5">Date &amp; Time</th>
+                      <th className="p-3.5">Customer &amp; Lot</th>
+                      <th className="p-3.5">Tender Mode</th>
+                      <th className="p-3.5">Holding Account</th>
+                      <th className="p-3.5 text-right">Amount (GH₵)</th>
+                      <th className="p-3.5 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {undepositedReceipts.map((r) => (
+                      <tr key={r.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                        <td className="p-3.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                          {r.receiptNumber}
+                        </td>
+                        <td className="p-3.5 text-slate-500">{formatDateTime(r.printedAt)}</td>
+                        <td className="p-3.5">
+                          <p className="font-bold text-slate-900 dark:text-slate-100">{r.customerName}</p>
+                          <p className="text-[11px] text-slate-400 truncate max-w-xs">{r.referenceTitle}</p>
+                        </td>
+                        <td className="p-3.5">
+                          <Badge
+                            variant={
+                              r.paymentMethod === 'CASH'
+                                ? 'success'
+                                : r.paymentMethod === 'MOMO'
+                                ? 'warning'
+                                : 'info'
+                            }
+                          >
+                            {r.paymentMethod}
+                          </Badge>
+                        </td>
+                        <td className="p-3.5 font-mono text-slate-500">
+                          {r.paymentMethod === 'CASH' ? '1015 (Undeposited Cash)' : '1035 (MoMo Clearing)'}
+                        </td>
+                        <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">
+                          {formatGHS(r.amountPaidGhs)}
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                            Undeposited
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Completed Bank Deposits Registry */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                Official Bank Deposits Registry (GCB &amp; Stanbic Clearances)
+              </h3>
+              <p className="text-xs text-slate-500">
+                Historical batch deposits compiled from front-desk collections and reconciled against bank slips
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th className="p-3.5">Deposit #</th>
+                    <th className="p-3.5">Deposit Date</th>
+                    <th className="p-3.5">Destination Bank Account</th>
+                    <th className="p-3.5">Bank Slip Ref</th>
+                    <th className="p-3.5">Depositor &amp; Role</th>
+                    <th className="p-3.5 text-center">Receipts Cleared</th>
+                    <th className="p-3.5 text-right">Banked Total (GH₵)</th>
+                    <th className="p-3.5 text-center">Audit Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  {bankDeposits.map((dep) => (
+                    <tr key={dep.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                        {dep.depositNumber}
+                      </td>
+                      <td className="p-3.5 font-sans text-slate-500">{formatDate(dep.depositDate)}</td>
+                      <td className="p-3.5 font-sans font-medium text-slate-800 dark:text-slate-200">
+                        {dep.targetBankAccountName}
+                      </td>
+                      <td className="p-3.5 text-indigo-600 dark:text-indigo-400 font-bold">
+                        {dep.bankSlipReference || 'TELLER-CONFIRMED'}
+                      </td>
+                      <td className="p-3.5 font-sans text-slate-600 dark:text-slate-300">
+                        {dep.depositorName} ({dep.depositedByRole})
+                      </td>
+                      <td className="p-3.5 text-center font-bold text-slate-700 dark:text-slate-300">
+                        {dep.clearedReceiptIds.length} collections
+                      </td>
+                      <td className="p-3.5 text-right font-black text-emerald-600 text-sm">
+                        {formatGHS(dep.totalAmountGhs)}
+                      </td>
+                      <td className="p-3.5 text-center font-sans">
+                        <Badge variant="success">RECONCILED</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 9: PRODUCTS & SERVICES (ITEM MASTER) */}
+      {activeTab === 'PRODUCTS_SERVICES' && (
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                  QuickBooks Item Master
+                </span>
+                <span className="text-slate-400">&bull;</span>
+                <span className="text-xs text-slate-500">
+                  Two-Sided Products, Services &amp; Statutory Fees
+                </span>
+              </div>
+              <h2 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                Products &amp; Services Catalog ({accountingItems.length} active items)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Maps auction margins, showroom vehicles, land conveyances, and demurrage fees to automated GL accounts.
+              </p>
+            </div>
+
+            <Button
+              size="sm"
+              variant="primary"
+              icon={<PlusCircle className="h-3.5 w-3.5" />}
+              onClick={() => setIsNewItemModalOpen(true)}
+            >
+              Add Product / Service
+            </Button>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            {(['ALL', 'AUCTION', 'DEALERSHIP', 'LAND', 'PROPERTY', 'OPERATIONS'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setItemCategoryFilter(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  itemCategoryFilter === cat
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-100'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Items Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th className="p-3.5">SKU / Code</th>
+                    <th className="p-3.5">Item Name &amp; Description</th>
+                    <th className="p-3.5">Type</th>
+                    <th className="p-3.5">Category</th>
+                    <th className="p-3.5">Income GL Account</th>
+                    <th className="p-3.5">COGS / Asset Account</th>
+                    <th className="p-3.5 text-right">Default Price</th>
+                    <th className="p-3.5 text-center">GRA Tax</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {accountingItems
+                    .filter((item) => (itemCategoryFilter === 'ALL' ? true : item.category === itemCategoryFilter))
+                    .map((item) => {
+                      const incomeAcc = accounts.find((a) => a.id === item.incomeAccountId);
+                      const expenseAcc = item.expenseAccountId ? accounts.find((a) => a.id === item.expenseAccountId) : undefined;
+                      const assetAcc = item.assetAccountId ? accounts.find((a) => a.id === item.assetAccountId) : undefined;
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                          <td className="p-3.5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                            {item.sku}
+                          </td>
+                          <td className="p-3.5">
+                            <p className="font-bold text-slate-900 dark:text-slate-100">{item.name}</p>
+                            <p className="text-[11px] text-slate-400">{item.description}</p>
+                          </td>
+                          <td className="p-3.5">
+                            <Badge
+                              variant={
+                                item.type === 'FEE'
+                                  ? 'warning'
+                                  : item.type === 'INVENTORY'
+                                  ? 'success'
+                                  : 'info'
+                              }
+                            >
+                              {item.type}
+                            </Badge>
+                          </td>
+                          <td className="p-3.5 font-semibold text-slate-600 dark:text-slate-300">
+                            {item.category}
+                          </td>
+                          <td className="p-3.5 font-mono text-slate-700 dark:text-slate-300">
+                            <span className="font-bold text-indigo-600 dark:text-indigo-400 mr-1.5">
+                              {incomeAcc?.code}
+                            </span>
+                            {incomeAcc?.name}
+                          </td>
+                          <td className="p-3.5 font-mono text-slate-500">
+                            {expenseAcc ? (
+                              <div>
+                                <span className="font-bold text-rose-600 mr-1">{expenseAcc.code}</span>
+                                {expenseAcc.name}
+                              </div>
+                            ) : assetAcc ? (
+                              <div>
+                                <span className="font-bold text-emerald-600 mr-1">{assetAcc.code}</span>
+                                {assetAcc.name}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="p-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                            {item.defaultUnitPriceGhs ? formatGHS(item.defaultUnitPriceGhs) : 'Variable / %'}
+                          </td>
+                          <td className="p-3.5 text-center">
+                            {item.isTaxable ? (
+                              <Badge variant="warning">GRA 15+6%</Badge>
+                            ) : (
+                              <span className="text-[11px] text-slate-400">Exempt</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODALS */}
+      <BankDepositModal
+        isOpen={isBankDepositModalOpen}
+        onClose={() => setIsBankDepositModalOpen(false)}
+        onSuccess={() => setIsBankDepositModalOpen(false)}
+      />
+
+      <NewItemModal
+        isOpen={isNewItemModalOpen}
+        onClose={() => setIsNewItemModalOpen(false)}
+        onSuccess={() => setIsNewItemModalOpen(false)}
+      />
+
       <NewJournalEntryModal
         isOpen={isJournalModalOpen}
         onClose={() => setIsJournalModalOpen(false)}

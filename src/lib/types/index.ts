@@ -139,6 +139,8 @@ export interface Receipt {
   cashierName: string;
   issuedLocation: string;
   printedAt: string;
+  depositStatus?: 'UNDEPOSITED' | 'DEPOSITED';
+  bankDepositId?: string;
   syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';
 }
 
@@ -331,6 +333,13 @@ export interface JournalEntryLine {
   accountName: string;
   debitGhs: number;
   creditGhs: number;
+  classId?: string;
+  className?: string;
+  locationId?: string;
+  locationName?: string;
+  itemId?: string;
+  customerId?: string;
+  vendorId?: string;
   memo?: string;
 }
 
@@ -444,5 +453,82 @@ export interface PaymentSplit {
   momoNetwork?: MoMoNetwork;
   bankName?: string;
   transactionReference?: string;
+}
+
+// ==========================================
+// QUICKBOOKS ENTERPRISE ACCOUNTING ARCHITECTURE
+// ==========================================
+
+export type ItemType = 'SERVICE' | 'INVENTORY' | 'NON_INVENTORY' | 'FEE' | 'TAX';
+
+export interface AccountingItem {
+  id: string;
+  name: string;
+  sku: string;
+  type: ItemType;
+  description: string;
+  incomeAccountId: string; // Account credited on sale (e.g. 4010 Auction Margin)
+  expenseAccountId?: string; // Account debited when cost incurred (e.g. 5010 COGS)
+  assetAccountId?: string; // Account debited when inventoried (e.g. 1300 Vehicle Inventory)
+  defaultUnitPriceGhs?: number;
+  isTaxable: boolean; // Subject to standard GRA VAT/NHIL/GETFund/COVID levies
+  category: 'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY' | 'OPERATIONS';
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BusinessLineCode =
+  | 'AUCTION_PRIVATE'
+  | 'AUCTION_GOVERNMENT'
+  | 'AUCTION_JUDICIAL'
+  | 'DEALERSHIP'
+  | 'LAND'
+  | 'PROPERTY'
+  | 'ADMIN';
+
+export interface AccountingClass {
+  id: string;
+  code: string;
+  name: string;
+  businessLine: BusinessLineCode;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AccountingLocation {
+  id: string;
+  code: string;
+  name: string;
+  facilityType: 'AUCTION_YARD' | 'SHOWROOM' | 'HEAD_OFFICE' | 'LAND_SITE';
+  address: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface BankDeposit {
+  id: string;
+  depositNumber: string; // e.g. "DEP-2026-0001"
+  depositDate: string;
+  targetBankAccountId: string; // e.g. 'acc-1050' (GCB Bank Operating Account)
+  targetBankAccountName: string;
+  totalAmountGhs: number;
+  sourceAccountType: 'CASH_CLEARING' | 'MOMO_CLEARING' | 'MIXED';
+  clearedReceiptIds: string[]; // IDs of receipts cleared from 1015 / 1035
+  bankSlipReference?: string; // Teller reference / deposit slip #
+  depositorName: string;
+  depositedByRole: 'ACCOUNTANT' | 'ADMIN';
+  notes?: string;
+  syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';
+  createdAt: string;
+}
+
+export interface LinkedTxn {
+  txnId: string;
+  txnType: 'INVOICE' | 'PAYMENT' | 'BANK_DEPOSIT' | 'AUCTION_LOT';
+  docNumber: string;
+  amountAppliedGhs: number;
+  appliedAt: string;
 }
 

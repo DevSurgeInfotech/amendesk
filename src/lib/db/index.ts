@@ -1,7 +1,11 @@
 import Dexie, { type Table } from 'dexie';
 import type {
   Account,
+  AccountingClass,
+  AccountingItem,
+  AccountingLocation,
   AuctionLot,
+  BankDeposit,
   CashShift,
   Customer,
   DealershipVehicle,
@@ -19,7 +23,11 @@ import type {
   Waybill,
 } from '@/lib/types';
 import {
+  initialAccountingClasses,
+  initialAccountingItems,
+  initialAccountingLocations,
   initialAccounts,
+  initialBankDeposits,
   initialCustomers,
   initialExpenses,
   initialInvoices,
@@ -57,6 +65,10 @@ export class AmenDeskDB extends Dexie {
   expenses!: Table<Expense, string>;
   invoices!: Table<Invoice, string>;
   cashShifts!: Table<CashShift, string>;
+  accountingItems!: Table<AccountingItem, string>;
+  accountingClasses!: Table<AccountingClass, string>;
+  accountingLocations!: Table<AccountingLocation, string>;
+  bankDeposits!: Table<BankDeposit, string>;
 
   constructor() {
     super('AmenDeskLocalDB');
@@ -78,6 +90,14 @@ export class AmenDeskDB extends Dexie {
       expenses: 'id, expenseNumber, category, status, date',
       invoices: 'id, invoiceNumber, customerId, status, dueDate',
       cashShifts: 'id, shiftNumber, cashierName, status, shiftDate',
+    });
+
+    this.version(3).stores({
+      receipts: 'id, receiptNumber, paymentPlanId, customerId, printedAt, syncStatus, depositStatus, bankDepositId',
+      accountingItems: 'id, sku, name, type, category, incomeAccountId, isActive',
+      accountingClasses: 'id, code, name, businessLine, isActive',
+      accountingLocations: 'id, code, name, facilityType, isActive',
+      bankDeposits: 'id, depositNumber, depositDate, targetBankAccountId, syncStatus',
     });
   }
 
@@ -105,6 +125,14 @@ export class AmenDeskDB extends Dexie {
       await this.invoices.bulkAdd(initialInvoices);
       await this.cashShifts.bulkAdd(initialCashShifts);
     }
+
+    const itemCount = await this.accountingItems.count();
+    if (itemCount === 0) {
+      await this.accountingItems.bulkAdd(initialAccountingItems);
+      await this.accountingClasses.bulkAdd(initialAccountingClasses);
+      await this.accountingLocations.bulkAdd(initialAccountingLocations);
+      await this.bankDeposits.bulkAdd(initialBankDeposits);
+    }
   }
 
   async resetToSeedData(): Promise<void> {
@@ -125,6 +153,10 @@ export class AmenDeskDB extends Dexie {
     await this.expenses.clear();
     await this.invoices.clear();
     await this.cashShifts.clear();
+    await this.accountingItems.clear();
+    await this.accountingClasses.clear();
+    await this.accountingLocations.clear();
+    await this.bankDeposits.clear();
     await this.populateIfEmpty();
   }
 }

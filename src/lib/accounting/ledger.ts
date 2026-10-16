@@ -65,16 +65,22 @@ export async function postJournalEntry(
 }
 
 /**
- * Maps payment method & facility to the corresponding Asset GL Account ID
+ * Maps payment method & facility to the corresponding Asset GL Account ID.
+ * Follows QuickBooks Undeposited Funds clearance pattern for Cash and MoMo counter collections.
  */
 export async function getPaymentAssetAccount(
   method: PaymentMethod,
   momoNetwork?: MoMoNetwork,
-  bankName?: string
+  bankName?: string,
+  preferClearance = true
 ): Promise<{ id: string; code: string; name: string }> {
   const accounts = await db.accounts.toArray();
 
   if (method === 'MOMO') {
+    if (preferClearance) {
+      const clearingAcc = accounts.find((a) => a.code === '1035');
+      if (clearingAcc) return { id: clearingAcc.id, code: clearingAcc.code, name: clearingAcc.name };
+    }
     if (momoNetwork === 'VODAFONE') {
       const acc = accounts.find((a) => a.code === '1040');
       if (acc) return { id: acc.id, code: acc.code, name: acc.name };
@@ -82,6 +88,10 @@ export async function getPaymentAssetAccount(
     const acc = accounts.find((a) => a.code === '1030');
     if (acc) return { id: acc.id, code: acc.code, name: acc.name };
   } else if (method === 'CASH') {
+    if (preferClearance) {
+      const clearingAcc = accounts.find((a) => a.code === '1015');
+      if (clearingAcc) return { id: clearingAcc.id, code: clearingAcc.code, name: clearingAcc.name };
+    }
     const acc = accounts.find((a) => a.code === '1010');
     if (acc) return { id: acc.id, code: acc.code, name: acc.name };
   } else if (method === 'BANK_TRANSFER') {
@@ -100,14 +110,16 @@ export async function getPaymentAssetAccount(
     if (acc) return { id: acc.id, code: acc.code, name: acc.name };
   }
 
-  // Fallback to Cash Till
-  const fallback = accounts.find((a) => a.code === '1010') || accounts[0];
+  // Fallback to Cash Clearance or Cash Till
+  const fallback =
+    accounts.find((a) => a.code === '1015') || accounts.find((a) => a.code === '1010') || accounts[0];
   return { id: fallback.id, code: fallback.code, name: fallback.name };
 }
 
 /**
  * Automatically creates and posts the double-entry journal entry for a logged receipt.
  * Supports both single-method payments and multi-channel split payments.
+ * Tags entries with QuickBooks dimensional Class and Location metadata.
  */
 export async function postPaymentReceiptLedger(
   receiptNumber: string,
@@ -119,10 +131,24 @@ export async function postPaymentReceiptLedger(
   cashierName: string,
   momoNetwork?: MoMoNetwork,
   bankName?: string,
-  splitPayments?: PaymentSplit[]
+  splitPayments?: PaymentSplit[],
+  locationName?: string
 ): Promise<JournalEntry> {
   const accounts = await db.accounts.toArray();
   const lines: JournalEntryLine[] = [];
+
+  // Dimensional Class resolution
+  const classCodeMap: Record<string, string> = {
+    AUCTION: 'AUC_PRIV',
+    DEALERSHIP: 'DEALERSHIP',
+    LAND: 'LAND',
+    PROPERTY: 'PROPERTY',
+    GENERAL: 'ADMIN',
+  };
+  const targetClassCode = classCodeMap[referenceType] || 'ADMIN';
+  const matchingClass = await db.accountingClasses.where('code').equals(targetClassCode).first();
+  const classId = matchingClass?.id;
+  const className = matchingClass?.name;
 
   if (splitPayments && splitPayments.length > 0) {
     let idx = 1;
@@ -140,6 +166,9 @@ export async function postPaymentReceiptLedger(
         accountName: splitDebitAcc.name,
         debitGhs: split.amountGhs,
         creditGhs: 0,
+        classId,
+        className,
+        locationName,
         memo: `Receipt ${receiptNumber} Split — ${customerName} (${split.method}${
           split.momoNetwork ? ` ${split.momoNetwork}` : ''
         })`,
@@ -154,6 +183,9 @@ export async function postPaymentReceiptLedger(
       accountName: debitAccount.name,
       debitGhs: amountGhs,
       creditGhs: 0,
+      classId,
+      className,
+      locationName,
       memo: `Receipt ${receiptNumber} — ${customerName} (${paymentMethod})`,
     });
   }
@@ -189,6 +221,9 @@ export async function postPaymentReceiptLedger(
     accountName: creditAccountName,
     debitGhs: 0,
     creditGhs: amountGhs,
+    classId,
+    className,
+    locationName,
     memo: `Settlement for ${referenceTitle}`,
   });
 
@@ -217,9 +252,9 @@ export async function postInvoiceIssuedLedger(
 
   const revenueCodeMap: Record<Invoice['referenceType'], string> = {
     AUCTION: '4010',
-    DEALERSHIP: '4100',
-    LAND: '4200',
-    PROPERTY: '4300',
+    DEALERSHIP: '4030', // Dealership Vehicle Direct Sales Revenue
+    LAND: '4040',
+    PROPERTY: '4050',
     GENERAL: '4060',
   };
   const revCode = revenueCodeMap[invoice.referenceType] || '4060';
@@ -227,6 +262,19 @@ export async function postInvoiceIssuedLedger(
     accounts.find((a) => a.code === revCode) ||
     accounts.find((a) => a.type === 'REVENUE') ||
     arAcc;
+
+  // Resolve Class
+  const classCodeMap: Record<string, string> = {
+    AUCTION: 'AUC_PRIV',
+    DEALERSHIP: 'DEALERSHIP',
+    LAND: 'LAND',
+    PROPERTY: 'PROPERTY',
+    GENERAL: 'ADMIN',
+  };
+  const targetClassCode = classCodeMap[invoice.referenceType] || 'ADMIN';
+  const matchingClass = await db.accountingClasses.where('code').equals(targetClassCode).first();
+  const classId = matchingClass?.id;
+  const className = matchingClass?.name;
 
   const lines: JournalEntryLine[] = [
     {
@@ -236,6 +284,8 @@ export async function postInvoiceIssuedLedger(
       accountName: arAcc.name,
       debitGhs: invoice.totalAmountGhs,
       creditGhs: 0,
+      classId,
+      className,
       memo: `Invoice ${invoice.invoiceNumber} — ${invoice.customerName}`,
     },
     {
@@ -245,6 +295,8 @@ export async function postInvoiceIssuedLedger(
       accountName: revAcc.name,
       debitGhs: 0,
       creditGhs: invoice.subtotalGhs,
+      classId,
+      className,
       memo: `Net Revenue: ${invoice.referenceTitle || invoice.invoiceNumber}`,
     },
   ];
@@ -267,6 +319,8 @@ export async function postInvoiceIssuedLedger(
         accountName: taxAcc?.name || tax.fallbackName,
         debitGhs: 0,
         creditGhs: tax.amount,
+        classId,
+        className,
         memo: `${tax.fallbackName} on ${invoice.invoiceNumber}`,
       });
     }
@@ -282,6 +336,124 @@ export async function postInvoiceIssuedLedger(
     lines,
     totalAmountGhs: invoice.totalAmountGhs,
     createdBy,
+    status: 'POSTED',
+  });
+}
+
+/**
+ * QuickBooks Perpetual Inventory COGS Posting Engine
+ * Automatically debits Cost of Goods Sold (5010) and credits Vehicle Inventory (1300)
+ * at landed cost when a dealership vehicle is sold.
+ */
+export async function postVehicleSaleCOGS(params: {
+  vehicleVin: string;
+  stockNumber: string;
+  landedCostGhs: number;
+  salePriceGhs: number;
+  customerName: string;
+  createdBy: string;
+  locationName?: string;
+}): Promise<JournalEntry> {
+  const accounts = await db.accounts.toArray();
+  const cogsAccount =
+    accounts.find((a) => a.code === '5010') ||
+    accounts.find((a) => a.category === 'COST_OF_SALES') ||
+    accounts[0];
+  const inventoryAccount =
+    accounts.find((a) => a.code === '1300') ||
+    accounts.find((a) => a.code.startsWith('13')) ||
+    accounts[0];
+
+  const dealerClass = await db.accountingClasses.where('code').equals('DEALERSHIP').first();
+
+  const lines: JournalEntryLine[] = [
+    {
+      id: `line-${Date.now()}-1`,
+      accountId: cogsAccount.id,
+      accountCode: cogsAccount.code,
+      accountName: cogsAccount.name,
+      debitGhs: params.landedCostGhs,
+      creditGhs: 0,
+      classId: dealerClass?.id,
+      className: dealerClass?.name,
+      locationName: params.locationName,
+      memo: `COGS: Landed cost of Vin ${params.vehicleVin} (Stock ${params.stockNumber})`,
+    },
+    {
+      id: `line-${Date.now()}-2`,
+      accountId: inventoryAccount.id,
+      accountCode: inventoryAccount.code,
+      accountName: inventoryAccount.name,
+      debitGhs: 0,
+      creditGhs: params.landedCostGhs,
+      classId: dealerClass?.id,
+      className: dealerClass?.name,
+      locationName: params.locationName,
+      memo: `Inventory reduction for Vin ${params.vehicleVin} sold to ${params.customerName}`,
+    },
+  ];
+
+  return postJournalEntry({
+    entryNumber: `JE-COGS-${Date.now().toString().slice(-6)}`,
+    date: new Date().toISOString(),
+    reference: `VIN-${params.vehicleVin.slice(-6)}`,
+    description: `Vehicle Disposal COGS: Stock ${params.stockNumber} (VIN ${params.vehicleVin}) sold to ${params.customerName}`,
+    lines,
+    totalAmountGhs: params.landedCostGhs,
+    createdBy: params.createdBy,
+    status: 'POSTED',
+  });
+}
+
+/**
+ * QuickBooks Fiduciary Trust Accounting: Judicial High Court Remittance
+ * Records remittance to High Court Registrar from ring-fenced escrow account (1070/2030).
+ */
+export async function postJudicialCourtRemittance(params: {
+  remittanceAmountGhs: number;
+  courtCaseNumber: string;
+  sheriffInstructionRef: string;
+  approvedBy: string;
+}): Promise<JournalEntry> {
+  const accounts = await db.accounts.toArray();
+  const escrowPayable = accounts.find((a) => a.code === '2030') || accounts[0];
+  const escrowBank = accounts.find((a) => a.code === '1070') || accounts[0];
+
+  const judClass = await db.accountingClasses.where('code').equals('AUC_JUD').first();
+
+  const lines: JournalEntryLine[] = [
+    {
+      id: `line-${Date.now()}-1`,
+      accountId: escrowPayable.id,
+      accountCode: escrowPayable.code,
+      accountName: escrowPayable.name,
+      debitGhs: params.remittanceAmountGhs,
+      creditGhs: 0,
+      classId: judClass?.id,
+      className: judClass?.name,
+      memo: `Remittance to Court Registrar — Case: ${params.courtCaseNumber}`,
+    },
+    {
+      id: `line-${Date.now()}-2`,
+      accountId: escrowBank.id,
+      accountCode: escrowBank.code,
+      accountName: escrowBank.name,
+      debitGhs: 0,
+      creditGhs: params.remittanceAmountGhs,
+      classId: judClass?.id,
+      className: judClass?.name,
+      memo: `Disbursement from Ecobank Judicial Escrow — Writ: ${params.sheriffInstructionRef}`,
+    },
+  ];
+
+  return postJournalEntry({
+    entryNumber: `JE-JUD-REMIT-${Date.now().toString().slice(-6)}`,
+    date: new Date().toISOString(),
+    reference: params.courtCaseNumber,
+    description: `Judicial High Court Remittance: Case ${params.courtCaseNumber} (Ref: ${params.sheriffInstructionRef})`,
+    lines,
+    totalAmountGhs: params.remittanceAmountGhs,
+    createdBy: params.approvedBy,
     status: 'POSTED',
   });
 }

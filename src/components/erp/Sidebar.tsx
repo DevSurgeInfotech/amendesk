@@ -73,6 +73,8 @@ const erpModules: ModuleItem[] = [
       { label: 'Operating Expenses (AP)', href: '/desk/accounts?tab=EXPENSES' },
       { label: 'Invoices & Billing', href: '/desk/accounts?tab=INVOICES' },
       { label: 'Cashier Receipts Ledger', href: '/desk/accounts?tab=RECEIPTS' },
+      { label: 'Bank Deposits & Clearance', href: '/desk/accounts?tab=BANK_DEPOSITS' },
+      { label: 'Products & Services (Item Master)', href: '/desk/accounts?tab=PRODUCTS_SERVICES' },
     ],
   },
   {
