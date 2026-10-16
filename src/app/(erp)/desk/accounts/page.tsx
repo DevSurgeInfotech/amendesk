@@ -276,29 +276,6 @@ function AccountsContent() {
         </div>
       </div>
 
-      {/* Horizontal In-Page Tab Navigation */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 dark:border-slate-800">
-        {VALID_TABS.map((tab) => {
-          const meta = tabMeta[tab];
-          const Icon = meta.icon;
-          const isActive = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60 border border-slate-200 dark:border-slate-700'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{meta.label.split('(')[0].trim()}</span>
-            </button>
-          );
-        })}
-      </div>
-
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'OVERVIEW' && (
         <div className="space-y-6">
