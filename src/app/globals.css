@@ -10,6 +10,14 @@
   --primary-hover: #4338ca;
   --card-bg: #ffffff;
   --card-border: #e2e8f0;
+
+  /* Encore SMS Sidebar Design Tokens */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e2e8f0;
+  --sidebar-text: #0f172a;
+  --sidebar-text-muted: #334155;
+  --sidebar-divider: #f1f5f9;
+  --sidebar-overlay: rgba(79, 70, 229, 0.08);
 }
 
 .dark {
@@ -19,6 +27,14 @@
   --primary-hover: #4f46e5;
   --card-bg: #0f172a;
   --card-border: #1e293b;
+
+  /* Encore SMS Sidebar Design Tokens (Dark) */
+  --sidebar-bg: #0f172a;
+  --sidebar-border: #1e293b;
+  --sidebar-text: #f1f5f9;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-divider: #1e293b;
+  --sidebar-overlay: rgba(99, 102, 241, 0.12);
 }
 
 @theme inline {
