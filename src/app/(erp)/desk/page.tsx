@@ -8,14 +8,13 @@ import { formatGHS } from '@/lib/utils/currency';
 import { getInstalmentWindowInfo, formatDate } from '@/lib/utils/date';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { PaymentModal } from '@/components/erp/PaymentModal';
 import { ExtensionModal } from '@/components/erp/ExtensionModal';
 import Link from 'next/link';
 import {
   Gavel,
   Receipt,
-  Clock,
-  AlertTriangle,
   ArrowRight,
   PlusCircle,
   CreditCard,
@@ -104,77 +103,41 @@ export default function DeskDashboardPage() {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Receivables */}
-        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              14-Day Receivables Due
-            </span>
-            <div className="p-2 bg-amber-100 dark:bg-amber-950 text-amber-600 rounded-xl">
-              <Clock className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            {formatGHS(totalReceivablesGhs)}
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Across {awaitingBalanceLots.length} hammer settlements awaiting balance
-          </p>
-        </div>
+        <GlassCard
+          theme={0}
+          title="14-Day Receivables Due"
+          value={formatGHS(totalReceivablesGhs)}
+          subtitle={`Across ${awaitingBalanceLots.length} hammer settlements awaiting balance`}
+          iconName="receivables"
+          href="/desk/payment-plans"
+        />
 
-        {/* Collections */}
-        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Collections to Date
-            </span>
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-xl">
-              <Receipt className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            {formatGHS(totalCollectedGhs)}
-          </p>
-          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            {receipts.length} verified receipts issued
-          </p>
-        </div>
+        <GlassCard
+          theme={1}
+          title="Collections to Date"
+          value={formatGHS(totalCollectedGhs)}
+          subtitle={`${receipts.length} verified receipts issued`}
+          iconName="collections"
+          href="/desk/payments?view=collections"
+        />
 
-        {/* Active Auction Lots */}
-        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Active Auction Inventory
-            </span>
-            <div className="p-2 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 rounded-xl">
-              <Gavel className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            {activeLots.length} Lots
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Govt, Judicial &amp; Private listings
-          </p>
-        </div>
+        <GlassCard
+          theme={2}
+          title="Active Auction Inventory"
+          value={`${activeLots.length} Lots`}
+          subtitle="Govt, Judicial &amp; Private listings"
+          iconName="gavel"
+          href="/desk/auctions"
+        />
 
-        {/* Overdue Accounts */}
-        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Overdue Expirations
-            </span>
-            <div className="p-2 bg-rose-100 dark:bg-rose-950 text-rose-600 rounded-xl">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
-            {overdueLots.length} Accounts
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Eligible for manager extension review
-          </p>
-        </div>
+        <GlassCard
+          theme={3}
+          title="Overdue Expirations"
+          value={`${overdueLots.length} Accounts`}
+          subtitle="Eligible for manager extension review"
+          iconName="alert"
+          href="/desk/payment-plans?filter=OVERDUE"
+        />
       </div>
 
       {/* 14-Day Instalment Watchlist & Critical Expirations */}

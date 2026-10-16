@@ -13,6 +13,7 @@ import type {
 import { formatGHS } from '@/lib/utils/currency';
 import { formatDateTime, formatDate } from '@/lib/utils/date';
 import { Button } from '@/components/ui/Button';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { ThermalReceipt } from '@/components/erp/ThermalReceipt';
@@ -36,7 +37,6 @@ import {
   PieChart,
   FileText,
   DollarSign,
-  TrendingUp,
   CheckCircle,
   FileCheck,
   Scale,
@@ -304,112 +304,72 @@ function AccountsContent() {
         <div className="space-y-6">
           {/* KPI Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Total Liquid Funds
-                </span>
-                <Building className="h-4 w-4 text-indigo-600" />
-              </div>
-              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight font-mono">
-                {formatGHS(totalLiquidity)}
-              </p>
-              <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-1">
-                Cash Tills + MoMo + Bank Accounts
-              </p>
-            </div>
+            <GlassCard
+              theme={0}
+              title="Total Liquid Funds"
+              value={formatGHS(totalLiquidity)}
+              subtitle="Cash Tills + MoMo + Bank Accounts"
+              iconName="collections"
+            />
 
-            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Accounts Receivable (AR)
-                </span>
-                <ReceiptIcon className="h-4 w-4 text-amber-500" />
-              </div>
-              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight font-mono">
-                {formatGHS(totalReceivables)}
-              </p>
-              <p className="text-xs text-amber-600 font-medium mt-1">
-                14-day auction &amp; showroom debtor balances
-              </p>
-            </div>
+            <GlassCard
+              theme={1}
+              title="Accounts Receivable (AR)"
+              value={formatGHS(totalReceivables)}
+              subtitle="14-day auction &amp; showroom debtor balances"
+              iconName="receivables"
+            />
 
-            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Payables &amp; Judicial Escrow
-                </span>
-                <Scale className="h-4 w-4 text-blue-500" />
-              </div>
-              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight font-mono">
-                {formatGHS(totalPayablesAndEscrow)}
-              </p>
-              <p className="text-xs text-blue-600 font-medium mt-1">
-                Court registrar, consignor &amp; vendor liabilities
-              </p>
-            </div>
+            <GlassCard
+              theme={2}
+              title="Payables &amp; Judicial Escrow"
+              value={formatGHS(totalPayablesAndEscrow)}
+              subtitle="Court registrar, consignor &amp; vendor liabilities"
+              iconName="scale"
+            />
 
-            <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Net Operating Margin
-                </span>
-                <TrendingUp className="h-4 w-4 text-emerald-500" />
-              </div>
-              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight font-mono">
-                {formatGHS(netOperatingProfit)}
-              </p>
-              <p className="text-xs text-emerald-600 font-medium mt-1">
-                Revenue {formatGHS(totalRevenue)} &minus; Opex {formatGHS(totalOperatingExpenses)}
-              </p>
-            </div>
+            <GlassCard
+              theme={3}
+              title="Net Operating Margin"
+              value={formatGHS(netOperatingProfit)}
+              subtitle={`Revenue ${formatGHS(totalRevenue)} − Opex ${formatGHS(totalOperatingExpenses)}`}
+              iconName="profit"
+            />
           </div>
 
           {/* Multi-Mode Channels Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Cash on Hand (Tills)</span>
-                <Banknote className="h-4 w-4 text-emerald-500" />
-              </div>
-              <p className="mt-2 text-lg font-bold font-mono text-slate-900 dark:text-slate-100">
-                {formatGHS(cashTotal)}
-              </p>
-              <p className="text-[11px] text-slate-400">Tema Yard &amp; Spintex Showroom</p>
-            </div>
+            <GlassCard
+              theme={0}
+              title="Cash on Hand (Tills)"
+              value={formatGHS(cashTotal)}
+              subtitle="Tema Yard &amp; Spintex Showroom"
+              iconName="cash"
+            />
 
-            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Mobile Money (MoMo)</span>
-                <Smartphone className="h-4 w-4 text-amber-500" />
-              </div>
-              <p className="mt-2 text-lg font-bold font-mono text-slate-900 dark:text-slate-100">
-                {formatGHS(momoTotal)}
-              </p>
-              <p className="text-[11px] text-amber-600 font-medium">MTN &bull; Telecel &bull; Hubtel Float</p>
-            </div>
+            <GlassCard
+              theme={1}
+              title="Mobile Money (MoMo)"
+              value={formatGHS(momoTotal)}
+              subtitle="MTN &bull; Telecel &bull; Hubtel Float"
+              iconName="momo"
+            />
 
-            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Bank Deposits / Wire</span>
-                <Building className="h-4 w-4 text-blue-500" />
-              </div>
-              <p className="mt-2 text-lg font-bold font-mono text-slate-900 dark:text-slate-100">
-                {formatGHS(bankTotal)}
-              </p>
-              <p className="text-[11px] text-blue-600 font-medium">GCB &bull; Stanbic &bull; Ecobank Escrow</p>
-            </div>
+            <GlassCard
+              theme={2}
+              title="Bank Deposits / Wire"
+              value={formatGHS(bankTotal)}
+              subtitle="GCB &bull; Stanbic &bull; Ecobank Escrow"
+              iconName="bank"
+            />
 
-            <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Paystack / Card</span>
-                <CreditCard className="h-4 w-4 text-purple-500" />
-              </div>
-              <p className="mt-2 text-lg font-bold font-mono text-slate-900 dark:text-slate-100">
-                {formatGHS(cardTotal)}
-              </p>
-              <p className="text-[11px] text-purple-600 font-medium">Visa &bull; Mastercard &bull; Gh-Link</p>
-            </div>
+            <GlassCard
+              theme={3}
+              title="Paystack / Card"
+              value={formatGHS(cardTotal)}
+              subtitle="Visa &bull; Mastercard &bull; Gh-Link"
+              iconName="card"
+            />
           </div>
 
           {/* Quick Shortcuts & Recent Activity */}

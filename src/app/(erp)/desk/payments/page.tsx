@@ -19,6 +19,7 @@ import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
 import { formatGHS } from '@/lib/utils/currency';
 import { formatDateTime } from '@/lib/utils/date';
 import { Button } from '@/components/ui/Button';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { ThermalReceipt } from '@/components/erp/ThermalReceipt';
 import Link from 'next/link';
 import {
@@ -664,38 +665,37 @@ function RecordPaymentContent() {
 
       {/* Till Shift Summary Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Today&apos;s Total Collections</span>
-          <p className="mt-1 text-xl font-black font-mono text-slate-900 dark:text-slate-100">{formatGHS(todayTotal)}</p>
-          <p className="text-[11px] text-slate-400">{todayReceipts.length} receipts issued today</p>
-        </div>
+        <GlassCard
+          theme={0}
+          title="Today's Total Collections"
+          value={formatGHS(todayTotal)}
+          subtitle={`${todayReceipts.length} receipts issued today`}
+          iconName="collections"
+        />
 
-        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Drawer Cash Till</span>
-            <Banknote className="h-4 w-4 text-emerald-500" />
-          </div>
-          <p className="mt-1 text-xl font-black font-mono text-slate-900 dark:text-slate-100">{formatGHS(todayCash)}</p>
-          <p className="text-[11px] text-emerald-600 font-medium">Physical notes &amp; coins in till</p>
-        </div>
+        <GlassCard
+          theme={1}
+          title="Drawer Cash Till"
+          value={formatGHS(todayCash)}
+          subtitle="Physical notes &amp; coins in till"
+          iconName="cash"
+        />
 
-        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mobile Money (MoMo)</span>
-            <Smartphone className="h-4 w-4 text-amber-500" />
-          </div>
-          <p className="mt-1 text-xl font-black font-mono text-slate-900 dark:text-slate-100">{formatGHS(todayMomo)}</p>
-          <p className="text-[11px] text-amber-600 font-medium">MTN &bull; Telecel &bull; Hubtel</p>
-        </div>
+        <GlassCard
+          theme={2}
+          title="Mobile Money (MoMo)"
+          value={formatGHS(todayMomo)}
+          subtitle="MTN &bull; Telecel &bull; Hubtel"
+          iconName="momo"
+        />
 
-        <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bank Wires &amp; Drafts</span>
-            <Building className="h-4 w-4 text-blue-500" />
-          </div>
-          <p className="mt-1 text-xl font-black font-mono text-slate-900 dark:text-slate-100">{formatGHS(todayBank)}</p>
-          <p className="text-[11px] text-blue-600 font-medium">GCB &bull; Stanbic &bull; Ecobank Escrow</p>
-        </div>
+        <GlassCard
+          theme={3}
+          title="Bank Wires &amp; Drafts"
+          value={formatGHS(todayBank)}
+          subtitle="GCB &bull; Stanbic &bull; Ecobank Escrow"
+          iconName="bank"
+        />
       </div>
 
       {/* Main Payment Recording Layout (When in terminal view) */}

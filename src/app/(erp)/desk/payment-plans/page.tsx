@@ -8,6 +8,7 @@ import type { PaymentPlan } from '@/lib/types';
 import { formatGHS } from '@/lib/utils/currency';
 import { formatDate, getInstalmentWindowInfo } from '@/lib/utils/date';
 import { Button } from '@/components/ui/Button';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { PaymentModal } from '@/components/erp/PaymentModal';
 import { ExtensionModal } from '@/components/erp/ExtensionModal';
@@ -73,35 +74,29 @@ function PaymentPlansContent() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Total Outstanding Balance
-          </span>
-          <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">
-            {formatGHS(totalOutstanding)}
-          </p>
-          <p className="text-xs text-slate-500">{plans.length} total payment plans</p>
-        </div>
+        <GlassCard
+          theme={0}
+          title="Total Outstanding Balance"
+          value={formatGHS(totalOutstanding)}
+          subtitle={`${plans.length} total payment plans`}
+          iconName="receivables"
+        />
 
-        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Active Within 14-Day Window
-          </span>
-          <p className="mt-2 text-2xl font-black text-indigo-600 dark:text-indigo-400">
-            {activeCount} Plans
-          </p>
-          <p className="text-xs text-slate-500">Scheduled for balance settlement</p>
-        </div>
+        <GlassCard
+          theme={1}
+          title="Active Within 14-Day Window"
+          value={`${activeCount} Plans`}
+          subtitle="Scheduled for balance settlement"
+          iconName="collections"
+        />
 
-        <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Overdue / Needs Extension
-          </span>
-          <p className="mt-2 text-2xl font-black text-rose-600 dark:text-rose-400">
-            {overdueCount} Plans
-          </p>
-          <p className="text-xs text-rose-600 font-medium">Eligible for manager extension</p>
-        </div>
+        <GlassCard
+          theme="rose"
+          title="Overdue / Needs Extension"
+          value={`${overdueCount} Plans`}
+          subtitle="Eligible for manager extension"
+          iconName="alert"
+        />
       </div>
 
       {/* Filters and Search */}
