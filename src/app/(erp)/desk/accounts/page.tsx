@@ -270,41 +270,6 @@ function AccountsContent() {
 
   return (
     <div className="space-y-6">
-      {/* Top Tab Navigation Pill Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {VALID_TABS.map((t) => {
-          const meta = tabMeta[t];
-          const Icon = meta.icon;
-          const isActive = activeTab === t;
-          const badgeCount = t === 'BANK_DEPOSITS' ? undepositedReceipts.length : undefined;
-          return (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span>{meta.label.split('(')[0].trim()}</span>
-              {badgeCount !== undefined && badgeCount > 0 && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                    isActive
-                      ? 'bg-amber-400 text-slate-900'
-                      : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                  }`}
-                >
-                  {badgeCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Header Banner */}
       <div className="surface-card flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
