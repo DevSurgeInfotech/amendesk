@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { Customer, AuctionLot, DealershipVehicle, LandParcel } from '@/lib/types';
@@ -20,11 +20,32 @@ import {
   Gavel,
   Car,
   ShieldAlert,
+  BookOpen,
 } from 'lucide-react';
 
 type ImportCategory = 'CUSTOMERS' | 'AUCTION_LOTS' | 'DEALERSHIP_CARS' | 'LAND_PARCELS';
 
-export default function DataMigrationPage() {
+function generateMigCustId(idx: number): string {
+  return `mig-cust-${Date.now()}-${idx}`;
+}
+
+function generateMigLotId(idx: number): string {
+  return `mig-lot-${Date.now()}-${idx}`;
+}
+
+function generateMigVehId(idx: number): string {
+  return `mig-veh-${Date.now()}-${idx}`;
+}
+
+function generateMigLandId(idx: number): string {
+  return `mig-lnd-${Date.now()}-${idx}`;
+}
+
+function getIsoTimestamp(): string {
+  return new Date().toISOString();
+}
+
+function DataMigrationContent() {
   const [selectedCategory, setSelectedCategory] = useState<ImportCategory>('CUSTOMERS');
   const [csvText, setCsvText] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -40,6 +61,16 @@ export default function DataMigrationPage() {
   const paymentPlansCount = useLiveQuery(() => db.paymentPlans.count(), []) ?? 0;
   const receiptsCount = useLiveQuery(() => db.receipts.count(), []) ?? 0;
   const outboxCount = useLiveQuery(() => db.syncOutbox.count(), []) ?? 0;
+
+  // Accounting and Operations Counts
+  const accountsCount = useLiveQuery(() => db.accounts.count(), []) ?? 0;
+  const journalEntriesCount = useLiveQuery(() => db.journalEntries.count(), []) ?? 0;
+  const expensesCount = useLiveQuery(() => db.expenses.count(), []) ?? 0;
+  const invoicesCount = useLiveQuery(() => db.invoices.count(), []) ?? 0;
+  const cashShiftsCount = useLiveQuery(() => db.cashShifts.count(), []) ?? 0;
+  const inventoryCount = useLiveQuery(() => db.inventoryItems.count(), []) ?? 0;
+  const waybillsCount = useLiveQuery(() => db.waybills.count(), []) ?? 0;
+  const deedsCount = useLiveQuery(() => db.saleTransferDocs.count(), []) ?? 0;
 
   // Templates for CSV
   const templates: Record<ImportCategory, { filename: string; headers: string[]; sample: string }> = {
@@ -142,7 +173,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
           }
 
           recordsToInsert.push({
-            id: `mig-cust-${Date.now()}-${idx}`,
+            id: generateMigCustId(idx),
             fullName,
             phone,
             email: email || '',
@@ -150,7 +181,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
             address: address || 'Accra, Ghana',
             customerType: customerTypeStr?.toUpperCase() === 'CORPORATE' ? 'CORPORATE' : 'INDIVIDUAL',
             kycVerified: kycVerifiedStr?.toLowerCase() === 'true',
-            createdAt: new Date().toISOString(),
+            createdAt: getIsoTimestamp(),
             notes: 'Imported via AmenDesk Data Migration Hub',
           });
         });
@@ -191,10 +222,10 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
           }
 
           const reservePrice = parseFloat(reservePriceGhsStr) || 0;
-          const nowStr = new Date().toISOString();
+          const nowStr = getIsoTimestamp();
 
           recordsToInsert.push({
-            id: `mig-lot-${Date.now()}-${idx}`,
+            id: generateMigLotId(idx),
             eventId: 'evt-2026-migrated',
             lotNumber,
             title,
@@ -241,7 +272,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
           }
 
           recordsToInsert.push({
-            id: `mig-veh-${Date.now()}-${idx}`,
+            id: generateMigVehId(idx),
             stockNumber,
             vin,
             make,
@@ -257,8 +288,8 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
             photos: ['https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80'],
             description: `${make} ${model} imported direct from overseas auction with full landed customs documentation.`,
             featured: true,
-            location: 'Main Showroom, Ring Road Central',
-            createdAt: new Date().toISOString(),
+            location: 'Main Showroom, Spintex Road',
+            createdAt: getIsoTimestamp(),
           });
         });
 
@@ -294,7 +325,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
               : 'INDENTURE';
 
           recordsToInsert.push({
-            id: `mig-lnd-${Date.now()}-${idx}`,
+            id: generateMigLandId(idx),
             siteRef,
             title,
             location,
@@ -305,7 +336,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
             features: ['Litigation Free', 'Cadastral Survey Done', 'Accessible Roads'],
             description: `${title} located at ${location}. Ready for immediate development with clear title.`,
             sitePlanUrl: 'https://example.com/siteplan.pdf',
-            createdAt: new Date().toISOString(),
+            createdAt: getIsoTimestamp(),
           });
         });
 
@@ -333,7 +364,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
     }
   };
 
-  // Full Database Backup Export (.json)
+  // Full Database Backup Export (.json) — Including All 5 Accounting Partitions
   const handleExportFullBackup = async () => {
     setIsProcessing(true);
     try {
@@ -341,8 +372,8 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
         meta: {
           app: 'AmenDesk ERP',
           client: 'Amen Mart Ghana',
-          exportTimestamp: new Date().toISOString(),
-          version: '1.0.0',
+          exportTimestamp: getIsoTimestamp(),
+          version: '1.2.0',
         },
         customers: await db.customers.toArray(),
         auctionLots: await db.auctionLots.toArray(),
@@ -355,6 +386,11 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
         saleTransferDocs: await db.saleTransferDocs.toArray(),
         inventoryItems: await db.inventoryItems.toArray(),
         stockMovements: await db.stockMovements.toArray(),
+        accounts: await db.accounts.toArray(),
+        journalEntries: await db.journalEntries.toArray(),
+        expenses: await db.expenses.toArray(),
+        invoices: await db.invoices.toArray(),
+        cashShifts: await db.cashShifts.toArray(),
         syncOutbox: await db.syncOutbox.toArray(),
       };
 
@@ -363,12 +399,12 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `amendesk_full_backup_${new Date().toISOString().slice(0, 10)}.json`);
+      link.setAttribute('download', `amendesk_full_system_backup_${getIsoTimestamp().slice(0, 10)}.json`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      setSuccessMessage('Full database backup generated and downloaded successfully.');
+      setSuccessMessage('Full database & general ledger snapshot generated and downloaded successfully.');
     } catch (err: unknown) {
       setValidationErrors([`Backup export failed: ${err instanceof Error ? err.message : String(err)}`]);
     } finally {
@@ -376,7 +412,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
     }
   };
 
-  // Full Database Restore (.json)
+  // Full Database Restore (.json) — Including All 5 Accounting Partitions
   const handleRestoreBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -403,8 +439,13 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
         if (backup.saleTransferDocs) await db.saleTransferDocs.bulkPut(backup.saleTransferDocs);
         if (backup.inventoryItems) await db.inventoryItems.bulkPut(backup.inventoryItems);
         if (backup.stockMovements) await db.stockMovements.bulkPut(backup.stockMovements);
+        if (backup.accounts) await db.accounts.bulkPut(backup.accounts);
+        if (backup.journalEntries) await db.journalEntries.bulkPut(backup.journalEntries);
+        if (backup.expenses) await db.expenses.bulkPut(backup.expenses);
+        if (backup.invoices) await db.invoices.bulkPut(backup.invoices);
+        if (backup.cashShifts) await db.cashShifts.bulkPut(backup.cashShifts);
 
-        setSuccessMessage('System backup successfully restored into local database.');
+        setSuccessMessage('Full system snapshot and accounting ledger restored into local store.');
         setValidationErrors([]);
       } catch (err: unknown) {
         setValidationErrors([`Restore failed: ${err instanceof Error ? err.message : String(err)}`]);
@@ -426,7 +467,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
             Data Migration &amp; Offline Portability Hub
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Bulk ingest legacy Excel/CSV datasets, export offline yard snapshots, and manage device-to-device migration.
+            Bulk ingest legacy Excel/CSV datasets, export complete offline system snapshots (including General Ledger), and manage device-to-device migration.
           </p>
         </div>
 
@@ -490,11 +531,11 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
 
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-            <HardDrive className="h-5 w-5" />
+            <BookOpen className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Land &amp; Units</p>
-            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{landCount + propertiesCount}</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">GL Accounts &amp; Journals</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{accountsCount + journalEntriesCount}</p>
           </div>
         </div>
       </div>
@@ -519,9 +560,9 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
             </p>
           </div>
           <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-            <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">3. Schema Versioning</p>
+            <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">3. Complete Accounting Portability</p>
             <p>
-              IndexedDB schemas utilize explicit Dexie versions. Future upgrades execute seamless table migrations without clearing existing cash transactions.
+              Chart of Accounts, General Ledger journal entries, tax invoices, and cash shift reconciliations are fully preserved across all device backups.
             </p>
           </div>
         </div>
@@ -663,7 +704,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
         <div className="p-5 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <HardDrive className="h-4 w-4 text-indigo-600" />
-            IndexedDB Local Store Schema Status
+            IndexedDB Local Store Schema Status &amp; Partitions
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Real-time table partitions registered in the local Dexie store.
@@ -693,6 +734,27 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
           </div>
 
           <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">dealershipVehicles</div>
+            <div className="text-slate-500">id, vin, make, model, askingPriceGhs</div>
+            <div className="font-bold">{vehiclesCount}</div>
+            <div><Badge variant="success" size="sm">Indexed &amp; Synced</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">landParcels</div>
+            <div className="text-slate-500">id, siteRef, location, titleType</div>
+            <div className="font-bold">{landCount}</div>
+            <div><Badge variant="success" size="sm">Indexed &amp; Synced</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">propertyUnits</div>
+            <div className="text-slate-500">id, unitRef, propertyType, location</div>
+            <div className="font-bold">{propertiesCount}</div>
+            <div><Badge variant="success" size="sm">Indexed &amp; Synced</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
             <div className="font-mono font-bold">paymentPlans</div>
             <div className="text-slate-500">id, referenceType, referenceId, currentDueDate</div>
             <div className="font-bold">{paymentPlansCount}</div>
@@ -707,10 +769,52 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
           </div>
 
           <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
-            <div className="font-mono font-bold">dealershipVehicles</div>
-            <div className="text-slate-500">id, vin, make, model, askingPriceGhs</div>
-            <div className="font-bold">{vehiclesCount}</div>
+            <div className="font-mono font-bold">inventoryItems</div>
+            <div className="text-slate-500">id, sku, category, location</div>
+            <div className="font-bold">{inventoryCount}</div>
             <div><Badge variant="success" size="sm">Indexed &amp; Synced</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">accounts (GL Chart)</div>
+            <div className="text-slate-500">code, name, type, currency</div>
+            <div className="font-bold">{accountsCount}</div>
+            <div><Badge variant="success" size="sm">Accounting GL</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">journalEntries</div>
+            <div className="text-slate-500">id, date, reference, syncStatus</div>
+            <div className="font-bold">{journalEntriesCount}</div>
+            <div><Badge variant="success" size="sm">Accounting GL</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">expenses</div>
+            <div className="text-slate-500">id, date, category, status</div>
+            <div className="font-bold">{expensesCount}</div>
+            <div><Badge variant="success" size="sm">Accounting GL</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">invoices (Tax Engine)</div>
+            <div className="text-slate-500">id, invoiceNumber, customerId, status</div>
+            <div className="font-bold">{invoicesCount}</div>
+            <div><Badge variant="success" size="sm">GRA Compliant</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">cashShifts</div>
+            <div className="text-slate-500">id, cashierName, status, openingTime</div>
+            <div className="font-bold">{cashShiftsCount}</div>
+            <div><Badge variant="success" size="sm">Drawer Audit</Badge></div>
+          </div>
+
+          <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
+            <div className="font-mono font-bold">waybills &amp; deeds</div>
+            <div className="text-slate-500">waybillNumber, transferDocNumber</div>
+            <div className="font-bold">{waybillsCount + deedsCount}</div>
+            <div><Badge variant="success" size="sm">Legal Docs</Badge></div>
           </div>
 
           <div className="grid grid-cols-4 p-4 text-slate-700 dark:text-slate-300 items-center">
@@ -726,5 +830,19 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DataMigrationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-500 font-semibold text-sm">
+          Loading Data Migration Hub...
+        </div>
+      }
+    >
+      <DataMigrationContent />
+    </Suspense>
   );
 }

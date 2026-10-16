@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { PaymentPlan } from '@/lib/types';
@@ -15,18 +16,32 @@ import {
   CalendarPlus,
   History,
   CheckCircle2,
+  Search,
 } from 'lucide-react';
 
-export default function PaymentPlansPage() {
+function PaymentPlansContent() {
+  const searchParams = useSearchParams();
+  const urlFilter = searchParams.get('filter');
+
   const plans = useLiveQuery(() => db.paymentPlans.toArray(), []) || [];
-  const [filter, setFilter] = useState<'ALL' | 'AWAITING_BALANCE' | 'OVERDUE' | 'EXTENDED' | 'PAID_IN_FULL'>('ALL');
+  const initialFilter = urlFilter && ['ALL', 'AWAITING_BALANCE', 'OVERDUE', 'EXTENDED', 'PAID_IN_FULL'].includes(urlFilter)
+    ? (urlFilter as 'ALL' | 'AWAITING_BALANCE' | 'OVERDUE' | 'EXTENDED' | 'PAID_IN_FULL')
+    : 'ALL';
+  const [filter, setFilter] = useState<'ALL' | 'AWAITING_BALANCE' | 'OVERDUE' | 'EXTENDED' | 'PAID_IN_FULL'>(initialFilter);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlan | null>(null);
   const [extensionPlan, setExtensionPlan] = useState<PaymentPlan | null>(null);
 
   const filteredPlans = plans.filter((p) => {
-    if (filter === 'ALL') return true;
-    return p.status === filter;
+    if (filter !== 'ALL' && p.status !== filter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = p.referenceTitle.toLowerCase().includes(q);
+      const matchBuyer = p.customerName.toLowerCase().includes(q) || p.customerPhone.includes(q);
+      if (!matchTitle && !matchBuyer) return false;
+    }
+    return true;
   });
 
   const totalOutstanding = plans
@@ -89,21 +104,34 @@ export default function PaymentPlansPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        {(['ALL', 'AWAITING_BALANCE', 'OVERDUE', 'EXTENDED', 'PAID_IN_FULL'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              filter === tab
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            {tab.replace('_', ' ')}
-          </button>
-        ))}
+      {/* Filters and Search */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {(['ALL', 'AWAITING_BALANCE', 'OVERDUE', 'EXTENDED', 'PAID_IN_FULL'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                filter === tab
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {tab.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search buyer or asset..."
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
       </div>
 
       {/* Plans List */}
@@ -231,5 +259,13 @@ export default function PaymentPlansPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function PaymentPlansPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 text-sm">Loading payment plans...</div>}>
+      <PaymentPlansContent />
+    </Suspense>
   );
 }

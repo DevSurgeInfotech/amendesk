@@ -29,13 +29,13 @@ export function SiteFooter() {
           <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Service Lines</h4>
           <ul className="space-y-1.5 text-xs">
             <li>
-              <Link href="/auctions" className="hover:text-indigo-600 transition-colors flex items-center gap-1.5">
+              <Link href="/auctions?cat=JUDICIAL" className="hover:text-indigo-600 transition-colors flex items-center gap-1.5">
                 <Gavel className="h-3.5 w-3.5 text-indigo-600" />
                 <span>Judicial Court Auctions</span>
               </Link>
             </li>
             <li>
-              <Link href="/auctions" className="hover:text-indigo-600 transition-colors flex items-center gap-1.5">
+              <Link href="/auctions?cat=GOVERNMENT" className="hover:text-indigo-600 transition-colors flex items-center gap-1.5">
                 <Gavel className="h-3.5 w-3.5 text-indigo-600" />
                 <span>Government Fleet Disposals</span>
               </Link>

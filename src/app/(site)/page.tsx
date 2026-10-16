@@ -34,30 +34,57 @@ export default function HomePage() {
   const [inquiryNotes, setInquiryNotes] = useState('');
   const [isInquirySubmitted, setIsInquirySubmitted] = useState(false);
 
-  const featuredCars = vehicles.slice(0, 3);
-  const featuredLots = lots.filter((l) => l.status === 'ACTIVE' || l.status === 'UPCOMING').slice(0, 3);
+  const featuredCars = vehicles
+    .filter((v) => v.status === 'AVAILABLE')
+    .slice(0, 3);
+  const featuredLots = lots
+    .filter((l) => l.status === 'ACTIVE' || l.status === 'UPCOMING')
+    .slice(0, 3);
 
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inquiryName || !inquiryPhone) return;
 
     try {
-      const customerId = `cust-${Date.now()}`;
-      const customer = {
-        id: customerId,
-        fullName: inquiryName,
-        phone: inquiryPhone,
-        email: inquiryEmail || 'web-inquiry@amenmartgh.com',
-        ghanaCardNumber: 'PENDING_ONLINE_KYC',
-        address: 'Website Online Inquiry',
-        customerType: 'INDIVIDUAL' as const,
-        kycVerified: false,
-        notes: `Inquiry on ${inquiryModalItem?.title} (${inquiryModalItem?.type}): ${inquiryNotes}`,
-        createdAt: new Date().toISOString(),
-      };
+      // Deduplicate Customer: check if client already exists by phone or email
+      const existingCustomer = await db.customers
+        .filter(
+          (c) =>
+            c.phone.trim() === inquiryPhone.trim() ||
+            (Boolean(inquiryEmail) && c.email.toLowerCase() === inquiryEmail.toLowerCase())
+        )
+        .first();
 
-      await db.customers.add(customer);
-      await syncEngine.queueMutation('customers', customerId, 'CREATE', customer);
+      const noteText = `Inquiry on ${inquiryModalItem?.title} (${inquiryModalItem?.type}): ${inquiryNotes || 'No notes'}`;
+
+      if (existingCustomer) {
+        const updatedNotes = existingCustomer.notes
+          ? `${existingCustomer.notes}\n---\n${noteText}`
+          : noteText;
+        await db.customers.update(existingCustomer.id, {
+          notes: updatedNotes,
+        });
+        await syncEngine.queueMutation('customers', existingCustomer.id, 'UPDATE', {
+          notes: updatedNotes,
+        });
+      } else {
+        const customerId = `cust-${Date.now()}`;
+        const customer = {
+          id: customerId,
+          fullName: inquiryName,
+          phone: inquiryPhone,
+          email: inquiryEmail || 'web-inquiry@amenmartgh.com',
+          ghanaCardNumber: 'PENDING_ONLINE_KYC',
+          address: 'Website Online Inquiry',
+          customerType: 'INDIVIDUAL' as const,
+          kycVerified: false,
+          notes: noteText,
+          createdAt: new Date().toISOString(),
+        };
+
+        await db.customers.add(customer);
+        await syncEngine.queueMutation('customers', customerId, 'CREATE', customer);
+      }
 
       setIsInquirySubmitted(true);
       setTimeout(() => {
@@ -65,6 +92,7 @@ export default function HomePage() {
         setInquiryModalItem(null);
         setInquiryName('');
         setInquiryPhone('');
+        setInquiryEmail('');
         setInquiryNotes('');
       }, 1800);
     } catch (err) {

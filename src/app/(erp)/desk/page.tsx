@@ -27,6 +27,8 @@ import {
 export default function DeskDashboardPage() {
   const lots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
   const receipts = useLiveQuery(() => db.receipts.toArray(), []) || [];
+  const paymentPlans = useLiveQuery(() => db.paymentPlans.toArray(), []) || [];
+  const invoices = useLiveQuery(() => db.invoices.toArray(), []) || [];
 
   const [selectedLotForPayment, setSelectedLotForPayment] = useState<AuctionLot | null>(null);
   const [selectedLotForExtension, setSelectedLotForExtension] = useState<AuctionLot | null>(null);
@@ -36,10 +38,21 @@ export default function DeskDashboardPage() {
   const awaitingBalanceLots = lots.filter((l) => l.status === 'AWAITING_BALANCE' || l.status === 'OVERDUE');
   const overdueLots = lots.filter((l) => l.status === 'OVERDUE');
 
-  const totalReceivablesGhs = awaitingBalanceLots.reduce(
+  // Comprehensive receivables: sum outstanding balances from payment plans and unpaid invoices
+  const planReceivables = paymentPlans
+    .filter((p) => p.status !== 'PAID_IN_FULL')
+    .reduce((acc, p) => acc + p.balanceRemainingGhs, 0);
+
+  const invoiceReceivables = invoices
+    .filter((inv) => inv.status === 'ISSUED' || inv.status === 'PARTIALLY_PAID' || inv.status === 'OVERDUE')
+    .reduce((acc, inv) => acc + inv.balanceDueGhs, 0);
+
+  const lotReceivables = awaitingBalanceLots.reduce(
     (acc, l) => acc + (l.balanceDueGhs || 0),
     0
   );
+
+  const totalReceivablesGhs = Math.max(planReceivables + invoiceReceivables, lotReceivables);
 
   const totalCollectedGhs = receipts.reduce(
     (acc, r) => acc + r.amountPaidGhs,
@@ -352,7 +365,7 @@ export default function DeskDashboardPage() {
                 Recent Front-Desk Receipts
               </h2>
               <Link
-                href="/desk/accounts"
+                href="/desk/accounts?tab=RECEIPTS"
                 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 All Receipts &rarr;

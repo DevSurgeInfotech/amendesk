@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -10,6 +11,8 @@ import {
   Phone,
   ShieldCheck,
   Lock,
+  Menu,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -24,6 +27,7 @@ const navLinks = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -67,7 +71,7 @@ export function SiteHeader() {
           </div>
         </Link>
 
-        {/* Links */}
+        {/* Desktop Links */}
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((item) => {
             const isActive = pathname === item.href;
@@ -88,16 +92,67 @@ export function SiteHeader() {
           })}
         </nav>
 
-        {/* Action Button */}
+        {/* Action Button & Mobile Menu Toggle */}
         <div className="flex items-center gap-3">
           <Link
             href="/showroom"
-            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs transition-colors"
+            className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs transition-colors"
           >
             Explore Showroom
           </Link>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            aria-label="Toggle mobile navigation"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-2 shadow-lg">
+          {navLinks.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={clsx(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-indigo-50 text-indigo-700 font-bold'
+                    : 'text-slate-700 hover:bg-slate-50'
+                )}
+              >
+                {Icon && <Icon className="h-4 w-4 text-indigo-600" />}
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+          <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+            <Link
+              href="/showroom"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-center py-2 px-4 rounded-lg bg-indigo-600 text-white text-xs font-bold"
+            >
+              Explore Showroom
+            </Link>
+            <Link
+              href="/desk"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-center py-2 px-4 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5"
+            >
+              <Lock className="h-3 w-3" />
+              <span>Staff AmenDesk ERP</span>
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

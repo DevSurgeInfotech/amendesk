@@ -21,6 +21,10 @@ export class SyncEngine {
     return SyncEngine.instance;
   }
 
+  public getIsOnline(): boolean {
+    return this.isOnline;
+  }
+
   public subscribe(listener: (isOnline: boolean, pendingCount: number) => void) {
     this.listeners.push(listener);
     // notify immediately

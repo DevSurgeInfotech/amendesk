@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { db } from '@/lib/db';
 import type { Account, AccountType, AccountCategory } from '@/lib/types';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { useTerminal } from '@/context/TerminalContext';
+import { postJournalEntry } from '@/lib/accounting/ledger';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 
@@ -14,6 +16,7 @@ interface NewAccountModalProps {
 }
 
 export function NewAccountModal({ isOpen, onClose, onSuccess }: NewAccountModalProps) {
+  const { currentStaffName } = useTerminal();
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('EXPENSE');
@@ -42,7 +45,7 @@ export function NewAccountModal({ isOpen, onClose, onSuccess }: NewAccountModalP
     }
 
     // Check duplicate code
-    const existing = await db.accounts.where('code').equals(code).first();
+    const existing = await db.accounts.where('code').equals(code.trim()).first();
     if (existing) {
       setErrorMsg(`Account with code ${code} already exists (${existing.name})`);
       return;
@@ -56,7 +59,7 @@ export function NewAccountModal({ isOpen, onClose, onSuccess }: NewAccountModalP
         name: name.trim(),
         type,
         category,
-        balanceGhs: openingBalance,
+        balanceGhs: 0,
         description,
         isSystem: false,
         currency: 'GHS',
@@ -66,6 +69,53 @@ export function NewAccountModal({ isOpen, onClose, onSuccess }: NewAccountModalP
       await db.accounts.add(newAcc);
       await syncEngine.queueMutation('accounts', newAcc.id, 'CREATE', newAcc);
 
+      // If openingBalance > 0, post a balanced double-entry against Owner's Equity (3100)
+      // so the Trial Balance remains in strict mathematical equilibrium.
+      if (openingBalance > 0) {
+        const equityAcc =
+          (await db.accounts.where('code').equals('3100').first()) ||
+          (await db.accounts.where('type').equals('EQUITY').first());
+
+        if (equityAcc) {
+          const isDebitNormal = type === 'ASSET' || type === 'EXPENSE';
+          await postJournalEntry({
+            entryNumber: `JE-OB-${Date.now().toString().slice(-5)}`,
+            date: new Date().toISOString(),
+            reference: `OB-${newAcc.code}`,
+            description: `Opening Balance Allocation for ${newAcc.code} — ${newAcc.name}`,
+            lines: [
+              {
+                id: `line-${Date.now()}-1`,
+                accountId: newAcc.id,
+                accountCode: newAcc.code,
+                accountName: newAcc.name,
+                debitGhs: isDebitNormal ? openingBalance : 0,
+                creditGhs: isDebitNormal ? 0 : openingBalance,
+                memo: 'Opening balance setup',
+              },
+              {
+                id: `line-${Date.now()}-2`,
+                accountId: equityAcc.id,
+                accountCode: equityAcc.code,
+                accountName: equityAcc.name,
+                debitGhs: isDebitNormal ? 0 : openingBalance,
+                creditGhs: isDebitNormal ? openingBalance : 0,
+                memo: `Opening balance offset for ${newAcc.code}`,
+              },
+            ],
+            totalAmountGhs: openingBalance,
+            createdBy: currentStaffName,
+            status: 'POSTED',
+          });
+        } else {
+          await db.accounts.update(newAcc.id, { balanceGhs: openingBalance });
+        }
+      }
+
+      setCode('');
+      setName('');
+      setDescription('');
+      setOpeningBalance(0);
       onSuccess();
       onClose();
     } catch (err) {

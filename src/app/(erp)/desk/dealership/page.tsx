@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { DealershipVehicle } from '@/lib/types';
@@ -11,11 +12,40 @@ import { Modal } from '@/components/ui/Modal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PlusCircle, Fuel, Gauge, CreditCard } from 'lucide-react';
+import { PlusCircle, Fuel, Gauge, CreditCard, Search, ArrowRight } from 'lucide-react';
 
-export default function DealershipPage() {
+function generateVehicleId(): string {
+  return `car-${Date.now()}`;
+}
+
+function generateStockNumber(): string {
+  return `AM-CAR-${Math.floor(2000 + Math.random() * 8000)}`;
+}
+
+function getIsoTimestamp(): string {
+  return new Date().toISOString();
+}
+
+function DealershipContent() {
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get('status')?.toUpperCase();
+  const initialFuel = searchParams.get('fuel')?.toUpperCase();
+
   const vehicles = useLiveQuery(() => db.dealershipVehicles.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'AVAILABLE' | 'RESERVED' | 'SOLD'>(
+    initialStatus === 'AVAILABLE' || initialStatus === 'RESERVED' || initialStatus === 'SOLD'
+      ? initialStatus
+      : 'ALL'
+  );
+  const [fuelFilter, setFuelFilter] = useState<'ALL' | 'PETROL' | 'DIESEL' | 'HYBRID' | 'ELECTRIC'>(
+    initialFuel === 'PETROL' || initialFuel === 'DIESEL' || initialFuel === 'HYBRID' || initialFuel === 'ELECTRIC'
+      ? initialFuel
+      : 'ALL'
+  );
+  const [searchQuery, setSearchQuery] = useState('');
 
   // New vehicle form state
   const [make, setMake] = useState('');
@@ -28,7 +58,9 @@ export default function DealershipPage() {
   const [color, setColor] = useState('Pearl White');
   const [mileageKm, setMileageKm] = useState<number>(30000);
   const [location, setLocation] = useState('Amen Mart Spintex Showroom');
-  const [photoUrl, setPhotoUrl] = useState('https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80');
+  const [photoUrl, setPhotoUrl] = useState(
+    'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80'
+  );
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,10 +69,14 @@ export default function DealershipPage() {
     setIsSubmitting(true);
 
     try {
+      const newCarId = generateVehicleId();
+      const stockNumber = generateStockNumber();
+      const nowIso = getIsoTimestamp();
+
       const newCar: DealershipVehicle = {
-        id: `car-${Date.now()}`,
+        id: newCarId,
         vin,
-        stockNumber: `AM-CAR-${Math.floor(2000 + Math.random() * 8000)}`,
+        stockNumber,
         make,
         model,
         year,
@@ -55,7 +91,7 @@ export default function DealershipPage() {
         description,
         featured: true,
         location,
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso,
       };
 
       await db.dealershipVehicles.add(newCar);
@@ -80,6 +116,20 @@ export default function DealershipPage() {
     await syncEngine.queueMutation('dealershipVehicles', car.id, 'UPDATE', { status: newStatus });
   };
 
+  const filteredVehicles = vehicles.filter((car) => {
+    if (statusFilter !== 'ALL' && car.status !== statusFilter) return false;
+    if (fuelFilter !== 'ALL' && car.fuelType !== fuelFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchMake = car.make.toLowerCase().includes(q);
+      const matchModel = car.model.toLowerCase().includes(q);
+      const matchVin = car.vin.toLowerCase().includes(q);
+      const matchStock = car.stockNumber.toLowerCase().includes(q);
+      if (!matchMake && !matchModel && !matchVin && !matchStock) return false;
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -99,120 +149,197 @@ export default function DealershipPage() {
           </p>
         </div>
 
-        <Button variant="primary" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
-          Add Showroom Vehicle
-        </Button>
+        <div className="flex items-center gap-3">
+          <Link href="/showroom">
+            <Button variant="outline" size="sm" icon={<ArrowRight className="h-4 w-4" />}>
+              Live Showroom
+            </Button>
+          </Link>
+          <Button variant="primary" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
+            Add Showroom Vehicle
+          </Button>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Status:</span>
+          {(['ALL', 'AVAILABLE', 'RESERVED', 'SOLD'] as const).map((st) => (
+            <button
+              key={st}
+              onClick={() => setStatusFilter(st)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                statusFilter === st
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {st}
+            </button>
+          ))}
+
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-3 mr-1">Fuel:</span>
+          {(['ALL', 'PETROL', 'DIESEL', 'HYBRID', 'ELECTRIC'] as const).map((fl) => (
+            <button
+              key={fl}
+              onClick={() => setFuelFilter(fl)}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                fuelFilter === fl
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {fl}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative min-w-[240px]">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search make, model, VIN..."
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
       </div>
 
       {/* Grid of Vehicles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {vehicles.map((car) => {
-          const projectedMargin = car.askingPriceGhs - car.landedCostGhs;
-          const marginPercent = Math.round((projectedMargin / car.landedCostGhs) * 100);
+      {filteredVehicles.length === 0 ? (
+        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <p className="text-sm font-semibold text-slate-500">No vehicles match the selected criteria.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredVehicles.map((car) => {
+            const projectedMargin = car.askingPriceGhs - car.landedCostGhs;
+            const marginPercent = car.landedCostGhs > 0 ? Math.round((projectedMargin / car.landedCostGhs) * 100) : 0;
 
-          return (
-            <div
-              key={car.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative h-48 bg-slate-200 dark:bg-slate-800">
-                  <Image
-                    src={car.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
-                    alt={`${car.make} ${car.model}`}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
-                      {car.stockNumber}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-3 right-3">
-                    <Badge
-                      variant={car.status === 'AVAILABLE' ? 'success' : car.status === 'RESERVED' ? 'warning' : 'default'}
-                      size="sm"
-                    >
-                      {car.status}
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-3">
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
-                    {car.year} {car.make} {car.model}
-                  </h3>
-
-                  <div className="text-xs text-slate-500 space-y-1">
-                    <p>VIN: <strong className="font-mono text-slate-800 dark:text-slate-200">{car.vin}</strong></p>
-                    <div className="flex items-center gap-4 pt-1">
-                      <span className="flex items-center gap-1">
-                        <Fuel className="h-3.5 w-3.5 text-indigo-500" />
-                        {car.fuelType}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Gauge className="h-3.5 w-3.5 text-indigo-500" />
-                        {car.mileageKm.toLocaleString()} km
+            return (
+              <div
+                key={car.id}
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative h-48 bg-slate-200 dark:bg-slate-800">
+                    <Image
+                      src={
+                        car.photos[0] ||
+                        'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'
+                      }
+                      alt={`${car.make} ${car.model}`}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
+                        {car.stockNumber}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Margins */}
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-slate-500">Landed Cost:</span>
-                      <p className="font-bold text-slate-700 dark:text-slate-300">
-                        {formatGHS(car.landedCostGhs)}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">Asking Price:</span>
-                      <p className="font-black text-indigo-600 dark:text-indigo-400 text-sm">
-                        {formatGHS(car.askingPriceGhs)}
-                      </p>
-                    </div>
-                    <div className="col-span-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 flex justify-between font-semibold">
-                      <span>Projected Dealer Margin:</span>
-                      <span>+{formatGHS(projectedMargin)} ({marginPercent}%)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Switcher & Record Payment */}
-              <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-slate-500">Status:</span>
-                  <div className="flex gap-1.5">
-                    {(['AVAILABLE', 'RESERVED', 'SOLD'] as const).map((st) => (
-                      <button
-                        key={st}
-                        onClick={() => void handleToggleStatus(car, st)}
-                        className={`px-2 py-1 text-[10px] font-bold rounded ${
-                          car.status === st
-                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200'
-                        }`}
+                    <div className="absolute bottom-3 right-3">
+                      <Badge
+                        variant={
+                          car.status === 'AVAILABLE' ? 'success' : car.status === 'RESERVED' ? 'warning' : 'default'
+                        }
+                        size="sm"
                       >
-                        {st}
-                      </button>
-                    ))}
+                        {car.status}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                      {car.year} {car.make} {car.model}
+                    </h3>
+
+                    <div className="text-xs text-slate-500 space-y-1">
+                      <p>
+                        VIN: <strong className="font-mono text-slate-800 dark:text-slate-200">{car.vin}</strong>
+                      </p>
+                      <div className="flex items-center gap-4 pt-1">
+                        <span className="flex items-center gap-1">
+                          <Fuel className="h-3.5 w-3.5 text-indigo-500" />
+                          {car.fuelType}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Gauge className="h-3.5 w-3.5 text-indigo-500" />
+                          {car.mileageKm.toLocaleString()} km
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Margins */}
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-slate-500">Landed Cost:</span>
+                        <p className="font-bold text-slate-700 dark:text-slate-300">{formatGHS(car.landedCostGhs)}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Asking Price:</span>
+                        <p className="font-black text-indigo-600 dark:text-indigo-400 text-sm">
+                          {formatGHS(car.askingPriceGhs)}
+                        </p>
+                      </div>
+                      <div className="col-span-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 flex justify-between font-semibold">
+                        <span>Projected Dealer Margin:</span>
+                        <span>
+                          +{formatGHS(projectedMargin)} ({marginPercent}%)
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {car.status !== 'SOLD' && (
-                  <Link href="/desk/payments" className="block w-full">
-                    <Button size="sm" variant="outline" className="w-full" icon={<CreditCard className="h-3.5 w-3.5" />}>
-                      Record Sale Payment
-                    </Button>
-                  </Link>
-                )}
+                {/* Status Switcher & Record Payment */}
+                <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-slate-500">Status:</span>
+                    <div className="flex gap-1.5">
+                      {(['AVAILABLE', 'RESERVED', 'SOLD'] as const).map((st) => (
+                        <button
+                          key={st}
+                          onClick={() => void handleToggleStatus(car, st)}
+                          className={`px-2 py-1 text-[10px] font-bold rounded ${
+                            car.status === st
+                              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          {st}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {car.status !== 'SOLD' ? (
+                    <Link href={`/desk/payments?category=DEALERSHIP&id=${car.id}`} className="block w-full">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                        icon={<CreditCard className="h-3.5 w-3.5" />}
+                      >
+                        Record Sale Payment
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href={`/desk/payments?category=DEALERSHIP&id=${car.id}`} className="block w-full">
+                      <Button size="sm" variant="outline" className="w-full text-slate-600">
+                        View Payment Ledger
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add Vehicle Modal */}
       <Modal
@@ -372,5 +499,19 @@ export default function DealershipPage() {
         </form>
       </Modal>
     </div>
+  );
+}
+
+export default function DealershipPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-500 font-semibold text-sm">
+          Loading Dealership Inventory...
+        </div>
+      }
+    >
+      <DealershipContent />
+    </Suspense>
   );
 }

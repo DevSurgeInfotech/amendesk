@@ -46,7 +46,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+        className="no-print fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
@@ -59,7 +59,7 @@ export function Modal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 p-5">
+          <div className="no-print flex items-start justify-between border-b border-slate-200 dark:border-slate-800 p-5">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 {title}

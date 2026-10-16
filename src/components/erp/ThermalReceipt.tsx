@@ -94,17 +94,33 @@ export function ThermalReceipt({ receipt, onClose }: ThermalReceiptProps) {
           <div className="flex justify-between">
             <span className="text-slate-600">METHOD:</span>
             <span className="font-semibold">
-              {receipt.paymentMethod}
-              {receipt.momoNetwork ? ` (${receipt.momoNetwork})` : ''}
+              {receipt.splitPayments && receipt.splitPayments.length > 0
+                ? `SPLIT (${receipt.splitPayments.length} LEGS)`
+                : `${receipt.paymentMethod}${receipt.momoNetwork ? ` (${receipt.momoNetwork})` : ''}`}
             </span>
           </div>
-          {receipt.transactionReference && (
-            <div className="flex justify-between text-[10px]">
-              <span className="text-slate-600">REF/TXN ID:</span>
-              <span className="truncate max-w-[160px] font-mono">
-                {receipt.transactionReference}
-              </span>
+          {receipt.splitPayments && receipt.splitPayments.length > 0 ? (
+            <div className="pt-1 border-t border-dotted border-slate-400 space-y-1 text-[10px]">
+              {receipt.splitPayments.map((sp, i) => (
+                <div key={i} className="flex justify-between">
+                  <span className="text-slate-600 truncate max-w-[165px]">
+                    {i + 1}. {sp.method}
+                    {sp.momoNetwork ? ` (${sp.momoNetwork})` : ''}
+                    {sp.bankName ? ` (${sp.bankName})` : ''}
+                  </span>
+                  <span className="font-bold">{formatGHS(sp.amountGhs)}</span>
+                </div>
+              ))}
             </div>
+          ) : (
+            receipt.transactionReference && (
+              <div className="flex justify-between text-[10px]">
+                <span className="text-slate-600">REF/TXN ID:</span>
+                <span className="truncate max-w-[160px] font-mono">
+                  {receipt.transactionReference}
+                </span>
+              </div>
+            )
           )}
           <div className="flex justify-between pt-1 border-t border-dotted border-slate-400">
             <span className="text-slate-600">TOTAL TO DATE:</span>

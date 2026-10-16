@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import type { AuctionLot, PaymentMethod, MoMoNetwork, Receipt, PaymentPlan } from '@/lib/types';
+import type { AuctionLot, PaymentMethod, MoMoNetwork, Receipt, PaymentPlan, Invoice } from '@/lib/types';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { useTerminal } from '@/context/TerminalContext';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ThermalReceipt } from '@/components/erp/ThermalReceipt';
@@ -16,6 +17,7 @@ interface PaymentModalProps {
   onClose: () => void;
   lot?: AuctionLot;
   paymentPlan?: PaymentPlan;
+  invoice?: Invoice;
   onSuccess: () => void;
 }
 
@@ -24,37 +26,104 @@ export function PaymentModal({
   onClose,
   lot,
   paymentPlan,
+  invoice,
   onSuccess,
 }: PaymentModalProps) {
-  const customerName = lot?.winningBidderName || paymentPlan?.customerName || 'Walk-in Client';
-  const customerPhone = lot?.winningBidderPhone || paymentPlan?.customerPhone || '+233 24 000 0000';
-  const customerId = lot?.winningBidderId || paymentPlan?.customerId || 'cust-generic';
-  const balanceRemaining = lot?.balanceDueGhs ?? paymentPlan?.balanceRemainingGhs ?? 0;
-  const referenceTitle = lot ? `${lot.lotNumber}: ${lot.title}` : (paymentPlan?.referenceTitle || 'Sale Item');
-  const referenceType = (lot ? 'AUCTION' : paymentPlan?.referenceType || 'AUCTION') as 'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY';
-  const referenceId = lot?.id || paymentPlan?.referenceId || '';
+  const { currentStaffName, facilityLocation, isOnline } = useTerminal();
 
-  const [amount, setAmount] = useState<number>(balanceRemaining);
+  const customerName =
+    lot?.winningBidderName ||
+    paymentPlan?.customerName ||
+    invoice?.customerName ||
+    'Walk-in Client';
+  const customerPhone =
+    lot?.winningBidderPhone ||
+    paymentPlan?.customerPhone ||
+    invoice?.customerPhone ||
+    '+233 24 000 0000';
+  const customerId =
+    lot?.winningBidderId ||
+    paymentPlan?.customerId ||
+    invoice?.customerId ||
+    'cust-generic';
+  const balanceRemaining =
+    lot?.balanceDueGhs ??
+    paymentPlan?.balanceRemainingGhs ??
+    invoice?.balanceDueGhs ??
+    0;
+  const priorPaidGhs =
+    lot?.depositAmountGhs ??
+    paymentPlan?.depositPaidGhs ??
+    invoice?.amountPaidGhs ??
+    0;
+  const referenceTitle = lot
+    ? `${lot.lotNumber}: ${lot.title}`
+    : paymentPlan?.referenceTitle ||
+      invoice?.referenceTitle ||
+      (invoice ? `Invoice ${invoice.invoiceNumber}` : 'Sale Item');
+  const referenceType = (
+    lot
+      ? 'AUCTION'
+      : paymentPlan?.referenceType || invoice?.referenceType || 'AUCTION'
+  ) as 'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY' | 'GENERAL';
+  const referenceId =
+    lot?.id || paymentPlan?.referenceId || invoice?.referenceId || invoice?.id || '';
+
+  const [customAmount, setCustomAmount] = useState<number | null>(null);
+  const amount = customAmount ?? balanceRemaining;
   const [method, setMethod] = useState<PaymentMethod>('MOMO');
   const [momoNetwork, setMomoNetwork] = useState<MoMoNetwork>('MTN');
   const [txnRef, setTxnRef] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdReceipt, setCreatedReceipt] = useState<Receipt | null>(null);
 
+  const handleClose = () => {
+    setCustomAmount(null);
+    setCreatedReceipt(null);
+    setErrorMsg('');
+    setTxnRef('');
+    onClose();
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (amount <= 0) return;
+    setErrorMsg('');
+
+    if (amount <= 0) {
+      setErrorMsg('Payment amount must be greater than GH₵ 0.00');
+      return;
+    }
+    if (balanceRemaining > 0 && amount > balanceRemaining) {
+      setErrorMsg(`Payment amount cannot exceed current balance due (${formatGHS(balanceRemaining)})`);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const receiptNumber = `AM-RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      const newBalanceRemaining = Math.max(0, balanceRemaining - amount);
+      const newBalanceRemaining = Math.max(0, Math.round((balanceRemaining - amount) * 100) / 100);
       const isSettled = newBalanceRemaining === 0;
+      const nowIso = new Date().toISOString();
+
+      // Find linked payment plan if only lot was passed
+      const linkedPlan =
+        paymentPlan ||
+        (lot
+          ? await db.paymentPlans.where('referenceId').equals(lot.id).first()
+          : undefined);
+
+      // Find linked auction lot if only paymentPlan was passed
+      const linkedLot =
+        lot ||
+        (paymentPlan && paymentPlan.referenceType === 'AUCTION'
+          ? await db.auctionLots.get(paymentPlan.referenceId)
+          : undefined);
 
       const receipt: Receipt = {
         id: `rcp-${Date.now()}`,
         receiptNumber,
-        paymentPlanId: paymentPlan?.id,
+        paymentPlanId: linkedPlan?.id,
         referenceType,
         referenceId,
         referenceTitle,
@@ -65,48 +134,91 @@ export function PaymentModal({
         paymentMethod: method,
         momoNetwork: method === 'MOMO' ? momoNetwork : undefined,
         transactionReference: txnRef || (method === 'CASH' ? 'CASH-TILL-01' : undefined),
-        totalPaidToDateGhs: (lot?.depositAmountGhs || paymentPlan?.depositPaidGhs || 0) + amount,
+        totalPaidToDateGhs: priorPaidGhs + amount,
         balanceRemainingGhs: newBalanceRemaining,
-        balanceDueDate: lot?.balanceDueDate || paymentPlan?.currentDueDate,
-        cashierName: 'Mary Afriyie',
-        issuedLocation: 'Front Desk — Amen Mart Tema',
-        printedAt: new Date().toISOString(),
-        syncStatus: 'SYNCED',
+        balanceDueDate: isSettled
+          ? undefined
+          : linkedLot?.balanceDueDate || linkedPlan?.currentDueDate || invoice?.dueDate,
+        cashierName: currentStaffName,
+        issuedLocation: facilityLocation,
+        printedAt: nowIso,
+        syncStatus: isOnline ? 'SYNCED' : 'PENDING',
       };
 
       await db.receipts.add(receipt);
 
-      // Update Auction Lot if relevant
-      if (lot) {
+      // Update Auction Lot if relevant (either passed directly or linked via PaymentPlan)
+      if (linkedLot) {
         const updatedStatus = isSettled ? 'FULLY_PAID' : 'AWAITING_BALANCE';
-        const updatedDeposit = (lot.depositAmountGhs || 0) + amount;
-        await db.auctionLots.update(lot.id, {
+        const updatedDeposit = (linkedLot.depositAmountGhs || 0) + amount;
+        await db.auctionLots.update(linkedLot.id, {
           depositAmountGhs: updatedDeposit,
           balanceDueGhs: newBalanceRemaining,
           status: updatedStatus,
+          updatedAt: nowIso,
         });
 
-        await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', {
+        await syncEngine.queueMutation('auctionLots', linkedLot.id, 'UPDATE', {
           depositAmountGhs: updatedDeposit,
           balanceDueGhs: newBalanceRemaining,
           status: updatedStatus,
+          updatedAt: nowIso,
         });
       }
 
-      // Update Payment Plan if relevant
-      if (paymentPlan) {
+      // Update Payment Plan if relevant (either passed directly or linked via AuctionLot)
+      if (linkedPlan) {
         const updatedStatus = isSettled ? 'PAID_IN_FULL' : 'AWAITING_BALANCE';
-        const updatedDeposit = paymentPlan.depositPaidGhs + amount;
-        await db.paymentPlans.update(paymentPlan.id, {
+        const updatedDeposit = linkedPlan.depositPaidGhs + amount;
+        await db.paymentPlans.update(linkedPlan.id, {
           depositPaidGhs: updatedDeposit,
           balanceRemainingGhs: newBalanceRemaining,
           status: updatedStatus,
+          updatedAt: nowIso,
         });
 
-        await syncEngine.queueMutation('paymentPlans', paymentPlan.id, 'UPDATE', {
+        await syncEngine.queueMutation('paymentPlans', linkedPlan.id, 'UPDATE', {
           depositPaidGhs: updatedDeposit,
           balanceRemainingGhs: newBalanceRemaining,
           status: updatedStatus,
+          updatedAt: nowIso,
+        });
+
+        // Also sync non-auction asset status if linkedPlan settles Dealership / Land / Property
+        if (linkedPlan.referenceType === 'DEALERSHIP' && linkedPlan.referenceId) {
+          const newAssetStatus = isSettled ? 'SOLD' : 'RESERVED';
+          await db.dealershipVehicles.update(linkedPlan.referenceId, { status: newAssetStatus });
+          await syncEngine.queueMutation('dealershipVehicles', linkedPlan.referenceId, 'UPDATE', {
+            status: newAssetStatus,
+          });
+        } else if (linkedPlan.referenceType === 'LAND' && linkedPlan.referenceId) {
+          const newAssetStatus = isSettled ? 'SOLD' : 'RESERVED';
+          await db.landParcels.update(linkedPlan.referenceId, { status: newAssetStatus });
+          await syncEngine.queueMutation('landParcels', linkedPlan.referenceId, 'UPDATE', {
+            status: newAssetStatus,
+          });
+        } else if (linkedPlan.referenceType === 'PROPERTY' && linkedPlan.referenceId) {
+          const newAssetStatus = isSettled ? 'SOLD' : 'RESERVED';
+          await db.propertyUnits.update(linkedPlan.referenceId, { status: newAssetStatus });
+          await syncEngine.queueMutation('propertyUnits', linkedPlan.referenceId, 'UPDATE', {
+            status: newAssetStatus,
+          });
+        }
+      }
+
+      // Update Invoice if relevant
+      if (invoice) {
+        const updatedPaid = invoice.amountPaidGhs + amount;
+        const updatedInvoiceStatus = isSettled ? 'PAID' : 'PARTIALLY_PAID';
+        await db.invoices.update(invoice.id, {
+          amountPaidGhs: updatedPaid,
+          balanceDueGhs: newBalanceRemaining,
+          status: updatedInvoiceStatus,
+        });
+        await syncEngine.queueMutation('invoices', invoice.id, 'UPDATE', {
+          amountPaidGhs: updatedPaid,
+          balanceDueGhs: newBalanceRemaining,
+          status: updatedInvoiceStatus,
         });
       }
 
@@ -132,6 +244,7 @@ export function PaymentModal({
       onSuccess();
     } catch (err) {
       console.error('Failed to process payment:', err);
+      setErrorMsg('Failed to process payment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,7 +253,7 @@ export function PaymentModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={createdReceipt ? 'Payment Receipt Logged' : 'Record Deposit / Instalment Payment'}
       subtitle={
         createdReceipt
@@ -150,9 +263,14 @@ export function PaymentModal({
       maxWidth={createdReceipt ? 'md' : 'lg'}
     >
       {createdReceipt ? (
-        <ThermalReceipt receipt={createdReceipt} onClose={onClose} />
+        <ThermalReceipt receipt={createdReceipt} onClose={handleClose} />
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
+          {errorMsg && (
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium">
+              {errorMsg}
+            </div>
+          )}
           <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-slate-500">Particulars:</span>
@@ -262,7 +380,7 @@ export function PaymentModal({
               </label>
               <button
                 type="button"
-                onClick={() => setAmount(balanceRemaining)}
+                onClick={() => setCustomAmount(balanceRemaining)}
                 className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
               >
                 Full Balance ({formatGHS(balanceRemaining)})
@@ -275,7 +393,7 @@ export function PaymentModal({
               step="any"
               required
               value={amount || ''}
-              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+              onChange={(e) => setCustomAmount(parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-2 text-base font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -298,7 +416,7 @@ export function PaymentModal({
           )}
 
           <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <Button

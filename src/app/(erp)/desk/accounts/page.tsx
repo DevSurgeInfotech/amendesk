@@ -129,6 +129,7 @@ function AccountsContent() {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
   const [viewingReceipt, setViewingReceipt] = useState<Receipt | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
@@ -182,6 +183,19 @@ function AccountsContent() {
   const totalLiabilities = accounts.filter((a) => a.type === 'LIABILITY').reduce((acc, a) => acc + a.balanceGhs, 0);
   const totalEquity = accounts.filter((a) => a.type === 'EQUITY').reduce((acc, a) => acc + a.balanceGhs, 0);
   const totalLiabilitiesAndEquity = totalLiabilities + totalEquity + netOperatingProfit;
+
+  // GRA Statutory Tax Calculations
+  const vatAcc = accounts.find((a) => a.code === '2100');
+  const nhilAcc = accounts.find((a) => a.code === '2110');
+  const getfundAcc = accounts.find((a) => a.code === '2120');
+  const covidAcc = accounts.find((a) => a.code === '2130');
+  const whtAcc = accounts.find((a) => a.code === '2140');
+
+  const totalVat = (vatAcc?.balanceGhs || 0) + invoices.reduce((acc, i) => acc + (i.vatGhs || 0), 0);
+  const totalNhil = (nhilAcc?.balanceGhs || 0) + invoices.reduce((acc, i) => acc + (i.nhilGhs || 0), 0);
+  const totalGetfund = (getfundAcc?.balanceGhs || 0) + invoices.reduce((acc, i) => acc + (i.getfundGhs || 0), 0);
+  const totalCovid = (covidAcc?.balanceGhs || 0) + invoices.reduce((acc, i) => acc + (i.covidGhs || 0), 0);
+  const totalWht = whtAcc?.balanceGhs || 0;
 
   // Filtered Receipts
   const filteredReceipts = receipts.filter((r) => {
@@ -260,6 +274,29 @@ function AccountsContent() {
             Create Invoice
           </Button>
         </div>
+      </div>
+
+      {/* Horizontal In-Page Tab Navigation */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 dark:border-slate-800">
+        {VALID_TABS.map((tab) => {
+          const meta = tabMeta[tab];
+          const Icon = meta.icon;
+          const isActive = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                isActive
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60 border border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{meta.label.split('(')[0].trim()}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* TAB 1: OVERVIEW */}
@@ -923,28 +960,28 @@ function AccountsContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-mono">
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 font-sans font-bold">GRA VAT (15%)</span>
-                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">GH₵ 32,500</p>
-                  <span className="text-[10px] text-slate-500 font-sans">Standard VAT Levy</span>
+                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">{formatGHS(totalVat)}</p>
+                  <span className="text-[10px] text-slate-500 font-sans">Standard VAT Levy (Acc 2100)</span>
                 </div>
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 font-sans font-bold">NHIL (2.5%)</span>
-                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">GH₵ 5,400</p>
-                  <span className="text-[10px] text-slate-500 font-sans">National Health Ins.</span>
+                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">{formatGHS(totalNhil)}</p>
+                  <span className="text-[10px] text-slate-500 font-sans">National Health Ins. (Acc 2110)</span>
                 </div>
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 font-sans font-bold">GETFund (2.5%)</span>
-                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">GH₵ 5,400</p>
-                  <span className="text-[10px] text-slate-500 font-sans">Education Trust Fund</span>
+                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">{formatGHS(totalGetfund)}</p>
+                  <span className="text-[10px] text-slate-500 font-sans">Education Trust (Acc 2120)</span>
                 </div>
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 font-sans font-bold">COVID-19 (1%)</span>
-                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">GH₵ 2,200</p>
-                  <span className="text-[10px] text-slate-500 font-sans">Health Recovery Levy</span>
+                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">{formatGHS(totalCovid)}</p>
+                  <span className="text-[10px] text-slate-500 font-sans">Health Recovery (Acc 2130)</span>
                 </div>
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
                   <span className="text-xs text-slate-400 font-sans font-bold">Withholding Tax (WHT)</span>
-                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">GH₵ 8,800</p>
-                  <span className="text-[10px] text-slate-500 font-sans">3% Goods / 7.5% Serv.</span>
+                  <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">{formatGHS(totalWht)}</p>
+                  <span className="text-[10px] text-slate-500 font-sans">3% Goods / 7.5% Serv. (Acc 2140)</span>
                 </div>
               </div>
             </div>
@@ -1251,6 +1288,7 @@ function AccountsContent() {
           isOpen={true}
           onClose={() => setViewingInvoice(null)}
           onRecordPayment={() => {
+            setPayingInvoice(viewingInvoice);
             setIsPaymentModalOpen(true);
           }}
         />
@@ -1270,8 +1308,15 @@ function AccountsContent() {
 
       <PaymentModal
         isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        onSuccess={() => setIsPaymentModalOpen(false)}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setPayingInvoice(null);
+        }}
+        invoice={payingInvoice || undefined}
+        onSuccess={() => {
+          setIsPaymentModalOpen(false);
+          setPayingInvoice(null);
+        }}
       />
     </div>
   );

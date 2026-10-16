@@ -1,5 +1,12 @@
 import { db } from '@/lib/db';
-import type { JournalEntry, JournalEntryLine, PaymentMethod, MoMoNetwork } from '@/lib/types';
+import type {
+  JournalEntry,
+  JournalEntryLine,
+  PaymentMethod,
+  MoMoNetwork,
+  PaymentSplit,
+  Invoice,
+} from '@/lib/types';
 import { syncEngine } from '@/lib/sync/syncEngine';
 
 /**
@@ -27,9 +34,9 @@ export async function postJournalEntry(
   const entry: JournalEntry = {
     ...entryData,
     id: `je-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
-    totalAmountGhs: totalDebits,
+    totalAmountGhs: Math.round(totalDebits * 100) / 100,
     createdAt: new Date().toISOString(),
-    syncStatus: 'SYNCED',
+    syncStatus: syncEngine.getIsOnline() ? 'SYNCED' : 'PENDING',
   };
 
   await db.journalEntries.add(entry);
@@ -47,7 +54,7 @@ export async function postJournalEntry(
       balanceDelta = line.creditGhs - line.debitGhs;
     }
 
-    const newBalance = account.balanceGhs + balanceDelta;
+    const newBalance = Math.round((account.balanceGhs + balanceDelta) * 100) / 100;
     await db.accounts.update(account.id, { balanceGhs: newBalance });
     await syncEngine.queueMutation('accounts', account.id, 'UPDATE', { balanceGhs: newBalance });
   }
@@ -99,7 +106,8 @@ export async function getPaymentAssetAccount(
 }
 
 /**
- * Automatically creates and posts the double-entry journal entry for a logged receipt
+ * Automatically creates and posts the double-entry journal entry for a logged receipt.
+ * Supports both single-method payments and multi-channel split payments.
  */
 export async function postPaymentReceiptLedger(
   receiptNumber: string,
@@ -110,10 +118,45 @@ export async function postPaymentReceiptLedger(
   paymentMethod: PaymentMethod,
   cashierName: string,
   momoNetwork?: MoMoNetwork,
-  bankName?: string
+  bankName?: string,
+  splitPayments?: PaymentSplit[]
 ): Promise<JournalEntry> {
-  const debitAccount = await getPaymentAssetAccount(paymentMethod, momoNetwork, bankName);
   const accounts = await db.accounts.toArray();
+  const lines: JournalEntryLine[] = [];
+
+  if (splitPayments && splitPayments.length > 0) {
+    let idx = 1;
+    for (const split of splitPayments) {
+      if (split.amountGhs <= 0) continue;
+      const splitDebitAcc = await getPaymentAssetAccount(
+        split.method,
+        split.momoNetwork,
+        split.bankName
+      );
+      lines.push({
+        id: `line-${Date.now()}-${idx++}`,
+        accountId: splitDebitAcc.id,
+        accountCode: splitDebitAcc.code,
+        accountName: splitDebitAcc.name,
+        debitGhs: split.amountGhs,
+        creditGhs: 0,
+        memo: `Receipt ${receiptNumber} Split — ${customerName} (${split.method}${
+          split.momoNetwork ? ` ${split.momoNetwork}` : ''
+        })`,
+      });
+    }
+  } else {
+    const debitAccount = await getPaymentAssetAccount(paymentMethod, momoNetwork, bankName);
+    lines.push({
+      id: `line-${Date.now()}-1`,
+      accountId: debitAccount.id,
+      accountCode: debitAccount.code,
+      accountName: debitAccount.name,
+      debitGhs: amountGhs,
+      creditGhs: 0,
+      memo: `Receipt ${receiptNumber} — ${customerName} (${paymentMethod})`,
+    });
+  }
 
   // Credit Account: By default reduces Accounts Receivable (1200) for ongoing settlements,
   // or records direct revenue if miscellaneous/general
@@ -137,26 +180,17 @@ export async function postPaymentReceiptLedger(
     }
   }
 
-  const lines: JournalEntryLine[] = [
-    {
-      id: `line-${Date.now()}-1`,
-      accountId: debitAccount.id,
-      accountCode: debitAccount.code,
-      accountName: debitAccount.name,
-      debitGhs: amountGhs,
-      creditGhs: 0,
-      memo: `Receipt ${receiptNumber} — ${customerName} (${paymentMethod})`,
-    },
-    {
-      id: `line-${Date.now()}-2`,
-      accountId: creditAccountId || debitAccount.id,
-      accountCode: creditAccountCode,
-      accountName: creditAccountName,
-      debitGhs: 0,
-      creditGhs: amountGhs,
-      memo: `Settlement for ${referenceTitle}`,
-    },
-  ];
+  const fallbackAccountId = lines[0]?.accountId || accounts[0]?.id || 'acc-1200';
+
+  lines.push({
+    id: `line-${Date.now()}-${lines.length + 1}`,
+    accountId: creditAccountId || fallbackAccountId,
+    accountCode: creditAccountCode,
+    accountName: creditAccountName,
+    debitGhs: 0,
+    creditGhs: amountGhs,
+    memo: `Settlement for ${referenceTitle}`,
+  });
 
   return postJournalEntry({
     entryNumber: `JE-${Date.now().toString().slice(-6)}`,
@@ -166,6 +200,88 @@ export async function postPaymentReceiptLedger(
     lines,
     totalAmountGhs: amountGhs,
     createdBy: cashierName,
+    status: 'POSTED',
+  });
+}
+
+/**
+ * Automatically posts an Accounts Receivable / Revenue / GRA Tax Payable journal entry
+ * when a Commercial/Tax Invoice is issued.
+ */
+export async function postInvoiceIssuedLedger(
+  invoice: Invoice,
+  createdBy = 'Accounts Office'
+): Promise<JournalEntry> {
+  const accounts = await db.accounts.toArray();
+  const arAcc = accounts.find((a) => a.code === '1200') || accounts[0];
+
+  const revenueCodeMap: Record<Invoice['referenceType'], string> = {
+    AUCTION: '4010',
+    DEALERSHIP: '4100',
+    LAND: '4200',
+    PROPERTY: '4300',
+    GENERAL: '4060',
+  };
+  const revCode = revenueCodeMap[invoice.referenceType] || '4060';
+  const revAcc =
+    accounts.find((a) => a.code === revCode) ||
+    accounts.find((a) => a.type === 'REVENUE') ||
+    arAcc;
+
+  const lines: JournalEntryLine[] = [
+    {
+      id: `line-${Date.now()}-1`,
+      accountId: arAcc.id,
+      accountCode: arAcc.code,
+      accountName: arAcc.name,
+      debitGhs: invoice.totalAmountGhs,
+      creditGhs: 0,
+      memo: `Invoice ${invoice.invoiceNumber} — ${invoice.customerName}`,
+    },
+    {
+      id: `line-${Date.now()}-2`,
+      accountId: revAcc.id,
+      accountCode: revAcc.code,
+      accountName: revAcc.name,
+      debitGhs: 0,
+      creditGhs: invoice.subtotalGhs,
+      memo: `Net Revenue: ${invoice.referenceTitle || invoice.invoiceNumber}`,
+    },
+  ];
+
+  const taxEntries: Array<{ code: string; fallbackName: string; amount: number }> = [
+    { code: '2100', fallbackName: 'GRA VAT Payable (15%)', amount: invoice.vatGhs },
+    { code: '2110', fallbackName: 'NHIL Levy Payable (2.5%)', amount: invoice.nhilGhs },
+    { code: '2120', fallbackName: 'GETFund Levy Payable (2.5%)', amount: invoice.getfundGhs },
+    { code: '2130', fallbackName: 'COVID-19 Health Recovery Levy (1%)', amount: invoice.covidGhs },
+  ];
+
+  let idx = 3;
+  for (const tax of taxEntries) {
+    if (tax.amount > 0) {
+      const taxAcc = accounts.find((a) => a.code === tax.code);
+      lines.push({
+        id: `line-${Date.now()}-${idx++}`,
+        accountId: taxAcc?.id || revAcc.id,
+        accountCode: taxAcc?.code || tax.code,
+        accountName: taxAcc?.name || tax.fallbackName,
+        debitGhs: 0,
+        creditGhs: tax.amount,
+        memo: `${tax.fallbackName} on ${invoice.invoiceNumber}`,
+      });
+    }
+  }
+
+  return postJournalEntry({
+    entryNumber: `JE-${Date.now().toString().slice(-6)}`,
+    date: invoice.issueDate || new Date().toISOString(),
+    reference: invoice.invoiceNumber,
+    description: `Commercial Invoice ${invoice.invoiceNumber}: ${
+      invoice.referenceTitle || invoice.customerName
+    }`,
+    lines,
+    totalAmountGhs: invoice.totalAmountGhs,
+    createdBy,
     status: 'POSTED',
   });
 }

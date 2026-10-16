@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import type { AuctionLot, PaymentPlan } from '@/lib/types';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { useTerminal } from '@/context/TerminalContext';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { CalendarPlus, AlertCircle } from 'lucide-react';
@@ -23,6 +24,7 @@ export function ExtensionModal({
   paymentPlan,
   onSuccess,
 }: ExtensionModalProps) {
+  const { currentStaffName } = useTerminal();
   const currentDueDate = lot?.balanceDueDate || paymentPlan?.currentDueDate || new Date().toISOString();
   // Default new date +7 days from current or today
   const defaultNextDate = new Date(new Date(currentDueDate).getTime() + 7 * 24 * 60 * 60 * 1000)
@@ -31,7 +33,6 @@ export function ExtensionModal({
 
   const [newDueDate, setNewDueDate] = useState(defaultNextDate);
   const [reason, setReason] = useState('');
-  const [approvedBy] = useState('Auction Manager (Amen Mart)');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -41,45 +42,62 @@ export function ExtensionModal({
     setIsSubmitting(true);
     try {
       const fullIsoDate = new Date(newDueDate).toISOString();
+      const nowIso = new Date().toISOString();
 
-      if (lot) {
-        const extensionCount = (lot.extensionCount || 0) + 1;
-        await db.auctionLots.update(lot.id, {
+      const linkedLot =
+        lot ||
+        (paymentPlan && paymentPlan.referenceType === 'AUCTION'
+          ? await db.auctionLots.get(paymentPlan.referenceId)
+          : undefined);
+
+      const linkedPlan =
+        paymentPlan ||
+        (lot
+          ? await db.paymentPlans.where('referenceId').equals(lot.id).first()
+          : undefined);
+
+      if (linkedLot) {
+        const extensionCount = (linkedLot.extensionCount || 0) + 1;
+        await db.auctionLots.update(linkedLot.id, {
           balanceDueDate: fullIsoDate,
           status: 'AWAITING_BALANCE', // restore from OVERDUE to active awaiting balance
           extensionCount,
           extensionReason: reason,
+          updatedAt: nowIso,
         });
 
-        await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', {
+        await syncEngine.queueMutation('auctionLots', linkedLot.id, 'UPDATE', {
           balanceDueDate: fullIsoDate,
           status: 'AWAITING_BALANCE',
           extensionCount,
           extensionReason: reason,
+          updatedAt: nowIso,
         });
       }
 
-      if (paymentPlan) {
+      if (linkedPlan) {
         const updatedExtensions = [
-          ...paymentPlan.extensions,
+          ...linkedPlan.extensions,
           {
-            extendedBy: approvedBy,
-            extendedAt: new Date().toISOString(),
+            extendedBy: currentStaffName,
+            extendedAt: nowIso,
             newDueDate: fullIsoDate,
             reason,
           },
         ];
 
-        await db.paymentPlans.update(paymentPlan.id, {
+        await db.paymentPlans.update(linkedPlan.id, {
           currentDueDate: fullIsoDate,
           status: 'EXTENDED',
           extensions: updatedExtensions,
+          updatedAt: nowIso,
         });
 
-        await syncEngine.queueMutation('paymentPlans', paymentPlan.id, 'UPDATE', {
+        await syncEngine.queueMutation('paymentPlans', linkedPlan.id, 'UPDATE', {
           currentDueDate: fullIsoDate,
           status: 'EXTENDED',
           extensions: updatedExtensions,
+          updatedAt: nowIso,
         });
       }
 
@@ -145,7 +163,7 @@ export function ExtensionModal({
           <input
             type="text"
             readOnly
-            value={approvedBy}
+            value={currentStaffName}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 cursor-not-allowed"
           />
         </div>

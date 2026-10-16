@@ -4,12 +4,13 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import type { DealershipVehicle } from '@/lib/types';
+import type { DealershipVehicle, PaymentPlan, Receipt } from '@/lib/types';
 import { formatGHS } from '@/lib/utils/currency';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
 import {
   Fuel,
   Gauge,
@@ -31,8 +32,19 @@ export default function ShowroomPage() {
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
   const [depositAmount, setDepositAmount] = useState<number>(10000); // GH₵ 10,000 standard reservation
+  const [depositError, setDepositError] = useState('');
   const [isDepositProcessing, setIsDepositProcessing] = useState(false);
   const [isDepositSuccessful, setIsDepositSuccessful] = useState(false);
+
+  const handleCloseModal = () => {
+    setSelectedVehicleForDeposit(null);
+    setBuyerName('');
+    setBuyerPhone('');
+    setBuyerEmail('');
+    setDepositAmount(10000);
+    setDepositError('');
+    setIsDepositSuccessful(false);
+  };
 
   const filteredVehicles = vehicles.filter((car) => {
     if (fuelFilter !== 'ALL' && car.fuelType !== fuelFilter) return false;
@@ -50,35 +62,80 @@ export default function ShowroomPage() {
 
   const handleOnlineDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setDepositError('');
+
     if (!selectedVehicleForDeposit || depositAmount <= 0) return;
+
+    if (depositAmount > selectedVehicleForDeposit.askingPriceGhs) {
+      setDepositError(
+        `Deposit cannot exceed full vehicle price (${formatGHS(selectedVehicleForDeposit.askingPriceGhs)})`
+      );
+      return;
+    }
 
     setIsDepositProcessing(true);
     try {
-      // 1. Create Customer if new
+      const nowIso = new Date().toISOString();
+      const dueDateIso = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+      const balanceRemaining = Math.max(0, selectedVehicleForDeposit.askingPriceGhs - depositAmount);
+      const isFullSettlement = balanceRemaining === 0;
+
+      // 1. Create Customer
       const customerId = `cust-${Date.now()}`;
-      await db.customers.add({
+      const customer = {
         id: customerId,
         fullName: buyerName,
         phone: buyerPhone,
         email: buyerEmail || 'customer@paystack.gh',
         ghanaCardNumber: 'ONLINE_PAYSTACK_HOLD',
         address: 'Online Showroom Reservation',
-        customerType: 'INDIVIDUAL',
+        customerType: 'INDIVIDUAL' as const,
         kycVerified: false,
-        notes: `Online reservation for ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model}`,
-        createdAt: new Date().toISOString(),
-      });
+        notes: `Online reservation deposit for ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model}`,
+        createdAt: nowIso,
+      };
+      await db.customers.add(customer);
+      await syncEngine.queueMutation('customers', customerId, 'CREATE', customer);
 
-      // 2. Mark Vehicle as RESERVED
+      // 2. Mark Vehicle status
+      const updatedVehicleStatus = isFullSettlement ? 'SOLD' : 'RESERVED';
       await db.dealershipVehicles.update(selectedVehicleForDeposit.id, {
-        status: 'RESERVED',
+        status: updatedVehicleStatus,
+      });
+      await syncEngine.queueMutation('dealershipVehicles', selectedVehicleForDeposit.id, 'UPDATE', {
+        status: updatedVehicleStatus,
       });
 
-      // 3. Issue Paystack deposit receipt
+      // 3. Create 14-day Payment Plan for the vehicle balance
+      const planId = `plan-${Date.now()}`;
+      const paymentPlan: PaymentPlan = {
+        id: planId,
+        referenceType: 'DEALERSHIP',
+        referenceId: selectedVehicleForDeposit.id,
+        referenceTitle: `${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model} (${selectedVehicleForDeposit.stockNumber})`,
+        customerId,
+        customerName: buyerName,
+        customerPhone: buyerPhone,
+        totalPriceGhs: selectedVehicleForDeposit.askingPriceGhs,
+        depositPaidGhs: depositAmount,
+        balanceRemainingGhs: balanceRemaining,
+        initialDueDate: dueDateIso,
+        currentDueDate: dueDateIso,
+        status: isFullSettlement ? 'PAID_IN_FULL' : 'AWAITING_BALANCE',
+        extensions: [],
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+      await db.paymentPlans.add(paymentPlan);
+      await syncEngine.queueMutation('paymentPlans', planId, 'CREATE', paymentPlan);
+
+      // 4. Issue Paystack deposit receipt
       const receiptId = `rcp-${Date.now()}`;
-      await db.receipts.add({
+      const receiptNumber = `AM-RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const receipt: Receipt = {
         id: receiptId,
-        receiptNumber: `AM-RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        receiptNumber,
+        paymentPlanId: planId,
         referenceType: 'DEALERSHIP',
         referenceId: selectedVehicleForDeposit.id,
         referenceTitle: `${selectedVehicleForDeposit.stockNumber}: ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model} (Deposit)`,
@@ -89,17 +146,36 @@ export default function ShowroomPage() {
         paymentMethod: 'CARD_PAYSTACK',
         transactionReference: `PSTK-SUBACC-${Date.now().toString().slice(-6)}`,
         totalPaidToDateGhs: depositAmount,
-        balanceRemainingGhs: selectedVehicleForDeposit.askingPriceGhs - depositAmount,
+        balanceRemainingGhs: balanceRemaining,
+        balanceDueDate: isFullSettlement ? undefined : dueDateIso,
         cashierName: 'Paystack Subaccount Escrow',
         issuedLocation: 'Amen Mart Online Gateway',
-        printedAt: new Date().toISOString(),
+        printedAt: nowIso,
         syncStatus: 'SYNCED',
-      });
+      };
 
-      await syncEngine.queueMutation('dealershipVehicles', selectedVehicleForDeposit.id, 'UPDATE', { status: 'RESERVED' });
+      await db.receipts.add(receipt);
+      await syncEngine.queueMutation('receipts', receiptId, 'CREATE', receipt);
+
+      // 5. Post to General Ledger (Account 1080 Paystack Settlement Clearing)
+      try {
+        await postPaymentReceiptLedger(
+          receiptNumber,
+          buyerName,
+          `${selectedVehicleForDeposit.stockNumber}: ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model}`,
+          'DEALERSHIP',
+          depositAmount,
+          'CARD_PAYSTACK',
+          'Paystack Online Gateway'
+        );
+      } catch (ledgerErr) {
+        console.warn('Online deposit GL posting note:', ledgerErr);
+      }
+
       setIsDepositSuccessful(true);
     } catch (err) {
       console.error('Failed to process online deposit:', err);
+      setDepositError('Failed to process reservation payment. Please try again.');
     } finally {
       setIsDepositProcessing(false);
     }
@@ -135,7 +211,7 @@ export default function ShowroomPage() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {(['ALL', 'PETROL', 'DIESEL', 'HYBRID'] as const).map((fuel) => (
+            {(['ALL', 'PETROL', 'DIESEL', 'HYBRID', 'ELECTRIC'] as const).map((fuel) => (
               <button
                 key={fuel}
                 onClick={() => setFuelFilter(fuel)}
@@ -240,7 +316,7 @@ export default function ShowroomPage() {
       {selectedVehicleForDeposit && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedVehicleForDeposit(null)}
+          onClose={handleCloseModal}
           title="Online Vehicle Reservation Deposit"
           subtitle="Processed securely through Paystack subaccount with instant receipt."
           maxWidth="md"
@@ -255,13 +331,19 @@ export default function ShowroomPage() {
                 Vehicle stock <strong>{selectedVehicleForDeposit.stockNumber}</strong> has been marked RESERVED in the AmenDesk showroom registry. An official deposit receipt has been issued.
               </p>
               <div className="pt-4">
-                <Button variant="primary" onClick={() => setSelectedVehicleForDeposit(null)}>
+                <Button variant="primary" onClick={handleCloseModal}>
                   Close
                 </Button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleOnlineDeposit} className="space-y-4">
+              {depositError && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                  {depositError}
+                </div>
+              )}
+
               <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs space-y-1">
                 <p className="font-bold text-indigo-900 dark:text-indigo-200">
                   {selectedVehicleForDeposit.year} {selectedVehicleForDeposit.make} {selectedVehicleForDeposit.model}
@@ -312,6 +394,7 @@ export default function ShowroomPage() {
                 <input
                   type="number"
                   min="5000"
+                  max={selectedVehicleForDeposit.askingPriceGhs}
                   step="any"
                   required
                   value={depositAmount || ''}
@@ -326,7 +409,7 @@ export default function ShowroomPage() {
               </div>
 
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setSelectedVehicleForDeposit(null)}>
+                <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
                 <Button type="submit" variant="primary" isLoading={isDepositProcessing}>

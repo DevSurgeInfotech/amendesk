@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import type { AuctionLot, SaleTransferDoc } from '@/lib/types';
+import type { AuctionLot, LandParcel, PropertyUnit, SaleTransferDoc } from '@/lib/types';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { useTerminal } from '@/context/TerminalContext';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Printer, FileCheck, CheckCircle2 } from 'lucide-react';
@@ -13,16 +14,62 @@ import { formatGHS } from '@/lib/utils/currency';
 interface SaleTransferModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lot: AuctionLot;
+  lot?: AuctionLot;
+  land?: LandParcel;
+  property?: PropertyUnit;
   onSuccess: () => void;
 }
 
-export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTransferModalProps) {
+export function SaleTransferModal({
+  isOpen,
+  onClose,
+  lot,
+  land,
+  property,
+  onSuccess,
+}: SaleTransferModalProps) {
+  const { currentStaffName, isOnline } = useTerminal();
+
+  const [buyerName, setBuyerName] = useState(lot?.winningBidderName || 'Dr. Samuel Ofori-Atta');
+  const [buyerPhone, setBuyerPhone] = useState(lot?.winningBidderPhone || '+233 20 811 4500');
   const [buyerAddress, setBuyerAddress] = useState('Plot 14, Airport Residential Area, Accra');
   const [buyerGhanaCard, setBuyerGhanaCard] = useState('GHA-712894102-4');
-  const [lawyerWitnessName, setLawyerWitnessName] = useState('Barrister Kofi Asante (Legal Counsel, Amen Mart)');
+  const [lawyerWitnessName, setLawyerWitnessName] = useState(
+    'Barrister Kofi Asante (Legal Counsel, Amen Mart)'
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdDoc, setCreatedDoc] = useState<SaleTransferDoc | null>(null);
+
+  const assetTitle = lot
+    ? `Lot: ${lot.lotNumber} • ${lot.title}`
+    : land
+    ? `Land Parcel: ${land.siteRef} • ${land.title}`
+    : property
+    ? `Property Unit: ${property.unitRef} • ${property.title}`
+    : 'Immovable Property';
+
+  const parcelRef =
+    lot?.parcelReference || land?.siteRef || property?.unitRef || 'N/A';
+  const titleRef =
+    lot?.titleReference ||
+    (land ? `${land.titleType} — ${land.siteRef}` : undefined) ||
+    (property ? `DEED-${property.unitRef}` : undefined) ||
+    'N/A';
+  const locationArea =
+    lot?.locationArea || land?.location || property?.location || 'Accra, Ghana';
+  const sizeDimensions =
+    lot?.sizeDimensions ||
+    (land ? `${land.sizeAcres} Acres` : undefined) ||
+    (property
+      ? `${property.propertyType}${property.bedrooms ? ` (${property.bedrooms} Bed)` : ''}`
+      : undefined) ||
+    'Standard Demarcation';
+  const considerationAmountGhs =
+    lot?.hammerPriceGhs ||
+    lot?.currentBidGhs ||
+    land?.priceGhs ||
+    property?.priceGhs ||
+    0;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -33,35 +80,39 @@ export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTrans
       const doc: SaleTransferDoc = {
         id: `trf-${Date.now()}`,
         docNumber,
-        lotId: lot.id,
-        parcelReference: lot.parcelReference || 'N/A',
-        titleReference: lot.titleReference || 'N/A',
-        locationArea: lot.locationArea || 'Accra, Ghana',
-        sizeDimensions: lot.sizeDimensions || 'Standard Demarcation',
-        buyerName: lot.winningBidderName || 'N/A',
+        lotId: lot?.id,
+        landId: land?.id,
+        propertyId: property?.id,
+        parcelReference: parcelRef,
+        titleReference: titleRef,
+        locationArea,
+        sizeDimensions,
+        buyerName: buyerName || lot?.winningBidderName || 'N/A',
         buyerGhanaCard,
-        buyerPhone: lot.winningBidderPhone || 'N/A',
+        buyerPhone: buyerPhone || lot?.winningBidderPhone || 'N/A',
         buyerAddress,
-        considerationAmountGhs: lot.hammerPriceGhs || lot.currentBidGhs,
-        courtCaseNumber: lot.courtCaseNumber,
-        sheriffInstructionRef: lot.sheriffInstructionRef,
+        considerationAmountGhs,
+        courtCaseNumber: lot?.courtCaseNumber,
+        sheriffInstructionRef: lot?.sheriffInstructionRef,
         lawyerWitnessName,
-        authorizedOfficer: 'Managing Auctioneer (Amen Mart)',
+        authorizedOfficer: currentStaffName,
         executedDate: new Date().toISOString(),
-        syncStatus: 'SYNCED',
+        syncStatus: isOnline ? 'SYNCED' : 'PENDING',
       };
 
       await db.saleTransferDocs.add(doc);
-      await db.auctionLots.update(lot.id, {
-        status: 'DISPOSED',
-        saleTransferDocId: doc.id,
-      });
-
       await syncEngine.queueMutation('saleTransferDocs', doc.id, 'CREATE', doc);
-      await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', {
-        status: 'DISPOSED',
-        saleTransferDocId: doc.id,
-      });
+
+      if (lot) {
+        await db.auctionLots.update(lot.id, {
+          status: 'DISPOSED',
+          saleTransferDocId: doc.id,
+        });
+        await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', {
+          status: 'DISPOSED',
+          saleTransferDocId: doc.id,
+        });
+      }
 
       setCreatedDoc(doc);
       onSuccess();
@@ -98,7 +149,7 @@ export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTrans
                   Transfer Deed #{createdDoc.docNumber} Executed
                 </p>
                 <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                  Lot status updated to DISPOSED. Authorized for title registration.
+                  Authorized for Lands Commission title registration &amp; indenture perfection.
                 </p>
               </div>
             </div>
@@ -117,10 +168,10 @@ export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTrans
             {/* Header */}
             <div className="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4">
               <h1 className="text-2xl font-black tracking-widest uppercase text-indigo-900 dark:text-indigo-400">
-                AMEN MART AUCTIONEERS
+                AMEN MART GHANA
               </h1>
               <p className="text-xs font-sans uppercase font-bold text-slate-600 dark:text-slate-400 mt-1">
-                Official Memorandum &amp; Deed of Auction Sale (Immovable Property)
+                Official Memorandum &amp; Deed of Sale / Conveyance (Immovable Property)
               </p>
               <p className="text-xs font-sans text-slate-500">Tema Heavy Industrial Area &bull; P.O. Box GP 22451, Accra</p>
               <div className="mt-3 flex justify-between font-sans text-xs border-t pt-2">
@@ -132,13 +183,19 @@ export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTrans
             {/* Recitals & Particulars */}
             <div className="mt-6 space-y-4 text-xs font-sans leading-relaxed">
               <p>
-                This instrument certifies that at a public auction conducted by Amen Mart on behalf of the{' '}
-                <strong>{lot.category} AUCTION DIVISION</strong>, the following described immovable property was
-                knocked down to the highest bidder named herein, and that full consideration has been satisfied in the
-                cash office of Amen Mart.
+                This instrument certifies that through Amen Mart{' '}
+                <strong>
+                  {lot
+                    ? `${lot.category} AUCTION DIVISION`
+                    : land
+                    ? 'LAND & ESTATES DIVISION'
+                    : 'PROPERTY DEVELOPMENT DIVISION'}
+                </strong>
+                , the following described immovable property has been lawfully conveyed to the purchaser
+                named herein, and that full consideration has been satisfied in the cash office of Amen Mart.
               </p>
 
-              {lot.category === 'JUDICIAL' && (
+              {lot?.category === 'JUDICIAL' && (
                 <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-xs space-y-1">
                   <p className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px]">
                     Judicial Authority &amp; Sheriff Writ Particulars:
@@ -184,6 +241,7 @@ export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTrans
                   Purchaser / Assignee
                 </p>
                 <p className="font-bold">{createdDoc.buyerName}</p>
+                <p className="text-slate-600 dark:text-slate-400">Phone: {createdDoc.buyerPhone}</p>
                 <p className="text-slate-600 dark:text-slate-400">Ghana Card: {createdDoc.buyerGhanaCard}</p>
                 <p className="text-slate-600 dark:text-slate-400">Address: {createdDoc.buyerAddress}</p>
               </div>
@@ -194,7 +252,7 @@ export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTrans
               <div>
                 <div className="h-10 border-b border-dashed border-slate-400 mb-1" />
                 <p className="font-bold">{createdDoc.authorizedOfficer}</p>
-                <p className="text-[10px] text-slate-500">Auctioneer In Charge</p>
+                <p className="text-[10px] text-slate-500">Authorized Officer</p>
               </div>
               <div>
                 <div className="h-10 border-b border-dashed border-slate-400 mb-1" />
@@ -213,15 +271,46 @@ export function SaleTransferModal({ isOpen, onClose, lot, onSuccess }: SaleTrans
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs space-y-1">
             <p className="font-bold text-indigo-900 dark:text-indigo-200">
-              Lot: {lot.lotNumber} &bull; {lot.title}
+              {assetTitle}
             </p>
             <p className="text-indigo-700 dark:text-indigo-300">
-              Parcel: <span className="font-mono font-bold">{lot.parcelReference || 'N/A'}</span> &bull; Location:{' '}
-              <span className="font-bold">{lot.locationArea || 'N/A'}</span>
+              Reference: <span className="font-mono font-bold">{parcelRef}</span> &bull; Location:{' '}
+              <span className="font-bold">{locationArea}</span>
             </p>
           </div>
 
           <div className="space-y-3">
+            {!lot && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Purchaser Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={buyerName}
+                    onChange={(e) => setBuyerName(e.target.value)}
+                    placeholder="e.g. Dr. Samuel Ofori-Atta"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Purchaser Phone *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={buyerPhone}
+                    onChange={(e) => setBuyerPhone(e.target.value)}
+                    placeholder="+233 20 811 4500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Purchaser Ghana Card Number *

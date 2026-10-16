@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 
 :root {
   --background: #f8fafc;
@@ -45,6 +45,26 @@ body {
     display: block !important;
   }
 
+  /* Isolate printable receipt or A4 document from background ERP shell & modal chrome */
+  body:has(.thermal-receipt-container, .a4-document-container)
+    *:not(:has(.thermal-receipt-container, .a4-document-container)):not(.thermal-receipt-container):not(.thermal-receipt-container *):not(.a4-document-container):not(.a4-document-container *) {
+    display: none !important;
+  }
+
+  body:has(.thermal-receipt-container, .a4-document-container)
+    *:has(.thermal-receipt-container, .a4-document-container) {
+    position: static !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
   /* Thermal 80mm receipt mode */
   .thermal-receipt-container {
     width: 80mm !important;
@@ -55,6 +75,7 @@ body {
     font-size: 11px !important;
     line-height: 1.25 !important;
     color: #000 !important;
+    background: #fff !important;
   }
 
   /* A4 document mode */
@@ -64,6 +85,8 @@ body {
     margin: 0 auto !important;
     padding: 15mm !important;
     box-sizing: border-box !important;
+    background: #fff !important;
+    color: #000 !important;
   }
 
   @page {

@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import type { AuctionCategory, AssetType, AuctionLot, LotStatus } from '@/lib/types';
+import type { AuctionCategory, AssetType, AuctionLot, LotStatus, PaymentPlan, Receipt } from '@/lib/types';
 import { formatGHS, calculateAuctionFee } from '@/lib/utils/currency';
 import { formatDate, getInstalmentWindowInfo } from '@/lib/utils/date';
+import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PaymentModal } from '@/components/erp/PaymentModal';
@@ -30,11 +32,35 @@ import {
   FileText,
 } from 'lucide-react';
 
-export default function AuctionsPage() {
+function generateReceiptNumber(): string {
+  return `AM-RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+function generateReceiptId(): string {
+  return `rcp-${Date.now()}`;
+}
+
+function generatePlanId(): string {
+  return `pp-${Date.now()}`;
+}
+
+function calculate14DayDueDate(): string {
+  return new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function getIsoTimestamp(): string {
+  return new Date().toISOString();
+}
+
+function AuctionsContent() {
+  const searchParams = useSearchParams();
+  const catParam = searchParams.get('cat') as AuctionCategory | null;
+  const initialCat = catParam && ['PRIVATE', 'GOVERNMENT', 'JUDICIAL'].includes(catParam) ? catParam : 'ALL';
+
   const lots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
   const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
 
-  const [categoryFilter, setCategoryFilter] = useState<'ALL' | AuctionCategory>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | AuctionCategory>(initialCat);
   const [assetTypeFilter, setAssetTypeFilter] = useState<'ALL' | AssetType>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | LotStatus>('ALL');
 
@@ -58,7 +84,8 @@ export default function AuctionsPage() {
   });
 
   const handleFastBidIncrement = async (lot: AuctionLot, increment: number) => {
-    const newBid = lot.currentBidGhs + increment;
+    const newBid = (lot.currentBidGhs || 0) + increment;
+    setQuickBidAmount(newBid);
     await db.auctionLots.update(lot.id, { currentBidGhs: newBid });
     await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', { currentBidGhs: newBid });
   };
@@ -72,11 +99,11 @@ export default function AuctionsPage() {
     const bidder = customers.find((c) => c.id === selectedBidderId);
     if (!bidder) return;
 
-    const hammerPrice = quickBidAmount || lot.currentBidGhs;
+    const hammerPrice = Math.max(quickBidAmount, lot.currentBidGhs);
     const feeCalculation = calculateAuctionFee(hammerPrice, 7); // strictly 7% for all categories
     const totalPriceWithFee = feeCalculation.totalPayableGhs;
     const balanceDue = Math.max(0, totalPriceWithFee - depositInput);
-    const balanceDueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(); // strictly 14 days
+    const balanceDueDate = calculate14DayDueDate();
     const newStatus: LotStatus = balanceDue === 0 ? 'FULLY_PAID' : 'AWAITING_BALANCE';
 
     // 1. Update lot
@@ -92,10 +119,22 @@ export default function AuctionsPage() {
       balanceDueDate,
       status: newStatus,
     });
+    await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', {
+      hammerPriceGhs: hammerPrice,
+      marginRatePercent: 7,
+      marginFeeGhs: feeCalculation.feeAmountGhs,
+      winningBidderId: bidder.id,
+      winningBidderName: bidder.fullName,
+      winningBidderPhone: bidder.phone,
+      depositAmountGhs: depositInput,
+      balanceDueGhs: balanceDue,
+      balanceDueDate,
+      status: newStatus,
+    });
 
     // 2. Create Payment Plan
-    const planId = `pp-${Date.now()}`;
-    await db.paymentPlans.add({
+    const planId = generatePlanId();
+    const planData: PaymentPlan = {
       id: planId,
       referenceType: 'AUCTION',
       referenceId: lot.id,
@@ -110,15 +149,18 @@ export default function AuctionsPage() {
       currentDueDate: balanceDueDate,
       status: balanceDue === 0 ? 'PAID_IN_FULL' : 'AWAITING_BALANCE',
       extensions: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+      createdAt: getIsoTimestamp(),
+      updatedAt: getIsoTimestamp(),
+    };
+    await db.paymentPlans.add(planData);
+    await syncEngine.queueMutation('paymentPlans', planId, 'CREATE', planData);
 
     // 3. Issue immediate Deposit Receipt
-    const receiptId = `rcp-${Date.now()}`;
-    await db.receipts.add({
+    const receiptId = generateReceiptId();
+    const receiptNumber = generateReceiptNumber();
+    const receiptData: Receipt = {
       id: receiptId,
-      receiptNumber: `AM-RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      receiptNumber,
       paymentPlanId: planId,
       referenceType: 'AUCTION',
       referenceId: lot.id,
@@ -134,11 +176,27 @@ export default function AuctionsPage() {
       balanceDueDate,
       cashierName: 'Yard Auctioneer',
       issuedLocation: 'Auction Yard — Tema',
-      printedAt: new Date().toISOString(),
+      printedAt: getIsoTimestamp(),
       syncStatus: 'SYNCED',
-    });
+    };
+    await db.receipts.add(receiptData);
+    await syncEngine.queueMutation('receipts', receiptId, 'CREATE', receiptData);
 
-    await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', { status: newStatus });
+    // 4. Double-entry General Ledger posting
+    try {
+      await postPaymentReceiptLedger(
+        receiptNumber,
+        bidder.fullName,
+        `${lot.lotNumber}: ${lot.title} (Hammer Deposit)`,
+        'AUCTION',
+        depositInput,
+        'CASH',
+        'Yard Auctioneer'
+      );
+    } catch (glErr) {
+      console.warn('GL Posting note:', glErr);
+    }
+
     setActiveBidLotId(null);
     setDepositInput(0);
     setSelectedBidderId('');
@@ -243,7 +301,7 @@ export default function AuctionsPage() {
 
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-500">Status:</span>
-            {(['ALL', 'ACTIVE', 'AWAITING_BALANCE', 'FULLY_PAID', 'OVERDUE', 'DISPOSED'] as const).map(
+            {(['ALL', 'UPCOMING', 'ACTIVE', 'AWAITING_BALANCE', 'FULLY_PAID', 'OVERDUE', 'DISPOSED'] as const).map(
               (s) => (
                 <button
                   key={s}
@@ -620,5 +678,13 @@ export default function AuctionsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AuctionsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 text-sm">Loading auctions...</div>}>
+      <AuctionsContent />
+    </Suspense>
   );
 }

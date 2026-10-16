@@ -16,11 +16,35 @@ export default function PublicPropertiesPage() {
   const properties = useLiveQuery(() => db.propertyUnits.toArray(), []) || [];
   const [selectedProp, setSelectedProp] = useState<PropertyUnit | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState<'ALL' | 'RESIDENTIAL' | 'COMMERCIAL' | 'INDUSTRIAL'>('ALL');
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleCloseModal = () => {
+    setSelectedProp(null);
+    setName('');
+    setPhone('');
+    setEmail('');
+    setIsSuccess(false);
+  };
+
+  const filteredProperties = properties.filter((prop) => {
+    if (propertyTypeFilter !== 'ALL' && prop.propertyType !== propertyTypeFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return (
+        prop.title.toLowerCase().includes(q) ||
+        prop.unitRef.toLowerCase().includes(q) ||
+        prop.location.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   const handleInquire = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,21 +83,50 @@ export default function PublicPropertiesPage() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-6">
-        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-          Executive Real Estate
-        </span>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-          Residential Townhouses &amp; Commercial Warehouses
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Direct sale properties across Cantonments, Airport Residential, and Spintex Industrial Area.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            Executive Real Estate
+          </span>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+            Residential Townhouses &amp; Commercial Warehouses
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Direct sale properties across Cantonments, Airport Residential, and Spintex Industrial Area.
+          </p>
+        </div>
+
+        {/* Search & Filter */}
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="text"
+            placeholder="Search title, location, unit..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
+          <div className="flex items-center gap-1.5">
+            {(['ALL', 'RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => setPropertyTypeFilter(type)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  propertyTypeFilter === type
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {properties.map((prop) => (
+        {filteredProperties.map((prop) => (
           <div
             key={prop.id}
             className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:border-indigo-300 dark:hover:border-indigo-800 transition-all flex flex-col justify-between"
@@ -93,6 +146,18 @@ export default function PublicPropertiesPage() {
                   </span>
                   <Badge variant="outline" size="sm" className="bg-white/90 dark:bg-slate-900/90 font-bold">
                     {prop.propertyType}
+                  </Badge>
+                  <Badge
+                    variant={
+                      prop.status === 'AVAILABLE'
+                        ? 'success'
+                        : prop.status === 'RESERVED'
+                        ? 'warning'
+                        : 'default'
+                    }
+                    size="sm"
+                  >
+                    {prop.status}
                   </Badge>
                 </div>
               </div>
@@ -145,16 +210,22 @@ export default function PublicPropertiesPage() {
                 </p>
               </div>
 
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => {
-                  setSelectedProp(prop);
-                  setIsSuccess(false);
-                }}
-              >
-                Inquire &amp; View
-              </Button>
+              {prop.status === 'AVAILABLE' || prop.status === 'RESERVED' ? (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {
+                    setSelectedProp(prop);
+                    setIsSuccess(false);
+                  }}
+                >
+                  Inquire &amp; View
+                </Button>
+              ) : (
+                <span className="text-xs font-bold text-slate-500 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                  Unit Sold
+                </span>
+              )}
             </div>
           </div>
         ))}
@@ -164,7 +235,7 @@ export default function PublicPropertiesPage() {
       {selectedProp && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedProp(null)}
+          onClose={handleCloseModal}
           title={`Property Inquiry: ${selectedProp.unitRef}`}
           subtitle={selectedProp.title}
           maxWidth="md"
@@ -179,7 +250,7 @@ export default function PublicPropertiesPage() {
                 Our property sales team will contact you promptly to schedule an exclusive viewing.
               </p>
               <div className="pt-4">
-                <Button variant="primary" onClick={() => setSelectedProp(null)}>
+                <Button variant="primary" onClick={handleCloseModal}>
                   Close
                 </Button>
               </div>
@@ -222,7 +293,7 @@ export default function PublicPropertiesPage() {
               </div>
 
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setSelectedProp(null)}>
+                <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
                 <Button type="submit" variant="primary" isLoading={isSubmitting}>

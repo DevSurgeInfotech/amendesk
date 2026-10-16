@@ -15,11 +15,35 @@ export default function PublicLandPage() {
   const parcels = useLiveQuery(() => db.landParcels.toArray(), []) || [];
   const [selectedParcel, setSelectedParcel] = useState<LandParcel | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [titleTypeFilter, setTitleTypeFilter] = useState<'ALL' | 'FREEHOLD' | 'LEASEHOLD' | 'INDENTURE'>('ALL');
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleCloseModal = () => {
+    setSelectedParcel(null);
+    setName('');
+    setPhone('');
+    setEmail('');
+    setIsSuccess(false);
+  };
+
+  const filteredParcels = parcels.filter((p) => {
+    if (titleTypeFilter !== 'ALL' && p.titleType !== titleTypeFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return (
+        p.title.toLowerCase().includes(q) ||
+        p.siteRef.toLowerCase().includes(q) ||
+        p.location.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   const handleInquire = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,21 +82,50 @@ export default function PublicLandPage() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-6">
-        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-          Titled Land Parcels
-        </span>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-          Direct Land Sales &amp; Commercial Acreage
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Verified cadastral survey plans, clear boundaries, and Lands Commission documentation across Greater Accra.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            Titled Land Parcels
+          </span>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+            Direct Land Sales &amp; Commercial Acreage
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Verified cadastral survey plans, clear boundaries, and Lands Commission documentation across Greater Accra.
+          </p>
+        </div>
+
+        {/* Search & Filter */}
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="text"
+            placeholder="Search location, site ref..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
+          <div className="flex items-center gap-1.5">
+            {(['ALL', 'FREEHOLD', 'LEASEHOLD', 'INDENTURE'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => setTitleTypeFilter(type)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  titleTypeFilter === type
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {parcels.map((parcel) => (
+        {filteredParcels.map((parcel) => (
           <div
             key={parcel.id}
             className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between"
@@ -87,7 +140,13 @@ export default function PublicLandPage() {
                     {parcel.titleType}
                   </Badge>
                   <Badge
-                    variant={parcel.status === 'AVAILABLE' ? 'success' : 'default'}
+                    variant={
+                      parcel.status === 'AVAILABLE'
+                        ? 'success'
+                        : parcel.status === 'RESERVED'
+                        ? 'warning'
+                        : 'default'
+                    }
                     size="sm"
                   >
                     {parcel.status}
@@ -128,16 +187,22 @@ export default function PublicLandPage() {
                 </p>
               </div>
 
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => {
-                  setSelectedParcel(parcel);
-                  setIsSuccess(false);
-                }}
-              >
-                Schedule Site Visit
-              </Button>
+              {parcel.status === 'AVAILABLE' || parcel.status === 'RESERVED' ? (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {
+                    setSelectedParcel(parcel);
+                    setIsSuccess(false);
+                  }}
+                >
+                  Schedule Site Visit
+                </Button>
+              ) : (
+                <span className="text-xs font-bold text-slate-500 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                  Parcel Sold
+                </span>
+              )}
             </div>
           </div>
         ))}
@@ -147,7 +212,7 @@ export default function PublicLandPage() {
       {selectedParcel && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedParcel(null)}
+          onClose={handleCloseModal}
           title={`Inquire & Schedule Visit for ${selectedParcel.siteRef}`}
           subtitle={selectedParcel.title}
           maxWidth="md"
@@ -162,7 +227,7 @@ export default function PublicLandPage() {
                 Our Land Acquisition officer has received your details in the AmenDesk CRM. We will call you to arrange an escorted site inspection.
               </p>
               <div className="pt-4">
-                <Button variant="primary" onClick={() => setSelectedParcel(null)}>
+                <Button variant="primary" onClick={handleCloseModal}>
                   Close
                 </Button>
               </div>
@@ -205,7 +270,7 @@ export default function PublicLandPage() {
               </div>
 
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setSelectedParcel(null)}>
+                <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
                 <Button type="submit" variant="primary" isLoading={isSubmitting}>

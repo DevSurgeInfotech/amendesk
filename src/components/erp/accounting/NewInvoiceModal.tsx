@@ -5,9 +5,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { Invoice, InvoiceItem } from '@/lib/types';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { useTerminal } from '@/context/TerminalContext';
+import { postInvoiceIssuedLedger } from '@/lib/accounting/ledger';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { formatGHS } from '@/lib/utils/currency';
+import { formatGHS, calculateGhanaTaxes } from '@/lib/utils/currency';
 import { Plus, Trash2 } from 'lucide-react';
 
 interface NewInvoiceModalProps {
@@ -37,6 +39,7 @@ function generateItemId(idx: number): string {
 }
 
 export function NewInvoiceModal({ isOpen, onClose, onSuccess }: NewInvoiceModalProps) {
+  const { currentStaffName, isOnline } = useTerminal();
   const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
   const lots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
   const vehicles = useLiveQuery(() => db.dealershipVehicles.toArray(), []) || [];
@@ -155,13 +158,14 @@ export function NewInvoiceModal({ isOpen, onClose, onSuccess }: NewInvoiceModalP
     setItems(updated);
   };
 
-  // Calculations
+  // Calculations using GRA statutory cascading tax breakdown
   const subtotalGhs = items.reduce((acc, it) => acc + (it.quantity * it.unitPriceGhs), 0);
-  const vatGhs = applyVat ? Math.round(subtotalGhs * 0.15 * 100) / 100 : 0;
-  const nhilGhs = applyVat ? Math.round(subtotalGhs * 0.025 * 100) / 100 : 0;
-  const getfundGhs = applyVat ? Math.round(subtotalGhs * 0.025 * 100) / 100 : 0;
-  const covidGhs = applyVat ? Math.round(subtotalGhs * 0.01 * 100) / 100 : 0;
-  const totalAmountGhs = subtotalGhs + vatGhs + nhilGhs + getfundGhs + covidGhs;
+  const taxBreakdown = calculateGhanaTaxes(subtotalGhs);
+  const vatGhs = applyVat ? Math.round(taxBreakdown.vat * 100) / 100 : 0;
+  const nhilGhs = applyVat ? Math.round(taxBreakdown.nhil * 100) / 100 : 0;
+  const getfundGhs = applyVat ? Math.round(taxBreakdown.getFund * 100) / 100 : 0;
+  const covidGhs = applyVat ? Math.round(taxBreakdown.covidLevy * 100) / 100 : 0;
+  const totalAmountGhs = Math.round((subtotalGhs + vatGhs + nhilGhs + getfundGhs + covidGhs) * 100) / 100;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,11 +217,18 @@ export function NewInvoiceModal({ isOpen, onClose, onSuccess }: NewInvoiceModalP
         status: 'ISSUED',
         notes,
         createdAt: new Date().toISOString(),
-        syncStatus: 'SYNCED',
+        syncStatus: isOnline ? 'SYNCED' : 'PENDING',
       };
 
       await db.invoices.add(newInvoice);
       await syncEngine.queueMutation('invoices', newInvoice.id, 'CREATE', newInvoice);
+
+      // Post Accounts Receivable / Revenue / GRA Tax Payable to General Ledger
+      try {
+        await postInvoiceIssuedLedger(newInvoice, currentStaffName);
+      } catch (ledgerErr) {
+        console.warn('Invoice GL posting note:', ledgerErr);
+      }
 
       onSuccess();
       onClose();

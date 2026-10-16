@@ -1,10 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import type { AuctionCategory, AssetType, MovableSubType, ImmovableSubType, AuctionLot } from '@/lib/types';
+import type {
+  AuctionCategory,
+  AssetType,
+  MovableSubType,
+  ImmovableSubType,
+  AuctionLot,
+  InventoryItem,
+} from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import {
@@ -18,8 +26,37 @@ import {
   Upload,
 } from 'lucide-react';
 
+function generateLotId(): string {
+  return `lot-${Date.now()}`;
+}
+
+function generateInventoryId(): string {
+  return `inv-${Date.now()}`;
+}
+
+function getIsoTimestamp(): string {
+  return new Date().toISOString();
+}
+
+function computeNextLotNumber(existingLots: AuctionLot[]): string {
+  if (!existingLots || existingLots.length === 0) return 'LOT-101';
+  let maxNum = 100;
+  for (const l of existingLots) {
+    const match = l.lotNumber.match(/\d+/);
+    if (match) {
+      const num = parseInt(match[0], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  }
+  return `LOT-${maxNum + 1}`;
+}
+
 export default function LotIntakePage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const existingLots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
+  const computedNextLotNumber = computeNextLotNumber(existingLots);
 
   // Step 1: Category
   const [category, setCategory] = useState<AuctionCategory>('PRIVATE');
@@ -30,7 +67,8 @@ export default function LotIntakePage() {
   const [immovableSubType, setImmovableSubType] = useState<ImmovableSubType>('LAND');
 
   // Common Fields
-  const [lotNumber, setLotNumber] = useState('LOT-301');
+  const [lotNumber, setLotNumber] = useState('');
+  const [autoRegisterInventory, setAutoRegisterInventory] = useState(true);
   const [title, setTitle] = useState('');
   const [reservePriceGhs, setReservePriceGhs] = useState<number>(0);
   const [startingBidGhs, setStartingBidGhs] = useState<number>(0);
@@ -73,16 +111,26 @@ export default function LotIntakePage() {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCourtOrderDocUrl(`/docs/${file.name}`);
+    }
+  };
+
+  const finalLotNumber = lotNumber || computedNextLotNumber;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const lotId = `lot-${Date.now()}`;
+      const lotId = generateLotId();
+      const isoNow = getIsoTimestamp();
       const newLot: AuctionLot = {
         id: lotId,
         eventId: 'auc-oct-2026',
-        lotNumber,
+        lotNumber: finalLotNumber,
         title,
         category,
         assetType,
@@ -119,13 +167,31 @@ export default function LotIntakePage() {
         marginRatePercent: 7, // Strictly 7% for all categories
         status: 'ACTIVE',
         extensionCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: isoNow,
+        updatedAt: isoNow,
         syncStatus: 'SYNCED',
       };
 
       await db.auctionLots.add(newLot);
       await syncEngine.queueMutation('auctionLots', lotId, 'CREATE', newLot);
+
+      // Optionally register movable lot in General Inventory
+      if (autoRegisterInventory && assetType === 'MOVABLE') {
+        const invId = generateInventoryId();
+        const invItem: InventoryItem = {
+          id: invId,
+          name: title,
+          sku: finalLotNumber,
+          category: movableSubType === 'VEHICLE' ? 'VEHICLE' : 'EQUIPMENT',
+          location: 'AUCTION_YARD',
+          quantity: (movableSubType === 'OTHER_MOVABLE' ? quantity : 1) || 1,
+          landedCostGhs: reservePriceGhs,
+          condition: 'GOOD',
+          lastCountDate: isoNow,
+        };
+        await db.inventoryItems.add(invItem);
+        await syncEngine.queueMutation('inventoryItems', invId, 'CREATE', invItem);
+      }
 
       router.push('/desk/auctions');
     } catch (err) {
@@ -283,7 +349,20 @@ export default function LotIntakePage() {
                       onChange={(e) => setCourtOrderDocUrl(e.target.value)}
                       className="flex-1 px-3 py-2 text-sm rounded-lg border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-xs"
                     />
-                    <Button type="button" size="sm" variant="outline" icon={<Upload className="h-4 w-4" />}>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      accept=".pdf,image/*"
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      icon={<Upload className="h-4 w-4" />}
+                    >
                       Upload Order
                     </Button>
                   </div>
@@ -414,14 +493,19 @@ export default function LotIntakePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Lot Sequence Code *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Lot Sequence Code *
+                  </label>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                    Next Auto: {computedNextLotNumber}
+                  </span>
+                </div>
                 <input
                   type="text"
-                  required
                   value={lotNumber}
                   onChange={(e) => setLotNumber(e.target.value)}
+                  placeholder={computedNextLotNumber}
                   className="w-full px-3 py-2 text-sm font-bold font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                 />
               </div>
@@ -715,6 +799,31 @@ export default function LotIntakePage() {
               </div>
             </div>
           </div>
+
+          {/* General Inventory / Fixed Assets Auto-registration */}
+          {assetType === 'MOVABLE' && (
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                  Register in General Inventory &amp; Asset Register
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Automatically create an inventory tracking item in the Auction Yard warehouse ledger
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoRegisterInventory}
+                  onChange={(e) => setAutoRegisterInventory(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                />
+                <span className="ml-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Enable
+                </span>
+              </label>
+            </div>
+          )}
 
           <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
             <Link href="/desk/auctions">

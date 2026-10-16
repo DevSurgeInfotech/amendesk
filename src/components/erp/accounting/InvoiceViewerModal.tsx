@@ -37,7 +37,7 @@ export function InvoiceViewerModal({
     >
       <div className="space-y-6">
         {/* Printable Invoice Container */}
-        <div id="printable-invoice" className="p-6 bg-white text-slate-900 border border-slate-200 rounded-xl space-y-6">
+        <div id="printable-invoice" className="a4-document-container p-6 bg-white text-slate-900 border border-slate-200 rounded-xl space-y-6">
           {/* Header */}
           <div className="flex justify-between items-start border-b border-slate-200 pb-4">
             <div>
@@ -188,7 +188,7 @@ export function InvoiceViewerModal({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
+        <div className="no-print flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
           <Button variant="outline" size="sm" onClick={onClose}>
             Close
           </Button>

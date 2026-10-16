@@ -9,7 +9,11 @@ import type {
   MoMoNetwork,
   Receipt,
   PaymentSplit,
+  PaymentPlan,
+  Customer,
+  CashShift,
 } from '@/lib/types';
+import { useTerminal } from '@/context/TerminalContext';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
 import { formatGHS } from '@/lib/utils/currency';
@@ -64,6 +68,18 @@ function generateGeneralRefId(): string {
   return `gen-${Date.now()}`;
 }
 
+function generatePlanId(): string {
+  return `plan-${Date.now()}`;
+}
+
+function generateShiftId(): string {
+  return `shift-${Date.now()}`;
+}
+
+function generateShiftNumber(): string {
+  return `SHF-${Date.now().toString().slice(-6)}`;
+}
+
 type PaymentView = 'terminal' | 'shift' | 'collections';
 
 const viewMeta: Record<
@@ -107,22 +123,34 @@ function RecordPaymentContent() {
   const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
   const paymentPlans = useLiveQuery(() => db.paymentPlans.toArray(), []) || [];
   const receipts = useLiveQuery(() => db.receipts.orderBy('printedAt').reverse().toArray(), []) || [];
+  const shifts = useLiveQuery(() => db.cashShifts.toArray(), []) || [];
 
   // Active cashier & shift
-  const cashierName = 'Mary Afriyie';
+  const { currentStaffName } = useTerminal();
+  const cashierName = currentStaffName || 'Mary Afriyie';
   const issuedLocation = 'Front Desk — Amen Mart Tema';
+
+  // Category & ID query parameters
+  const categoryParam = searchParams.get('category');
+  const idParam = searchParams.get('id');
+
+  const defaultCategory =
+    categoryParam && ['AUCTION', 'DEALERSHIP', 'LAND', 'PROPERTY', 'INVOICE', 'GENERAL'].includes(categoryParam)
+      ? (categoryParam as 'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY' | 'INVOICE' | 'GENERAL')
+      : 'AUCTION';
 
   // Category of item being paid
   const [targetCategory, setTargetCategory] = useState<
     'AUCTION' | 'DEALERSHIP' | 'LAND' | 'PROPERTY' | 'INVOICE' | 'GENERAL'
-  >('AUCTION');
+  >(defaultCategory);
 
   // Selected item reference
-  const [selectedLotId, setSelectedLotId] = useState('');
-  const [selectedVehicleId, setSelectedVehicleId] = useState('');
-  const [selectedLandId, setSelectedLandId] = useState('');
-  const [selectedPropertyId, setSelectedPropertyId] = useState('');
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState('');
+  const [selectedLotId, setSelectedLotId] = useState(defaultCategory === 'AUCTION' && idParam ? idParam : '');
+  const [selectedVehicleId, setSelectedVehicleId] = useState(defaultCategory === 'DEALERSHIP' && idParam ? idParam : '');
+  const [selectedLandId, setSelectedLandId] = useState(defaultCategory === 'LAND' && idParam ? idParam : '');
+  const [selectedPropertyId, setSelectedPropertyId] = useState(defaultCategory === 'PROPERTY' && idParam ? idParam : '');
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(defaultCategory === 'INVOICE' && idParam ? idParam : '');
+  const [shiftSuccessMsg, setShiftSuccessMsg] = useState('');
 
   // General particulars
   const [generalTitle, setGeneralTitle] = useState('Bidder Registration Fee (Catalog)');
@@ -242,9 +270,34 @@ function RecordPaymentContent() {
     }
   };
 
+  // Auto-derived particulars for items pre-selected via URL or selector
+  const activeLot = lots.find((l) => l.id === selectedLotId);
+  const activeInvoice = invoices.find((i) => i.id === selectedInvoiceId);
+
+  const effectiveCustomerId =
+    customerId ||
+    (targetCategory === 'AUCTION' ? activeLot?.winningBidderId || '' : '') ||
+    (targetCategory === 'INVOICE' ? activeInvoice?.customerId || '' : '');
+
+  const effectiveCustomerName =
+    customerName ||
+    (targetCategory === 'AUCTION' ? activeLot?.winningBidderName || '' : '') ||
+    (targetCategory === 'INVOICE' ? activeInvoice?.customerName || '' : '');
+
+  const effectiveCustomerPhone =
+    customerPhone ||
+    (targetCategory === 'AUCTION' ? activeLot?.winningBidderPhone || '' : '') ||
+    (targetCategory === 'INVOICE' ? activeInvoice?.customerPhone || '' : '');
+
+  const effectiveCustomerGhanaCard =
+    customerGhanaCard ||
+    (targetCategory === 'INVOICE' ? activeInvoice?.customerGhanaCard || '' : '');
+
+  const effectiveAmountToPay = amountPaid > 0 ? amountPaid : currentBalanceDue;
+
   const totalPaidComputed = isSplitPayment
     ? splits.reduce((acc, s) => acc + (Number(s.amountGhs) || 0), 0)
-    : amountPaid;
+    : effectiveAmountToPay;
 
   const changeDue = singleMethod === 'CASH' && cashTendered > totalPaidComputed
     ? cashTendered - totalPaidComputed
@@ -276,7 +329,12 @@ function RecordPaymentContent() {
       return;
     }
 
-    if (!customerName) {
+    const finalCustomerName = (customerName || effectiveCustomerName).trim();
+    const finalCustomerPhone = (customerPhone || effectiveCustomerPhone).trim();
+    const finalCustomerGhanaCard = (customerGhanaCard || effectiveCustomerGhanaCard).trim();
+    const finalCustomerId = customerId || effectiveCustomerId || generateCustomerId();
+
+    if (!finalCustomerName) {
       setErrorMsg('Please specify or select customer particulars');
       return;
     }
@@ -287,15 +345,35 @@ function RecordPaymentContent() {
       const newBalanceRemaining = Math.max(0, currentBalanceDue - totalPaidComputed);
       const isSettled = newBalanceRemaining === 0;
 
+      // Auto-register walk-in customer in database if not existing
+      if (finalCustomerName && finalCustomerPhone) {
+        const existingCust = customers.find((c) => c.phone === finalCustomerPhone || c.id === finalCustomerId);
+        if (!existingCust) {
+          const newCust: Customer = {
+            id: finalCustomerId,
+            fullName: finalCustomerName,
+            phone: finalCustomerPhone,
+            email: '',
+            ghanaCardNumber: finalCustomerGhanaCard || '',
+            address: 'Walk-in Cash Office',
+            customerType: 'INDIVIDUAL',
+            kycVerified: Boolean(finalCustomerGhanaCard),
+            createdAt: getIsoTimestamp(),
+          };
+          await db.customers.add(newCust);
+          await syncEngine.queueMutation('customers', newCust.id, 'CREATE', newCust);
+        }
+      }
+
       const receipt: Receipt = {
         id: generateReceiptId(),
         receiptNumber,
         referenceType,
         referenceId: referenceId === 'gen-service' ? generateGeneralRefId() : referenceId,
         referenceTitle,
-        customerId: customerId || generateCustomerId(),
-        customerName,
-        customerPhone,
+        customerId: finalCustomerId,
+        customerName: finalCustomerName,
+        customerPhone: finalCustomerPhone,
         amountPaidGhs: totalPaidComputed,
         paymentMethod: isSplitPayment ? 'CASH' : singleMethod,
         momoNetwork: !isSplitPayment && singleMethod === 'MOMO' ? singleMomoNet : undefined,
@@ -345,25 +423,112 @@ function RecordPaymentContent() {
 
       // 2. Update Dealership Vehicle if applicable
       if (targetCategory === 'DEALERSHIP' && selectedVehicleId) {
-        if (isSettled) {
-          await db.dealershipVehicles.update(selectedVehicleId, { status: 'SOLD' });
-          await syncEngine.queueMutation('dealershipVehicles', selectedVehicleId, 'UPDATE', { status: 'SOLD' });
+        const newVehicleStatus = isSettled ? 'SOLD' : 'RESERVED';
+        await db.dealershipVehicles.update(selectedVehicleId, { status: newVehicleStatus });
+        await syncEngine.queueMutation('dealershipVehicles', selectedVehicleId, 'UPDATE', { status: newVehicleStatus });
+
+        const plan = paymentPlans.find((p) => p.referenceId === selectedVehicleId);
+        if (plan) {
+          await db.paymentPlans.update(plan.id, {
+            depositPaidGhs: plan.depositPaidGhs + totalPaidComputed,
+            balanceRemainingGhs: newBalanceRemaining,
+            status: isSettled ? 'PAID_IN_FULL' : 'AWAITING_BALANCE',
+          });
+        } else if (!isSettled) {
+          const newPlan: PaymentPlan = {
+            id: generatePlanId(),
+            referenceType: 'DEALERSHIP',
+            referenceId: selectedVehicleId,
+            referenceTitle,
+            customerId: customerId || generateCustomerId(),
+            customerName,
+            customerPhone,
+            totalPriceGhs: currentBalanceDue,
+            depositPaidGhs: totalPaidComputed,
+            balanceRemainingGhs: newBalanceRemaining,
+            initialDueDate: calculate14DayDueDate(),
+            currentDueDate: calculate14DayDueDate(),
+            status: 'AWAITING_BALANCE',
+            extensions: [],
+            createdAt: getIsoTimestamp(),
+            updatedAt: getIsoTimestamp(),
+          };
+          await db.paymentPlans.add(newPlan);
+          await syncEngine.queueMutation('paymentPlans', newPlan.id, 'CREATE', newPlan);
         }
       }
 
       // 3. Update Land Parcel if applicable
       if (targetCategory === 'LAND' && selectedLandId) {
-        if (isSettled) {
-          await db.landParcels.update(selectedLandId, { status: 'SOLD' });
-          await syncEngine.queueMutation('landParcels', selectedLandId, 'UPDATE', { status: 'SOLD' });
+        const newLandStatus = isSettled ? 'SOLD' : 'RESERVED';
+        await db.landParcels.update(selectedLandId, { status: newLandStatus });
+        await syncEngine.queueMutation('landParcels', selectedLandId, 'UPDATE', { status: newLandStatus });
+
+        const plan = paymentPlans.find((p) => p.referenceId === selectedLandId);
+        if (plan) {
+          await db.paymentPlans.update(plan.id, {
+            depositPaidGhs: plan.depositPaidGhs + totalPaidComputed,
+            balanceRemainingGhs: newBalanceRemaining,
+            status: isSettled ? 'PAID_IN_FULL' : 'AWAITING_BALANCE',
+          });
+        } else if (!isSettled) {
+          const newPlan: PaymentPlan = {
+            id: generatePlanId(),
+            referenceType: 'LAND',
+            referenceId: selectedLandId,
+            referenceTitle,
+            customerId: customerId || generateCustomerId(),
+            customerName,
+            customerPhone,
+            totalPriceGhs: currentBalanceDue,
+            depositPaidGhs: totalPaidComputed,
+            balanceRemainingGhs: newBalanceRemaining,
+            initialDueDate: calculate14DayDueDate(),
+            currentDueDate: calculate14DayDueDate(),
+            status: 'AWAITING_BALANCE',
+            extensions: [],
+            createdAt: getIsoTimestamp(),
+            updatedAt: getIsoTimestamp(),
+          };
+          await db.paymentPlans.add(newPlan);
+          await syncEngine.queueMutation('paymentPlans', newPlan.id, 'CREATE', newPlan);
         }
       }
 
       // 4. Update Property Unit if applicable
       if (targetCategory === 'PROPERTY' && selectedPropertyId) {
-        if (isSettled) {
-          await db.propertyUnits.update(selectedPropertyId, { status: 'SOLD' });
-          await syncEngine.queueMutation('propertyUnits', selectedPropertyId, 'UPDATE', { status: 'SOLD' });
+        const newPropStatus = isSettled ? 'SOLD' : 'RESERVED';
+        await db.propertyUnits.update(selectedPropertyId, { status: newPropStatus });
+        await syncEngine.queueMutation('propertyUnits', selectedPropertyId, 'UPDATE', { status: newPropStatus });
+
+        const plan = paymentPlans.find((p) => p.referenceId === selectedPropertyId);
+        if (plan) {
+          await db.paymentPlans.update(plan.id, {
+            depositPaidGhs: plan.depositPaidGhs + totalPaidComputed,
+            balanceRemainingGhs: newBalanceRemaining,
+            status: isSettled ? 'PAID_IN_FULL' : 'AWAITING_BALANCE',
+          });
+        } else if (!isSettled) {
+          const newPlan: PaymentPlan = {
+            id: generatePlanId(),
+            referenceType: 'PROPERTY',
+            referenceId: selectedPropertyId,
+            referenceTitle,
+            customerId: customerId || generateCustomerId(),
+            customerName,
+            customerPhone,
+            totalPriceGhs: currentBalanceDue,
+            depositPaidGhs: totalPaidComputed,
+            balanceRemainingGhs: newBalanceRemaining,
+            initialDueDate: calculate14DayDueDate(),
+            currentDueDate: calculate14DayDueDate(),
+            status: 'AWAITING_BALANCE',
+            extensions: [],
+            createdAt: getIsoTimestamp(),
+            updatedAt: getIsoTimestamp(),
+          };
+          await db.paymentPlans.add(newPlan);
+          await syncEngine.queueMutation('paymentPlans', newPlan.id, 'CREATE', newPlan);
         }
       }
 
@@ -388,7 +553,7 @@ function RecordPaymentContent() {
 
       await syncEngine.queueMutation('receipts', receipt.id, 'CREATE', receipt);
 
-      // Post double-entry to General Ledger
+      // Post double-entry to General Ledger with split support
       try {
         await postPaymentReceiptLedger(
           receipt.receiptNumber,
@@ -399,7 +564,8 @@ function RecordPaymentContent() {
           receipt.paymentMethod,
           cashierName,
           receipt.momoNetwork,
-          singleBankName
+          singleBankName,
+          isSplitPayment ? splits : undefined
         );
       } catch (glErr) {
         console.warn('GL Posting note:', glErr);
@@ -423,6 +589,38 @@ function RecordPaymentContent() {
   const todayCash = todayReceipts.filter((r) => r.paymentMethod === 'CASH').reduce((acc, r) => acc + r.amountPaidGhs, 0);
   const todayMomo = todayReceipts.filter((r) => r.paymentMethod === 'MOMO').reduce((acc, r) => acc + r.amountPaidGhs, 0);
   const todayBank = todayReceipts.filter((r) => r.paymentMethod === 'BANK_TRANSFER').reduce((acc, r) => acc + r.amountPaidGhs, 0);
+
+  const todayShift = shifts.find(
+    (s) => s.shiftDate === getTodayDatePrefix() && s.cashierName === cashierName
+  );
+
+  const handleVerifyCloseShift = async () => {
+    const shiftRecord: CashShift = {
+      id: todayShift?.id || generateShiftId(),
+      shiftNumber: todayShift?.shiftNumber || generateShiftNumber(),
+      cashierName,
+      facilityLocation: issuedLocation,
+      shiftDate: getTodayDatePrefix(),
+      openingFloatGhs: 5000,
+      cashCollectionsGhs: todayCash,
+      momoCollectionsGhs: todayMomo,
+      bankCollectionsGhs: todayBank,
+      cardCollectionsGhs: todayReceipts
+        .filter((r) => r.paymentMethod === 'CARD_PAYSTACK')
+        .reduce((acc, r) => acc + r.amountPaidGhs, 0),
+      cashDisbursementsGhs: 0,
+      expectedCashInDrawerGhs: 5000 + todayCash,
+      actualCashInDrawerGhs: 5000 + todayCash,
+      varianceGhs: 0,
+      notes: 'Shift balanced and verified at front desk till.',
+      status: 'CLOSED',
+      closedAt: getIsoTimestamp(),
+    };
+
+    await db.cashShifts.put(shiftRecord);
+    await syncEngine.queueMutation('cashShifts', shiftRecord.id, todayShift ? 'UPDATE' : 'CREATE', shiftRecord);
+    setShiftSuccessMsg(`Shift verified and closed successfully! Expected Till Cash: ${formatGHS(5000 + todayCash)}`);
+  };
 
   // Filtered recent receipts
   const filteredRecent = receipts.filter((r) => {
@@ -585,11 +783,13 @@ function RecordPaymentContent() {
                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                   >
                     <option value="">-- Select Auction Lot with Balance Due --</option>
-                    {lots.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.lotNumber}: {l.title} (Bal Due: {formatGHS(l.balanceDueGhs || 0)}) &bull; {l.winningBidderName || 'Unassigned'}
-                      </option>
-                    ))}
+                    {lots
+                      .filter((l) => (l.balanceDueGhs ?? 0) > 0 || l.status === 'AWAITING_BALANCE' || l.status === 'ACTIVE')
+                      .map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.lotNumber}: {l.title} (Bal Due: {formatGHS(l.balanceDueGhs || 0)}) &bull; {l.winningBidderName || 'Unassigned'}
+                        </option>
+                      ))}
                   </select>
                 </div>
               )}
@@ -610,11 +810,13 @@ function RecordPaymentContent() {
                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                   >
                     <option value="">-- Select Vehicle from Stock --</option>
-                    {vehicles.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.stockNumber}: {v.year} {v.make} {v.model} &bull; Asking: {formatGHS(v.askingPriceGhs)} ({v.status})
-                      </option>
-                    ))}
+                    {vehicles
+                      .filter((v) => v.status !== 'SOLD')
+                      .map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.stockNumber}: {v.year} {v.make} {v.model} &bull; Asking: {formatGHS(v.askingPriceGhs)} ({v.status})
+                        </option>
+                      ))}
                   </select>
                 </div>
               )}
@@ -635,11 +837,13 @@ function RecordPaymentContent() {
                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                   >
                     <option value="">-- Select Land Parcel --</option>
-                    {landParcels.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.siteRef}: {l.title} &bull; Price: {formatGHS(l.priceGhs)} ({l.location})
-                      </option>
-                    ))}
+                    {landParcels
+                      .filter((l) => l.status !== 'SOLD')
+                      .map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.siteRef}: {l.title} &bull; Price: {formatGHS(l.priceGhs)} ({l.location})
+                        </option>
+                      ))}
                   </select>
                 </div>
               )}
@@ -660,11 +864,13 @@ function RecordPaymentContent() {
                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                   >
                     <option value="">-- Select Property Unit --</option>
-                    {properties.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.unitRef}: {p.title} &bull; Price: {formatGHS(p.priceGhs)} ({p.location})
-                      </option>
-                    ))}
+                    {properties
+                      .filter((p) => p.status !== 'SOLD')
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.unitRef}: {p.title} &bull; Price: {formatGHS(p.priceGhs)} ({p.location})
+                        </option>
+                      ))}
                   </select>
                 </div>
               )}
@@ -1134,10 +1340,16 @@ function RecordPaymentContent() {
       {activeView === 'shift' && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+            {shiftSuccessMsg && (
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span>{shiftSuccessMsg}</span>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
-                <span className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                  Drawer Status: Active &bull; In-Balance
+                <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${todayShift?.status === 'CLOSED' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'}`}>
+                  Drawer Status: {todayShift?.status === 'CLOSED' ? `Closed at ${todayShift.closedAt ? formatDateTime(todayShift.closedAt) : 'End of Shift'}` : 'Active • In-Balance'}
                 </span>
                 <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
                   Cash Drawer &amp; Till Shift Balancing
@@ -1150,11 +1362,11 @@ function RecordPaymentContent() {
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  variant="primary"
+                  variant={todayShift?.status === 'CLOSED' ? 'outline' : 'primary'}
                   icon={<CheckCircle className="h-4 w-4" />}
-                  onClick={() => alert(`Shift Drawer Count verified and matched! Expected Till Cash: GH₵ ${(5000 + todayCash).toLocaleString()}`)}
+                  onClick={handleVerifyCloseShift}
                 >
-                  Verify &amp; Close Shift
+                  {todayShift?.status === 'CLOSED' ? 'Re-Verify & Save Shift' : 'Verify & Close Shift'}
                 </Button>
               </div>
             </div>

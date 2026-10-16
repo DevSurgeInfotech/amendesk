@@ -15,6 +15,7 @@ export type UserRole =
 interface TerminalContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
+  currentStaffName: string;
   facilityLocation: string;
   isOnline: boolean;
   pendingSyncCount: number;
@@ -22,6 +23,15 @@ interface TerminalContextType {
   resetDatabase: () => Promise<void>;
   isDbReady: boolean;
 }
+
+const ROLE_STAFF_NAMES: Record<UserRole, string> = {
+  ADMIN: 'Kwesi Boateng (Managing Director)',
+  ACCOUNTANT: 'Esi Mansa (Chief Accountant)',
+  AUCTION_MANAGER: 'Kofi Asante (Chief Auctioneer)',
+  CASHIER: 'Mary Afriyie (Senior Cashier)',
+  DEALERSHIP_AGENT: 'Yaw Osei (Showroom Manager)',
+  INVENTORY_OFFICER: 'David Mensah (Yard Supervisor)',
+};
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
 
@@ -62,6 +72,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       value={{
         role,
         setRole,
+        currentStaffName: ROLE_STAFF_NAMES[role],
         facilityLocation,
         isOnline,
         pendingSyncCount,
