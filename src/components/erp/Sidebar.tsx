@@ -236,13 +236,12 @@ export function Sidebar() {
           boxShadow: '4px 0 24px -4px rgba(15, 23, 42, 0.08), 1px 0 3px 0 rgba(15, 23, 42, 0.04)',
         }}
       >
-        {/* Brand Header */}
+        {/* Brand Header — Far Left Unified Topbar Alignment */}
         <div
           className={cn(
-            'flex items-center flex-shrink-0 border-b transition-all duration-300',
-            collapsed ? 'h-[88px] justify-center px-2' : 'h-[88px] px-3.5 justify-center'
+            'flex items-center flex-shrink-0 border-b border-slate-200 dark:border-slate-800 transition-all duration-300',
+            collapsed ? 'h-[76px] justify-center px-2' : 'h-[76px] px-4 justify-start'
           )}
-          style={{ borderColor: 'var(--sidebar-divider, #f1f5f9)' }}
         >
           {collapsed ? (
             <Link

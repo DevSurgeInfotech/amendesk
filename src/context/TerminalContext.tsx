@@ -1,6 +1,13 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
 
@@ -16,6 +23,8 @@ interface TerminalContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   currentStaffName: string;
+  staffAvatarUrl: string | null;
+  setStaffAvatarUrl: (dataUrl: string | null) => void;
   facilityLocation: string;
   isOnline: boolean;
   pendingSyncCount: number;
@@ -33,6 +42,29 @@ const ROLE_STAFF_NAMES: Record<UserRole, string> = {
   INVENTORY_OFFICER: 'David Mensah (Yard Supervisor)',
 };
 
+const AVATAR_STORAGE_KEY = 'amendesk_staff_avatar';
+
+function subscribeAvatar(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener('amendesk-avatar-change', callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('amendesk-avatar-change', callback);
+  };
+}
+
+function getAvatarSnapshot(): string | null {
+  try {
+    return localStorage.getItem(AVATAR_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function getServerAvatarSnapshot(): string | null {
+  return null;
+}
+
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
 
 export function TerminalProvider({ children }: { children: ReactNode }) {
@@ -41,6 +73,25 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isDbReady, setIsDbReady] = useState(false);
+
+  const staffAvatarUrl = useSyncExternalStore(
+    subscribeAvatar,
+    getAvatarSnapshot,
+    getServerAvatarSnapshot
+  );
+
+  const setStaffAvatarUrl = (dataUrl: string | null) => {
+    try {
+      if (dataUrl) {
+        localStorage.setItem(AVATAR_STORAGE_KEY, dataUrl);
+      } else {
+        localStorage.removeItem(AVATAR_STORAGE_KEY);
+      }
+      window.dispatchEvent(new Event('amendesk-avatar-change'));
+    } catch (err) {
+      console.error('Failed to persist staff avatar in localStorage:', err);
+    }
+  };
 
   useEffect(() => {
     // Populate DB on client-side boot if empty
@@ -73,6 +124,8 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         role,
         setRole,
         currentStaffName: ROLE_STAFF_NAMES[role],
+        staffAvatarUrl,
+        setStaffAvatarUrl,
         facilityLocation,
         isOnline,
         pendingSyncCount,
