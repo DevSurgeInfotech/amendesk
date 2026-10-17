@@ -1032,15 +1032,15 @@ export function Topbar() {
       {/* Global Search Command Palette Modal (Ctrl+K) */}
       {searchOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 px-4"
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6"
           onClick={() => setSearchOpen(false)}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+            className="w-full max-w-2xl max-h-[82vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search Input Header */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+            <div className="shrink-0 flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
               <Search className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <input
                 ref={searchInputRef}
@@ -1094,7 +1094,7 @@ export function Topbar() {
             </div>
 
             {/* Search Results List */}
-            <div className="max-h-[420px] overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 min-h-0 max-h-[340px] overflow-y-auto p-2 space-y-1">
               <div className="px-3 py-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 <span>
                   {searchQuery.trim()
@@ -1189,7 +1189,7 @@ export function Topbar() {
             </div>
 
             {/* Footer Hints */}
-            <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="shrink-0 px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-3">
                 <span>
                   <strong className="font-mono text-slate-700 dark:text-slate-300">↑↓</strong> to navigate
