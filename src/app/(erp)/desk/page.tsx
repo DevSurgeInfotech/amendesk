@@ -155,22 +155,31 @@ export default function DeskDashboardPage() {
 
   const totalRealizedMarginGhs = realizedAuction7PercentMargin + realizedDealerGross;
 
-  // 1. Chart Data: Daily Collections Trend (Last 7-10 Days)
+  // 1. Chart Data: Daily Collections Trend (Continuous 7-Day Window)
   const collectionTrendData: DailyCollectionPoint[] = useMemo(() => {
-    // Generate dates for the last 7 calendar days
-    const days: DailyCollectionPoint[] = [];
-    const now = new Date();
+    // Determine the anchor date: latest receipt date or fallback to current date
+    let anchorDate = new Date();
+    if (receipts.length > 0) {
+      const sortedDates = receipts
+        .map((r) => r.printedAt)
+        .filter(Boolean)
+        .sort();
+      if (sortedDates.length > 0) {
+        const parsed = new Date(sortedDates[sortedDates.length - 1]);
+        if (!isNaN(parsed.getTime())) {
+          anchorDate = parsed;
+        }
+      }
+    }
 
+    const days: DailyCollectionPoint[] = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
+      const d = new Date(anchorDate);
       d.setDate(d.getDate() - i);
       const dateKey = d.toISOString().split('T')[0];
-      const displayLabel = d.toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-      });
+      const parts = dateKey.split('-');
+      const displayLabel = `${parts[2]}/${parts[1]}`;
 
-      // Filter receipts matching this day (comparing date prefix)
       const dayReceipts = receipts.filter((r) => r.printedAt?.startsWith(dateKey));
       const amountGhs = dayReceipts.reduce((acc, r) => acc + r.amountPaidGhs, 0);
 
@@ -180,32 +189,6 @@ export default function DeskDashboardPage() {
         amountGhs,
         count: dayReceipts.length,
       });
-    }
-
-    // If receipts don't have matching dates in the last 7 days (e.g. seed data in September/October),
-    // extract unique receipt dates to display meaningful flow
-    const totalWithData = days.reduce((acc, d) => acc + d.amountGhs, 0);
-    if (totalWithData === 0 && receipts.length > 0) {
-      const dateGroups: Record<string, { amount: number; count: number }> = {};
-      receipts.forEach((r) => {
-        const key = r.printedAt ? r.printedAt.split('T')[0] : '2026-10-15';
-        if (!dateGroups[key]) dateGroups[key] = { amount: 0, count: 0 };
-        dateGroups[key].amount += r.amountPaidGhs;
-        dateGroups[key].count += 1;
-      });
-
-      return Object.entries(dateGroups)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .slice(-7)
-        .map(([dateKey, stats]) => {
-          const parts = dateKey.split('-');
-          return {
-            dateKey,
-            displayLabel: `${parts[2]}/${parts[1]}`,
-            amountGhs: stats.amount,
-            count: stats.count,
-          };
-        });
     }
 
     return days;
@@ -474,44 +457,19 @@ export default function DeskDashboardPage() {
       />
 
       {/* Visual Analytics & Interactive Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Daily Cash Collections Trend (Takes 2 Columns on Desktop) */}
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Daily Cash Collections Trend (Takes 7 Columns on Desktop) */}
+        <div className="lg:col-span-7 min-w-0">
           <TrendBarChart
             data={collectionTrendData}
             title="Daily Cash Collections Velocity"
-            subtitle="Real-time multi-mode receipts flow across past days"
+            subtitle="Real-time multi-mode receipts flow across past 7 days"
             height={190}
           />
         </div>
 
-        {/* Payment Methods / Portfolio Split (Takes 1 Column) */}
-        <div className="lg:col-span-1 space-y-2">
-          <div className="flex justify-end gap-1">
-            <button
-              type="button"
-              onClick={() => setDonutMode('CHANNELS')}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
-                donutMode === 'CHANNELS'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Payment Channels
-            </button>
-            <button
-              type="button"
-              onClick={() => setDonutMode('PORTFOLIO')}
-              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
-                donutMode === 'PORTFOLIO'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Asset Portfolio
-            </button>
-          </div>
-
+        {/* Payment Methods / Portfolio Split (Takes 5 Columns on Desktop) */}
+        <div className="lg:col-span-5 min-w-0">
           <DonutMetricChart
             title={donutMode === 'CHANNELS' ? 'Payment Channels Inflow' : 'Asset Portfolio Valuation'}
             subtitle={
@@ -526,7 +484,33 @@ export default function DeskDashboardPage() {
                 ? formatGHS(totalCollectedGhs)
                 : formatGHS(totalAssetValuation)
             }
-            size={160}
+            size={140}
+            headerAction={
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setDonutMode('CHANNELS')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
+                    donutMode === 'CHANNELS'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  Channels
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDonutMode('PORTFOLIO')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
+                    donutMode === 'PORTFOLIO'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  Portfolio
+                </button>
+              </div>
+            }
           />
         </div>
       </div>
