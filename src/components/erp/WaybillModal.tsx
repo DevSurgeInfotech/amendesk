@@ -118,101 +118,136 @@ export function WaybillModal({ isOpen, onClose, lot, onSuccess }: WaybillModalPr
             </div>
           </div>
 
-          {/* Printable A4 Waybill */}
-          <div className="a4-document-container border border-slate-300 dark:border-slate-700 p-8 rounded-xl bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans shadow-sm">
+          {/* Printable A5 Landscape Waybill */}
+          <div className="a5-document-container border border-slate-300 dark:border-slate-700 p-4 rounded-xl bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans shadow-sm text-[11px] leading-tight">
             {/* Header */}
-            <div className="flex justify-between items-start border-b-2 border-slate-900 dark:border-slate-100 pb-4">
+            <div className="flex justify-between items-start border-b-2 border-slate-900 dark:border-slate-100 pb-2 mb-3">
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-indigo-700 dark:text-indigo-400">
-                  AMEN MART LIMITED
-                </h1>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  Government &amp; Judicial Auctioneers &bull; Asset Liquidators
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-black tracking-tight text-indigo-700 dark:text-indigo-400">
+                    AMEN MART LIMITED
+                  </h1>
+                  <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                    A5 Dispatch Pass
+                  </span>
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Licensed Auctioneers &bull; Government, Judicial &amp; Private Liquidators
                 </p>
-                <p className="text-xs text-slate-500">Tema Motorway Heavy Industrial Area, Accra, Ghana</p>
-                <p className="text-xs text-slate-500">Tel: +233 24 412 8990 / +233 30 223 9011</p>
+                <p className="text-[9px] text-slate-500">
+                  Tema Motorway Heavy Industrial Area &bull; Spintex Showroom &bull; Tel: +233 24 412 8990 / +233 30 223 9011
+                </p>
               </div>
+
               <div className="text-right">
-                <span className="inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold uppercase tracking-wider rounded">
-                  OFFICIAL WAYBILL &amp; GATE PASS
+                <span className="inline-block px-2.5 py-0.5 bg-indigo-700 text-white text-[10px] font-black uppercase tracking-wider rounded">
+                  WAYBILL &amp; GATE PASS
                 </span>
-                <p className="text-base font-black font-mono mt-2 text-slate-900 dark:text-white">
+                <p className="text-sm font-black font-mono mt-1 text-slate-900 dark:text-white">
                   {createdWaybill.waybillNumber}
                 </p>
-                <p className="text-xs text-slate-500">
-                  Date: {formatDateTime(createdWaybill.releasedAt)}
+                <p className="text-[9px] text-slate-500">
+                  {formatDateTime(createdWaybill.releasedAt)}
                 </p>
               </div>
             </div>
 
-            {/* Asset Breakdown */}
-            <div className="mt-6 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-              <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                Disposed Movable Asset Details
+            {/* 2-Column Grid: Asset vs Transport */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Asset Particulars */}
+              <div className="border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
+                <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-1 mb-1">
+                  <span className="font-bold text-[10px] uppercase text-indigo-900 dark:text-indigo-300">
+                    Dispatched Asset Details
+                  </span>
+                  <span className="font-bold text-[10px] px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200">
+                    {lot.category} AUCTION
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <div>
+                    <span className="text-slate-500">Lot Number:</span>
+                    <p className="font-bold font-mono text-slate-900 dark:text-slate-100">{createdWaybill.lotNumber}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Qty Released:</span>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{createdWaybill.quantity} Unit(s)</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-500">Description:</span>
+                    <p className="font-bold text-slate-900 dark:text-slate-100 line-clamp-1">{createdWaybill.assetDescription}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-500">Chassis / Serial / Tag:</span>
+                    <p className="font-mono font-bold text-slate-900 dark:text-slate-100">{createdWaybill.identifier}</p>
+                  </div>
+                </div>
               </div>
-              <div className="p-4 grid grid-cols-2 gap-4 text-xs">
-                <div>
-                  <span className="text-slate-500">Auction Lot No:</span>
-                  <p className="font-bold text-sm">{createdWaybill.lotNumber}</p>
+
+              {/* Consignee & Transport Particulars */}
+              <div className="border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
+                <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-1 mb-1">
+                  <span className="font-bold text-[10px] uppercase text-slate-900 dark:text-slate-200">
+                    Consignee &amp; Haulage
+                  </span>
+                  <span className="text-[9px] text-slate-500">Gate Verification</span>
                 </div>
-                <div>
-                  <span className="text-slate-500">Asset Category:</span>
-                  <p className="font-semibold">{lot.category} AUCTION</p>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-slate-500">Asset Description:</span>
-                  <p className="font-bold text-sm">{createdWaybill.assetDescription}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500">Chassis / Serial No:</span>
-                  <p className="font-mono font-bold">{createdWaybill.identifier}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500">Quantity Dispatched:</span>
-                  <p className="font-bold">{createdWaybill.quantity} Unit(s)</p>
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <div className="col-span-2">
+                    <span className="text-slate-500">Buyer / Consignee:</span>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{createdWaybill.buyerName} ({createdWaybill.buyerPhone})</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Transporter / Driver:</span>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{createdWaybill.driverName}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Driver Phone:</span>
+                    <p className="font-mono text-slate-900 dark:text-slate-100">{createdWaybill.driverPhone}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Driver Ghana Card:</span>
+                    <p className="font-mono font-bold text-slate-900 dark:text-slate-100">{createdWaybill.driverGhanaCard || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Vehicle Plate No:</span>
+                    <p className="font-mono font-bold text-slate-900 dark:text-slate-100">{createdWaybill.vehiclePlateNo}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-500">Destination:</span>
+                    <p className="text-slate-800 dark:text-slate-200 line-clamp-1">{createdWaybill.destinationAddress}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Consignee & Transport */}
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 text-xs space-y-1">
-                <p className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] border-b pb-1">
-                  Consignee / Buyer
-                </p>
-                <p className="font-bold text-sm">{createdWaybill.buyerName}</p>
-                <p className="text-slate-500">Contact: {createdWaybill.buyerPhone}</p>
-                <p className="text-slate-500">Destination: {createdWaybill.destinationAddress}</p>
+            {/* Verification Signatures & Security Stamp Box */}
+            <div className="border-t border-slate-300 dark:border-slate-700 pt-2 grid grid-cols-4 gap-2 text-center text-[9px]">
+              <div>
+                <div className="h-7 border-b border-dashed border-slate-400 mb-1" />
+                <p className="font-bold text-slate-800 dark:text-slate-200">{createdWaybill.authorizedBy}</p>
+                <p className="text-slate-500">Auction Manager</p>
               </div>
-
-              <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 text-xs space-y-1">
-                <p className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] border-b pb-1">
-                  Hauler / Driver Particulars
-                </p>
-                <p className="font-bold">{createdWaybill.driverName}</p>
-                <p className="text-slate-500">Driver Phone: {createdWaybill.driverPhone}</p>
-                <p className="text-slate-500">Ghana Card: {createdWaybill.driverGhanaCard || 'N/A'}</p>
-                <p className="text-slate-500">Transport Vehicle Reg: {createdWaybill.vehiclePlateNo}</p>
+              <div>
+                <div className="h-7 border-b border-dashed border-slate-400 mb-1" />
+                <p className="font-bold text-slate-800 dark:text-slate-200">{createdWaybill.gateOfficerName}</p>
+                <p className="text-slate-500">Gate Security Officer</p>
+              </div>
+              <div>
+                <div className="h-7 border-b border-dashed border-slate-400 mb-1" />
+                <p className="font-bold text-slate-800 dark:text-slate-200">{createdWaybill.driverName}</p>
+                <p className="text-slate-500">Receiving Transporter</p>
+              </div>
+              <div className="border border-dashed border-slate-400 rounded p-1 flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-900">
+                <span className="text-[8px] font-black uppercase text-slate-400 tracking-wider">OFFICIAL STAMP</span>
+                <span className="text-[7px] text-slate-400">YARD GATE SECURITY</span>
               </div>
             </div>
 
-            {/* Signatures */}
-            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-6 text-center text-xs">
-              <div>
-                <div className="h-10 border-b border-dashed border-slate-400 mb-1" />
-                <p className="font-bold">{createdWaybill.authorizedBy}</p>
-                <p className="text-[10px] text-slate-500">Auction Manager</p>
-              </div>
-              <div>
-                <div className="h-10 border-b border-dashed border-slate-400 mb-1" />
-                <p className="font-bold">{createdWaybill.gateOfficerName}</p>
-                <p className="text-[10px] text-slate-500">Gate Security Clearance</p>
-              </div>
-              <div>
-                <div className="h-10 border-b border-dashed border-slate-400 mb-1" />
-                <p className="font-bold">{createdWaybill.driverName}</p>
-                <p className="text-[10px] text-slate-500">Driver Receiving Goods</p>
-              </div>
+            {/* Legal Footnote */}
+            <div className="mt-2 pt-1 border-t border-slate-200 dark:border-slate-800 flex justify-between text-[8px] text-slate-400">
+              <span>Standard A5 Format &bull; Goods once cleared past security gate become buyer liability.</span>
+              <span>Amen Mart Local Ledger Registry &bull; Offline-First Clearance</span>
             </div>
           </div>
         </div>

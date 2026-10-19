@@ -96,14 +96,14 @@ body {
     display: block !important;
   }
 
-  /* Isolate printable receipt or A4 document from background ERP shell & modal chrome */
-  body:has(.thermal-receipt-container, .a4-document-container)
-    *:not(:has(.thermal-receipt-container, .a4-document-container)):not(.thermal-receipt-container):not(.thermal-receipt-container *):not(.a4-document-container):not(.a4-document-container *) {
+  /* Isolate printable receipt, A4 document, or A5 waybill from background ERP shell & modal chrome */
+  body:has(.thermal-receipt-container, .a4-document-container, .a5-document-container)
+    *:not(:has(.thermal-receipt-container, .a4-document-container, .a5-document-container)):not(.thermal-receipt-container):not(.thermal-receipt-container *):not(.a4-document-container):not(.a4-document-container *):not(.a5-document-container):not(.a5-document-container *) {
     display: none !important;
   }
 
-  body:has(.thermal-receipt-container, .a4-document-container)
-    *:has(.thermal-receipt-container, .a4-document-container) {
+  body:has(.thermal-receipt-container, .a4-document-container, .a5-document-container)
+    *:has(.thermal-receipt-container, .a4-document-container, .a5-document-container) {
     position: static !important;
     overflow: visible !important;
     background: transparent !important;
@@ -140,8 +140,23 @@ body {
     color: #000 !important;
   }
 
+  /* A5 document mode (Waybill & Gate Pass: 210mm x 148mm landscape) */
+  .a5-document-container {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 144mm !important;
+    max-height: 148mm !important;
+    margin: 0 auto !important;
+    padding: 6mm 8mm !important;
+    box-sizing: border-box !important;
+    background: #fff !important;
+    color: #000 !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
   @page {
-    margin: 6mm;
+    margin: 4mm;
     size: auto;
   }
 }

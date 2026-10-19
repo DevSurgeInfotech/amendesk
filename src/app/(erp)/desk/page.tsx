@@ -1,113 +1,438 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { AuctionLot } from '@/lib/types';
+import { useTerminal } from '@/context/TerminalContext';
 import { formatGHS } from '@/lib/utils/currency';
-import { getInstalmentWindowInfo, formatDate } from '@/lib/utils/date';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PaymentModal } from '@/components/erp/PaymentModal';
 import { ExtensionModal } from '@/components/erp/ExtensionModal';
-import Link from 'next/link';
+import { WaybillModal } from '@/components/erp/WaybillModal';
+import { RecordExpenseModal } from '@/components/erp/accounting/RecordExpenseModal';
+import { BankDepositModal } from '@/components/erp/accounting/BankDepositModal';
+import { QuickActionBar } from '@/components/erp/dashboard/QuickActionBar';
+import { VehicleIntakeModal } from '@/components/erp/dashboard/VehicleIntakeModal';
+import { OperationalAlerts } from '@/components/erp/dashboard/OperationalAlerts';
+import { LineOfOperationsPulse } from '@/components/erp/dashboard/LineOfOperationsPulse';
+import { SettlementWatchlist } from '@/components/erp/dashboard/SettlementWatchlist';
+import { TrendBarChart, type DailyCollectionPoint } from '@/components/erp/dashboard/charts/TrendBarChart';
+import { DonutMetricChart, type DonutSegment } from '@/components/erp/dashboard/charts/DonutMetricChart';
 import {
-  Gavel,
-  Receipt,
-  ArrowRight,
-  PlusCircle,
-  CreditCard,
-  ShieldAlert,
-  Building2,
-  Layers,
+  Wifi,
+  WifiOff,
+  MapPin,
+  UserCheck,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function DeskDashboardPage() {
-  const lots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
-  const receipts = useLiveQuery(() => db.receipts.toArray(), []) || [];
-  const paymentPlans = useLiveQuery(() => db.paymentPlans.toArray(), []) || [];
-  const invoices = useLiveQuery(() => db.invoices.toArray(), []) || [];
+  const { currentStaffName, facilityLocation, isOnline, pendingSyncCount, triggerManualSync } =
+    useTerminal();
 
+  // Live Dexie database collections with stable references
+  const rawLots = useLiveQuery(() => db.auctionLots.toArray(), []);
+  const lots = useMemo(() => rawLots || [], [rawLots]);
+
+  const rawReceipts = useLiveQuery(() => db.receipts.toArray(), []);
+  const receipts = useMemo(() => rawReceipts || [], [rawReceipts]);
+
+  const rawPaymentPlans = useLiveQuery(() => db.paymentPlans.toArray(), []);
+  const paymentPlans = useMemo(() => rawPaymentPlans || [], [rawPaymentPlans]);
+
+  const rawInvoices = useLiveQuery(() => db.invoices.toArray(), []);
+  const invoices = useMemo(() => rawInvoices || [], [rawInvoices]);
+
+  const rawVehicles = useLiveQuery(() => db.dealershipVehicles.toArray(), []);
+  const vehicles = useMemo(() => rawVehicles || [], [rawVehicles]);
+
+  const rawLandParcels = useLiveQuery(() => db.landParcels.toArray(), []);
+  const landParcels = useMemo(() => rawLandParcels || [], [rawLandParcels]);
+
+  const rawProperties = useLiveQuery(() => db.propertyUnits.toArray(), []);
+  const properties = useMemo(() => rawProperties || [], [rawProperties]);
+
+  // Modal States
   const [selectedLotForPayment, setSelectedLotForPayment] = useState<AuctionLot | null>(null);
+  const [isGeneralPaymentOpen, setIsGeneralPaymentOpen] = useState(false);
   const [selectedLotForExtension, setSelectedLotForExtension] = useState<AuctionLot | null>(null);
+  const [selectedLotForWaybill, setSelectedLotForWaybill] = useState<AuctionLot | null>(null);
+  const [isVehicleIntakeOpen, setIsVehicleIntakeOpen] = useState(false);
+  const [isExpenseOpen, setIsExpenseOpen] = useState(false);
+  const [isBankDepositOpen, setIsBankDepositOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [donutMode, setDonutMode] = useState<'CHANNELS' | 'PORTFOLIO'>('CHANNELS');
 
-  // Computed metrics
-  const activeLots = lots.filter((l) => l.status === 'ACTIVE' || l.status === 'UPCOMING');
-  const awaitingBalanceLots = lots.filter((l) => l.status === 'AWAITING_BALANCE' || l.status === 'OVERDUE');
-  const overdueLots = lots.filter((l) => l.status === 'OVERDUE');
+  // Key Computed Metrics
+  const activeLots = useMemo(
+    () => lots.filter((l) => l.status === 'ACTIVE' || l.status === 'UPCOMING'),
+    [lots]
+  );
+  const awaitingBalanceLots = useMemo(
+    () => lots.filter((l) => l.status === 'AWAITING_BALANCE' || l.status === 'OVERDUE'),
+    [lots]
+  );
 
-  // Comprehensive receivables: sum outstanding balances from payment plans and unpaid invoices
-  const planReceivables = paymentPlans
-    .filter((p) => p.status !== 'PAID_IN_FULL')
-    .reduce((acc, p) => acc + p.balanceRemainingGhs, 0);
+  // Receivables computation (auction balance + payment plans + unpaid invoices)
+  const planReceivables = useMemo(
+    () =>
+      paymentPlans
+        .filter((p) => p.status !== 'PAID_IN_FULL')
+        .reduce((acc, p) => acc + p.balanceRemainingGhs, 0),
+    [paymentPlans]
+  );
 
-  const invoiceReceivables = invoices
-    .filter((inv) => inv.status === 'ISSUED' || inv.status === 'PARTIALLY_PAID' || inv.status === 'OVERDUE')
-    .reduce((acc, inv) => acc + inv.balanceDueGhs, 0);
+  const invoiceReceivables = useMemo(
+    () =>
+      invoices
+        .filter(
+          (inv) =>
+            inv.status === 'ISSUED' ||
+            inv.status === 'PARTIALLY_PAID' ||
+            inv.status === 'OVERDUE'
+        )
+        .reduce((acc, inv) => acc + inv.balanceDueGhs, 0),
+    [invoices]
+  );
 
-  const lotReceivables = awaitingBalanceLots.reduce(
-    (acc, l) => acc + (l.balanceDueGhs || 0),
-    0
+  const lotReceivables = useMemo(
+    () =>
+      awaitingBalanceLots.reduce(
+        (acc, l) => acc + (l.balanceDueGhs || 0),
+        0
+      ),
+    [awaitingBalanceLots]
   );
 
   const totalReceivablesGhs = Math.max(planReceivables + invoiceReceivables, lotReceivables);
 
-  const totalCollectedGhs = receipts.reduce(
-    (acc, r) => acc + r.amountPaidGhs,
-    0
+  // Total verified cash collections to date
+  const totalCollectedGhs = useMemo(
+    () => receipts.reduce((acc, r) => acc + r.amountPaidGhs, 0),
+    [receipts]
   );
+
+  // Total inventory valuation across all lines
+  const totalVehiclesValue = useMemo(
+    () => vehicles.reduce((acc, v) => acc + v.askingPriceGhs, 0),
+    [vehicles]
+  );
+  const totalLandValue = useMemo(
+    () => landParcels.reduce((acc, p) => acc + p.priceGhs, 0),
+    [landParcels]
+  );
+  const totalPropertyValue = useMemo(
+    () => properties.reduce((acc, p) => acc + p.priceGhs, 0),
+    [properties]
+  );
+  const totalAuctionReserveValue = useMemo(
+    () => lots.reduce((acc, l) => acc + (l.reservePriceGhs || l.currentBidGhs || 0), 0),
+    [lots]
+  );
+  const totalAssetValuation =
+    totalVehiclesValue + totalLandValue + totalPropertyValue + totalAuctionReserveValue;
+
+  const totalInventoryUnits =
+    vehicles.length + landParcels.length + properties.length + activeLots.length;
+
+  // Realized 7% Margin on auctions + vehicle markups
+  const realizedAuction7PercentMargin = useMemo(
+    () =>
+      lots
+        .filter((l) => l.hammerPriceGhs && l.hammerPriceGhs > 0)
+        .reduce((acc, l) => acc + (l.hammerPriceGhs || 0) * 0.07, 0),
+    [lots]
+  );
+
+  const realizedDealerGross = useMemo(
+    () =>
+      vehicles
+        .filter((v) => v.status === 'SOLD')
+        .reduce((acc, v) => acc + Math.max(v.askingPriceGhs - v.landedCostGhs, 0), 0),
+    [vehicles]
+  );
+
+  const totalRealizedMarginGhs = realizedAuction7PercentMargin + realizedDealerGross;
+
+  // 1. Chart Data: Daily Collections Trend (Last 7-10 Days)
+  const collectionTrendData: DailyCollectionPoint[] = useMemo(() => {
+    // Generate dates for the last 7 calendar days
+    const days: DailyCollectionPoint[] = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateKey = d.toISOString().split('T')[0];
+      const displayLabel = d.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+      });
+
+      // Filter receipts matching this day (comparing date prefix)
+      const dayReceipts = receipts.filter((r) => r.printedAt?.startsWith(dateKey));
+      const amountGhs = dayReceipts.reduce((acc, r) => acc + r.amountPaidGhs, 0);
+
+      days.push({
+        dateKey,
+        displayLabel,
+        amountGhs,
+        count: dayReceipts.length,
+      });
+    }
+
+    // If receipts don't have matching dates in the last 7 days (e.g. seed data in September/October),
+    // extract unique receipt dates to display meaningful flow
+    const totalWithData = days.reduce((acc, d) => acc + d.amountGhs, 0);
+    if (totalWithData === 0 && receipts.length > 0) {
+      const dateGroups: Record<string, { amount: number; count: number }> = {};
+      receipts.forEach((r) => {
+        const key = r.printedAt ? r.printedAt.split('T')[0] : '2026-10-15';
+        if (!dateGroups[key]) dateGroups[key] = { amount: 0, count: 0 };
+        dateGroups[key].amount += r.amountPaidGhs;
+        dateGroups[key].count += 1;
+      });
+
+      return Object.entries(dateGroups)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .slice(-7)
+        .map(([dateKey, stats]) => {
+          const parts = dateKey.split('-');
+          return {
+            dateKey,
+            displayLabel: `${parts[2]}/${parts[1]}`,
+            amountGhs: stats.amount,
+            count: stats.count,
+          };
+        });
+    }
+
+    return days;
+  }, [receipts]);
+
+  // 2. Chart Data: Payment Methods Channel Split
+  const paymentChannelSegments: DonutSegment[] = useMemo(() => {
+    let cash = 0;
+    let momo = 0;
+    let bank = 0;
+    let card = 0;
+
+    receipts.forEach((r) => {
+      switch (r.paymentMethod) {
+        case 'CASH':
+          cash += r.amountPaidGhs;
+          break;
+        case 'MOMO':
+          momo += r.amountPaidGhs;
+          break;
+        case 'BANK_TRANSFER':
+          bank += r.amountPaidGhs;
+          break;
+        case 'CARD_PAYSTACK':
+          card += r.amountPaidGhs;
+          break;
+        default:
+          cash += r.amountPaidGhs;
+      }
+    });
+
+    const total = cash + momo + bank + card;
+    if (total === 0) {
+      return [
+        {
+          id: 'cash',
+          label: 'Physical Cash Drawer',
+          value: 1,
+          color: '#10b981',
+          formattedValue: 'GH₵ 0.00',
+        },
+      ];
+    }
+
+    return [
+      {
+        id: 'momo',
+        label: 'Mobile Money (Hubtel)',
+        value: momo,
+        color: '#eab308', // Amber/yellow for MTN/Vodafone
+        formattedValue: formatGHS(momo),
+      },
+      {
+        id: 'cash',
+        label: 'Cash in Hand / Drawer',
+        value: cash,
+        color: '#10b981', // Emerald green
+        formattedValue: formatGHS(cash),
+      },
+      {
+        id: 'bank',
+        label: 'Bank Wires / Transfer',
+        value: bank,
+        color: '#6366f1', // Indigo
+        formattedValue: formatGHS(bank),
+      },
+      {
+        id: 'card',
+        label: 'Card POS (Paystack)',
+        value: card,
+        color: '#3b82f6', // Blue
+        formattedValue: formatGHS(card),
+      },
+    ].filter((s) => s.value > 0);
+  }, [receipts]);
+
+  // 3. Chart Data: Asset Portfolio Valuation Split
+  const assetValuationSegments: DonutSegment[] = useMemo(() => {
+    return [
+      {
+        id: 'dealership',
+        label: 'Showroom Cars',
+        value: totalVehiclesValue,
+        color: '#6366f1',
+        formattedValue: formatGHS(totalVehiclesValue),
+      },
+      {
+        id: 'auctions',
+        label: 'Auction Yard Lots',
+        value: totalAuctionReserveValue,
+        color: '#f59e0b',
+        formattedValue: formatGHS(totalAuctionReserveValue),
+      },
+      {
+        id: 'land',
+        label: 'Land Parcels',
+        value: totalLandValue,
+        color: '#10b981',
+        formattedValue: formatGHS(totalLandValue),
+      },
+      {
+        id: 'property',
+        label: 'Property Units',
+        value: totalPropertyValue,
+        color: '#8b5cf6',
+        formattedValue: formatGHS(totalPropertyValue),
+      },
+    ].filter((s) => s.value > 0);
+  }, [totalVehiclesValue, totalAuctionReserveValue, totalLandValue, totalPropertyValue]);
+
+  // Handle manual sync trigger
+  const handleSyncClick = async () => {
+    setIsSyncing(true);
+    try {
+      await triggerManualSync();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Find a fallback lot if Waybill Quick Action is clicked without pre-selection
+  const handleOpenWaybillQuickAction = () => {
+    const candidate =
+      lots.find(
+        (l) =>
+          l.assetType === 'MOVABLE' &&
+          (l.status === 'FULLY_PAID' || (l.balanceDueGhs === 0 && l.hammerPriceGhs && l.hammerPriceGhs > 0)) &&
+          !l.waybillId
+      ) ||
+      lots.find((l) => l.assetType === 'MOVABLE') ||
+      lots[0];
+
+    if (candidate) {
+      setSelectedLotForWaybill(candidate);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Actions */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      {/* Field Operations & Central Office Status Banner */}
+      <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Amen Mart Executive Portal
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="px-2.5 py-0.5 rounded text-[11px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+              Amen Mart Field &amp; Central Desk
             </span>
-            <span className="text-xs text-slate-400">Standard Margin: 7% All Categories</span>
+
+            {/* Offline-First Network Status Pill */}
+            <div
+              className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                isOnline
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+              }`}
+            >
+              {isOnline ? (
+                <>
+                  <Wifi className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Online &bull; Auto-Sync Active</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3.5 w-3.5 text-amber-600" />
+                  <span>Offline Mode &bull; IndexedDB Local Storage</span>
+                </>
+              )}
+            </div>
+
+            <span className="text-xs text-slate-400">
+              Standard Margin: 7% Across All Asset Categories
+            </span>
           </div>
+
           <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             AmenDesk Operations Dashboard
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Offline-first management for Government, Judicial, and Private auctions &bull; Dealership &bull; Land &bull; Property
-          </p>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-semibold">
+              <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
+              <span>Officer: {currentStaffName}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5 text-slate-400" />
+              <span>{facilityLocation || 'Central Office & Mobile Auction Field'}</span>
+            </span>
+            <span>Ghana Cedis Standard (GH₵)</span>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href="/desk/payments">
-            <Button size="sm" variant="primary" icon={<CreditCard className="h-4 w-4" />}>
-              Record Payment
-            </Button>
-          </Link>
-          <Link href="/desk/accounts">
-            <Button size="sm" variant="secondary" icon={<Receipt className="h-4 w-4" />}>
-              Accounting &amp; GL
-            </Button>
-          </Link>
-          <Link href="/desk/auctions/intake">
-            <Button size="sm" variant="outline" icon={<PlusCircle className="h-4 w-4" />}>
-              Lot Intake
-            </Button>
-          </Link>
-          <Link href="/desk/auctions">
-            <Button size="sm" variant="outline" icon={<Gavel className="h-4 w-4" />}>
-              Auction Yard
-            </Button>
-          </Link>
+        {/* Sync Status Button */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-right text-xs">
+            <span className="text-slate-400">Sync Engine</span>
+            <p className="font-bold font-mono text-slate-800 dark:text-slate-200">
+              {pendingSyncCount > 0 ? `${pendingSyncCount} pending in queue` : 'All records synced'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSyncClick}
+            disabled={isSyncing}
+            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors shadow-xs"
+            title="Trigger Manual Cloud Sync"
+          >
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin text-indigo-600' : ''}`} />
+          </button>
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
+      {/* Quick Action Command Hub */}
+      <QuickActionBar
+        onOpenPayment={() => setIsGeneralPaymentOpen(true)}
+        onOpenVehicleIntake={() => setIsVehicleIntakeOpen(true)}
+        onOpenWaybillModal={handleOpenWaybillQuickAction}
+        onOpenExpenseModal={() => setIsExpenseOpen(true)}
+        onOpenBankDepositModal={() => setIsBankDepositOpen(true)}
+      />
+
+      {/* Tier-1 Executive KPI Ribbon */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard
           theme={0}
           title="14-Day Receivables Due"
           value={formatGHS(totalReceivablesGhs)}
-          subtitle={`Across ${awaitingBalanceLots.length} hammer settlements awaiting balance`}
+          subtitle={`Across ${awaitingBalanceLots.length} hammer settlements & debtor plans`}
           iconName="receivables"
           href="/desk/payment-plans"
         />
@@ -116,269 +441,114 @@ export default function DeskDashboardPage() {
           theme={1}
           title="Collections to Date"
           value={formatGHS(totalCollectedGhs)}
-          subtitle={`${receipts.length} verified receipts issued`}
+          subtitle={`${receipts.length} verified receipts issued (Cash, MoMo, Bank, Card)`}
           iconName="collections"
           href="/desk/payments?view=collections"
         />
 
         <GlassCard
           theme={2}
-          title="Active Auction Inventory"
-          value={`${activeLots.length} Lots`}
-          subtitle="Govt, Judicial &amp; Private listings"
-          iconName="gavel"
-          href="/desk/auctions"
+          title="Total Asset Valuation"
+          value={formatGHS(totalAssetValuation)}
+          subtitle={`${totalInventoryUnits} items across Showroom, Land, Property & Auctions`}
+          iconName="profit"
+          href="/desk/dealership"
         />
 
         <GlassCard
           theme={3}
-          title="Overdue Expirations"
-          value={`${overdueLots.length} Accounts`}
-          subtitle="Eligible for manager extension review"
-          iconName="alert"
-          href="/desk/payment-plans?filter=OVERDUE"
+          title="Realized 7% Margin & Gross"
+          value={formatGHS(totalRealizedMarginGhs)}
+          subtitle="Earned 7% auction commissions + showroom car gross"
+          iconName="scale"
+          href="/desk/accounts?tab=FINANCIAL_REPORTS"
         />
       </div>
 
-      {/* 14-Day Instalment Watchlist & Critical Expirations */}
-      <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              14-Day Balance Settlement Watchlist
-            </h2>
-            <p className="text-xs text-slate-500">
-              All hammer sales carry a 14-day balance window. Goods &amp; documents remain in yard until settled in full.
-            </p>
-          </div>
-          <Link
-            href="/desk/payment-plans"
-            className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-          >
-            <span>View Full Ageing Ledger</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+      {/* Operational Attention & Critical Action Center */}
+      <OperationalAlerts
+        lots={lots}
+        receipts={receipts}
+        onSelectLotForExtension={(lot) => setSelectedLotForExtension(lot)}
+        onSelectLotForWaybill={(lot) => setSelectedLotForWaybill(lot)}
+      />
+
+      {/* Visual Analytics & Interactive Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Daily Cash Collections Trend (Takes 2 Columns on Desktop) */}
+        <div className="lg:col-span-2">
+          <TrendBarChart
+            data={collectionTrendData}
+            title="Daily Cash Collections Velocity"
+            subtitle="Real-time multi-mode receipts flow across past days"
+            height={190}
+          />
         </div>
 
-        <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {awaitingBalanceLots.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">
-              No lots currently awaiting balance settlement.
-            </div>
-          ) : (
-            awaitingBalanceLots.map((lot) => {
-              const windowInfo = getInstalmentWindowInfo(lot.balanceDueDate);
-              return (
-                <div
-                  key={lot.id}
-                  className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {lot.lotNumber}
-                      </span>
-                      <Badge
-                        variant={
-                          lot.category === 'JUDICIAL'
-                            ? 'danger'
-                            : lot.category === 'GOVERNMENT'
-                            ? 'warning'
-                            : 'info'
-                        }
-                        size="sm"
-                      >
-                        {lot.category}
-                      </Badge>
-                      <Badge variant="outline" size="sm">
-                        {lot.assetType}
-                      </Badge>
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full ${windowInfo.badgeClass}`}>
-                        {windowInfo.statusLabel}
-                      </span>
-                    </div>
+        {/* Payment Methods / Portfolio Split (Takes 1 Column) */}
+        <div className="lg:col-span-1 space-y-2">
+          <div className="flex justify-end gap-1">
+            <button
+              type="button"
+              onClick={() => setDonutMode('CHANNELS')}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
+                donutMode === 'CHANNELS'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              Payment Channels
+            </button>
+            <button
+              type="button"
+              onClick={() => setDonutMode('PORTFOLIO')}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
+                donutMode === 'PORTFOLIO'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              Asset Portfolio
+            </button>
+          </div>
 
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {lot.title}
-                    </h3>
-
-                    <div className="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
-                      <span>Buyer: <strong className="text-slate-700 dark:text-slate-300">{lot.winningBidderName}</strong> ({lot.winningBidderPhone})</span>
-                      <span>Due Date: <strong>{formatDate(lot.balanceDueDate)}</strong></span>
-                      {lot.extensionCount > 0 && (
-                        <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
-                          Extended ({lot.extensionCount}x)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
-                    <div className="text-right">
-                      <span className="text-xs text-slate-500">Balance Remaining</span>
-                      <p className="text-base font-black text-slate-900 dark:text-slate-100 font-mono">
-                        {formatGHS(lot.balanceDueGhs)}
-                      </p>
-                      <span className="text-[10px] text-slate-400">
-                        Deposit: {formatGHS(lot.depositAmountGhs)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() => setSelectedLotForPayment(lot)}
-                        icon={<CreditCard className="h-3.5 w-3.5" />}
-                      >
-                        Pay Instalment
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setSelectedLotForExtension(lot)}
-                      >
-                        Extend
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+          <DonutMetricChart
+            title={donutMode === 'CHANNELS' ? 'Payment Channels Inflow' : 'Asset Portfolio Valuation'}
+            subtitle={
+              donutMode === 'CHANNELS'
+                ? 'Verified receipt settlement methods'
+                : 'Valuation split across operating inventory'
+            }
+            segments={donutMode === 'CHANNELS' ? paymentChannelSegments : assetValuationSegments}
+            centerLabel={donutMode === 'CHANNELS' ? 'Total Inflow' : 'Portfolio'}
+            centerValue={
+              donutMode === 'CHANNELS'
+                ? formatGHS(totalCollectedGhs)
+                : formatGHS(totalAssetValuation)
+            }
+            size={160}
+          />
         </div>
       </div>
 
-      {/* Two-Column Grid: Auction Categories & Recent Receipts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Categories Breakdown */}
-        <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Auction Categories &amp; Asset Scope
-            </h2>
-            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-              7% Fee Applied
-            </span>
-          </div>
+      {/* Multi-Line Operations Matrix Pulse */}
+      <LineOfOperationsPulse
+        lots={lots}
+        vehicles={vehicles}
+        landParcels={landParcels}
+        properties={properties}
+      />
 
-          <div className="space-y-3">
-            {/* Judicial */}
-            <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 flex items-start gap-3">
-              <ShieldAlert className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
-              <div className="flex-1 text-xs">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-rose-900 dark:text-rose-200 uppercase tracking-wider">
-                    Judicial Auctions
-                  </span>
-                  <span className="font-bold text-rose-700 dark:text-rose-300">
-                    {lots.filter((l) => l.category === 'JUDICIAL').length} Lots
-                  </span>
-                </div>
-                <p className="text-rose-800 dark:text-rose-300">
-                  Movable &amp; Immovable court disposals. Mandates High Court Case Ref &amp; Sheriff instruction writ attachments.
-                </p>
-              </div>
-            </div>
+      {/* 14-Day Hammer Settlement & Dispatch Watchlist */}
+      <SettlementWatchlist
+        lots={lots}
+        onSelectLotForPayment={(lot) => setSelectedLotForPayment(lot)}
+        onSelectLotForExtension={(lot) => setSelectedLotForExtension(lot)}
+        onSelectLotForWaybill={(lot) => setSelectedLotForWaybill(lot)}
+      />
 
-            {/* Government */}
-            <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 flex items-start gap-3">
-              <Building2 className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="flex-1 text-xs">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">
-                    Government Auctions
-                  </span>
-                  <span className="font-bold text-amber-700 dark:text-amber-300">
-                    {lots.filter((l) => l.category === 'GOVERNMENT').length} Lots
-                  </span>
-                </div>
-                <p className="text-amber-800 dark:text-amber-300">
-                  <strong>Strictly Movable only.</strong> Ministry fleet, heavy plants, and surplus public equipment.
-                </p>
-              </div>
-            </div>
-
-            {/* Private */}
-            <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 flex items-start gap-3">
-              <Layers className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
-              <div className="flex-1 text-xs">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
-                    Private Auctions
-                  </span>
-                  <span className="font-bold text-indigo-700 dark:text-indigo-300">
-                    {lots.filter((l) => l.category === 'PRIVATE').length} Lots
-                  </span>
-                </div>
-                <p className="text-indigo-800 dark:text-indigo-300">
-                  Movable (executive cars, plant) and Immovable (land, residential parcels) voluntary liquidations.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Official Receipts */}
-        <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Recent Front-Desk Receipts
-              </h2>
-              <Link
-                href="/desk/accounts?tab=RECEIPTS"
-                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                All Receipts &rarr;
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              {receipts.slice(-4).reverse().map((rcp) => (
-                <div
-                  key={rcp.id}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs"
-                >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                        {rcp.receiptNumber}
-                      </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
-                        {rcp.paymentMethod}
-                      </span>
-                    </div>
-                    <p className="font-bold text-slate-800 dark:text-slate-200">
-                      {rcp.customerName}
-                    </p>
-                    <p className="text-[11px] text-slate-500 truncate max-w-[200px]">
-                      {rcp.referenceTitle}
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="font-mono font-bold text-sm text-slate-900 dark:text-slate-100">
-                      {formatGHS(rcp.amountPaidGhs)}
-                    </p>
-                    <span className="text-[10px] text-slate-400">
-                      Bal: {formatGHS(rcp.balanceRemainingGhs)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-            <span>Offline-first append-only ledger</span>
-            <span>Total: {receipts.length} entries</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Modal */}
+      {/* MODALS */}
+      {/* 1. Payment Modal (For preselected lot) */}
       {selectedLotForPayment && (
         <PaymentModal
           isOpen={true}
@@ -388,7 +558,16 @@ export default function DeskDashboardPage() {
         />
       )}
 
-      {/* Extension Modal */}
+      {/* 2. General POS Payment Modal (From Quick Actions) */}
+      {isGeneralPaymentOpen && (
+        <PaymentModal
+          isOpen={true}
+          onClose={() => setIsGeneralPaymentOpen(false)}
+          onSuccess={() => setIsGeneralPaymentOpen(false)}
+        />
+      )}
+
+      {/* 3. Extension Modal */}
       {selectedLotForExtension && (
         <ExtensionModal
           isOpen={true}
@@ -397,6 +576,37 @@ export default function DeskDashboardPage() {
           onSuccess={() => setSelectedLotForExtension(null)}
         />
       )}
+
+      {/* 4. A5 Waybill Modal */}
+      {selectedLotForWaybill && (
+        <WaybillModal
+          isOpen={true}
+          onClose={() => setSelectedLotForWaybill(null)}
+          lot={selectedLotForWaybill}
+          onSuccess={() => setSelectedLotForWaybill(null)}
+        />
+      )}
+
+      {/* 5. Showroom Vehicle Intake Modal */}
+      <VehicleIntakeModal
+        isOpen={isVehicleIntakeOpen}
+        onClose={() => setIsVehicleIntakeOpen(false)}
+        onSuccess={() => setIsVehicleIntakeOpen(false)}
+      />
+
+      {/* 6. Record Expense Modal */}
+      <RecordExpenseModal
+        isOpen={isExpenseOpen}
+        onClose={() => setIsExpenseOpen(false)}
+        onSuccess={() => setIsExpenseOpen(false)}
+      />
+
+      {/* 7. Bank Deposit Slip Modal */}
+      <BankDepositModal
+        isOpen={isBankDepositOpen}
+        onClose={() => setIsBankDepositOpen(false)}
+        onSuccess={() => setIsBankDepositOpen(false)}
+      />
     </div>
   );
 }
