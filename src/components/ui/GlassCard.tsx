@@ -70,8 +70,8 @@ export function renderNamedCardIcon(name: CardIconName, className = 'h-5 w-5') {
 
 interface ThemeConfig {
   cardClasses: string;
-  topStreak: string;
-  glowOrb: string;
+  topStreak?: string;
+  glowOrb?: string;
   iconBadge: string;
   titleText: string;
   valueText: string;
@@ -79,7 +79,75 @@ interface ThemeConfig {
   badge: string;
 }
 
-const themeStyles: Record<GlassCardTheme, ThemeConfig> = {
+const pureThemeStyles: Record<GlassCardTheme, ThemeConfig> = {
+  indigo: {
+    cardClasses:
+      'bg-indigo-50 border-indigo-200/90 hover:border-indigo-400 ' +
+      'shadow-xs hover:shadow-md ' +
+      'dark:bg-indigo-950/40 dark:border-indigo-800/80 dark:hover:border-indigo-600',
+    iconBadge:
+      'bg-white text-indigo-600 border border-indigo-200/90 shadow-xs ' +
+      'dark:bg-indigo-900/60 dark:text-indigo-300 dark:border-indigo-700/60',
+    titleText: 'text-indigo-900/80 dark:text-indigo-200',
+    valueText: 'text-slate-900 dark:text-slate-50',
+    subtitleText: 'text-indigo-700 dark:text-indigo-300',
+    badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800',
+  },
+  emerald: {
+    cardClasses:
+      'bg-emerald-50 border-emerald-200/90 hover:border-emerald-400 ' +
+      'shadow-xs hover:shadow-md ' +
+      'dark:bg-emerald-950/40 dark:border-emerald-800/80 dark:hover:border-emerald-600',
+    iconBadge:
+      'bg-white text-emerald-600 border border-emerald-200/90 shadow-xs ' +
+      'dark:bg-emerald-900/60 dark:text-emerald-300 dark:border-emerald-700/60',
+    titleText: 'text-emerald-900/80 dark:text-emerald-200',
+    valueText: 'text-slate-900 dark:text-slate-50',
+    subtitleText: 'text-emerald-700 dark:text-emerald-300',
+    badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+  },
+  amber: {
+    cardClasses:
+      'bg-amber-50 border-amber-200/90 hover:border-amber-400 ' +
+      'shadow-xs hover:shadow-md ' +
+      'dark:bg-amber-950/40 dark:border-amber-800/80 dark:hover:border-amber-600',
+    iconBadge:
+      'bg-white text-amber-600 border border-amber-200/90 shadow-xs ' +
+      'dark:bg-amber-900/60 dark:text-amber-300 dark:border-amber-700/60',
+    titleText: 'text-amber-900/80 dark:text-amber-200',
+    valueText: 'text-slate-900 dark:text-slate-50',
+    subtitleText: 'text-amber-800 dark:text-amber-300',
+    badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
+  },
+  blue: {
+    cardClasses:
+      'bg-sky-50 border-sky-200/90 hover:border-sky-400 ' +
+      'shadow-xs hover:shadow-md ' +
+      'dark:bg-sky-950/40 dark:border-sky-800/80 dark:hover:border-sky-600',
+    iconBadge:
+      'bg-white text-sky-600 border border-sky-200/90 shadow-xs ' +
+      'dark:bg-sky-900/60 dark:text-sky-300 dark:border-sky-700/60',
+    titleText: 'text-sky-900/80 dark:text-sky-200',
+    valueText: 'text-slate-900 dark:text-slate-50',
+    subtitleText: 'text-sky-700 dark:text-sky-300',
+    badge: 'bg-sky-100 text-sky-700 dark:bg-sky-900/80 dark:text-sky-300 border border-sky-200 dark:border-sky-800',
+  },
+  rose: {
+    cardClasses:
+      'bg-rose-50 border-rose-200/90 hover:border-rose-400 ' +
+      'shadow-xs hover:shadow-md ' +
+      'dark:bg-rose-950/40 dark:border-rose-800/80 dark:hover:border-rose-600',
+    iconBadge:
+      'bg-white text-rose-600 border border-rose-200/90 shadow-xs ' +
+      'dark:bg-rose-900/60 dark:text-rose-300 dark:border-rose-700/60',
+    titleText: 'text-rose-900/80 dark:text-rose-200',
+    valueText: 'text-slate-900 dark:text-slate-50',
+    subtitleText: 'text-rose-700 dark:text-rose-300',
+    badge: 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
+  },
+};
+
+const glassThemeStyles: Record<GlassCardTheme, ThemeConfig> = {
   indigo: {
     cardClasses:
       'bg-gradient-to-br from-indigo-50/75 via-white/80 to-purple-50/50 ' +
@@ -179,6 +247,12 @@ export interface GlassCardProps {
    */
   theme?: GlassCardTheme | number;
   /**
+   * Visual style variant:
+   * 'pure' (default) - Flat solid soft-tinted color background without gradients or frosted glass blur
+   * 'glass' - Frosted glassmorphism with multi-stop gradient sheen and ambient glow orbs
+   */
+  variant?: 'pure' | 'glass';
+  /**
    * Eyebrow title / metric label (e.g. "TODAY'S TOTAL COLLECTIONS")
    */
   title?: React.ReactNode;
@@ -228,11 +302,12 @@ export interface GlassCardProps {
 }
 
 /**
- * AmenDesk Curated Glassmorphic Card
- * Distinct 4-color repeating palette, authentic frosted glass blur, specular highlights, and ambient glow.
+ * AmenDesk Metric Card
+ * Supports pure solid soft-tinted cards (default) and curated frosted glassmorphic cards.
  */
 export function GlassCard({
   theme = 'indigo',
+  variant = 'pure',
   title,
   value,
   subtitle,
@@ -246,31 +321,38 @@ export function GlassCard({
   children,
 }: GlassCardProps) {
   const resolvedTheme = resolveCardTheme(theme);
-  const cfg = themeStyles[resolvedTheme];
+  const isGlass = variant === 'glass';
+  const cfg = isGlass ? glassThemeStyles[resolvedTheme] : pureThemeStyles[resolvedTheme];
 
   const resolvedIcon = icon ?? (iconName ? renderNamedCardIcon(iconName) : null);
 
   const cardContent = (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border backdrop-blur-md p-5 ring-1 ring-inset ring-white/70 dark:ring-white/10 transition-all duration-200 group ${
+      className={`relative overflow-hidden rounded-2xl border p-5 transition-all duration-200 group ${
+        isGlass ? 'backdrop-blur-md ring-1 ring-inset ring-white/70 dark:ring-white/10' : ''
+      } ${
         onClick || href ? 'cursor-pointer hover:-translate-y-0.5' : ''
       } ${cfg.cardClasses} ${className}`}
     >
-      {/* Top Specular Edge Sheen */}
-      <div
-        className={`pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent ${cfg.topStreak} to-transparent`}
-      />
+      {/* Top Specular Edge Sheen (Glass mode only) */}
+      {isGlass && cfg.topStreak && (
+        <div
+          className={`pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent ${cfg.topStreak} to-transparent`}
+        />
+      )}
 
-      {/* Ambient Radial Glass Glow Orb */}
-      <div
-        className={`pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full blur-2xl transition-all duration-300 group-hover:scale-125 opacity-70 group-hover:opacity-100 ${cfg.glowOrb}`}
-      />
+      {/* Ambient Radial Glass Glow Orb (Glass mode only) */}
+      {isGlass && cfg.glowOrb && (
+        <div
+          className={`pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full blur-2xl transition-all duration-300 group-hover:scale-125 opacity-70 group-hover:opacity-100 ${cfg.glowOrb}`}
+        />
+      )}
 
       {/* Standard Metric Content if title or value is provided */}
       {(title || value || resolvedIcon) && (
         <div className="relative z-10 flex flex-col justify-between h-full">
-          {/* Header Row: Title & Glassmorphic Icon */}
+          {/* Header Row: Title & Icon Badge */}
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
               {title && (
@@ -287,7 +369,9 @@ export function GlassCard({
 
             {resolvedIcon && (
               <div
-                className={`p-2.5 rounded-xl border backdrop-blur-sm shadow-xs transition-transform duration-200 group-hover:scale-110 flex-shrink-0 ${cfg.iconBadge}`}
+                className={`p-2.5 rounded-xl border ${
+                  isGlass ? 'backdrop-blur-sm' : ''
+                } shadow-xs transition-transform duration-200 group-hover:scale-110 shrink-0 ${cfg.iconBadge}`}
               >
                 {resolvedIcon}
               </div>
@@ -345,3 +429,7 @@ export function GlassCard({
 
   return cardContent;
 }
+
+export const PureColorCard = GlassCard;
+export const PureCard = GlassCard;
+export type PureColorCardProps = GlassCardProps;
