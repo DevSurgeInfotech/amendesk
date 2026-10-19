@@ -14,6 +14,7 @@ import type {
   Invoice,
   JournalEntry,
   LandParcel,
+  MediaAttachment,
   PaymentPlan,
   PropertyUnit,
   Receipt,
@@ -55,6 +56,7 @@ export class AmenDeskDB extends Dexie {
   dealershipVehicles!: Table<DealershipVehicle, string>;
   landParcels!: Table<LandParcel, string>;
   propertyUnits!: Table<PropertyUnit, string>;
+  mediaAttachments!: Table<MediaAttachment, string>;
   inventoryItems!: Table<InventoryItem, string>;
   stockMovements!: Table<StockMovement, string>;
   syncOutbox!: Table<SyncOutboxItem, string>;
@@ -98,6 +100,10 @@ export class AmenDeskDB extends Dexie {
       accountingClasses: 'id, code, name, businessLine, isActive',
       accountingLocations: 'id, code, name, facilityType, isActive',
       bankDeposits: 'id, depositNumber, depositDate, targetBankAccountId, syncStatus',
+    });
+
+    this.version(4).stores({
+      mediaAttachments: 'id, entityType, entityId, isPrimary, syncStatus, createdAt',
     });
   }
 
@@ -145,6 +151,7 @@ export class AmenDeskDB extends Dexie {
     await this.dealershipVehicles.clear();
     await this.landParcels.clear();
     await this.propertyUnits.clear();
+    await this.mediaAttachments.clear();
     await this.inventoryItems.clear();
     await this.stockMovements.clear();
     await this.syncOutbox.clear();

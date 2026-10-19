@@ -100,7 +100,7 @@ export default function ContactPage() {
                     Dealership Showroom
                   </p>
                   <p className="text-slate-500">
-                    Spintex Road, Near Kasapreko Junction, Accra, Ghana
+                    Amen Mart Showroom Facility, Accra, Ghana
                   </p>
                 </div>
               </div>

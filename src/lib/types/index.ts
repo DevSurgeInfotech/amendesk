@@ -229,6 +229,21 @@ export interface DealershipVehicle {
   createdAt: string;
 }
 
+export interface MediaAttachment {
+  id: string;
+  entityType: 'DEALERSHIP' | 'LAND' | 'PROPERTY' | 'AUCTION';
+  entityId: string;
+  fileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+  dataUrl?: string;
+  remoteUrl?: string;
+  isPrimary: boolean;
+  caption?: string;
+  syncStatus: 'LOCAL' | 'UPLOADING' | 'SYNCED' | 'FAILED';
+  createdAt: string;
+}
+
 export interface LandParcel {
   id: string;
   siteRef: string;
@@ -240,7 +255,9 @@ export interface LandParcel {
   titleType: 'FREEHOLD' | 'LEASEHOLD' | 'INDENTURE';
   features: string[];
   description: string;
+  photos: string[];
   sitePlanUrl?: string;
+  indentureDocUrl?: string;
   createdAt: string;
 }
 

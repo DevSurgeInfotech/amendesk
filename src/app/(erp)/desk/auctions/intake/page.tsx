@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
@@ -14,6 +14,8 @@ import type {
   InventoryItem,
 } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
+import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
+import { DocumentUploader } from '@/components/erp/DocumentUploader';
 import Link from 'next/link';
 import {
   ShieldAlert,
@@ -23,7 +25,6 @@ import {
   Building,
   ArrowLeft,
   CheckCircle2,
-  Upload,
 } from 'lucide-react';
 
 function generateLotId(): string {
@@ -53,7 +54,6 @@ function computeNextLotNumber(existingLots: AuctionLot[]): string {
 
 export default function LotIntakePage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const existingLots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
   const computedNextLotNumber = computeNextLotNumber(existingLots);
@@ -74,7 +74,7 @@ export default function LotIntakePage() {
   const [startingBidGhs, setStartingBidGhs] = useState<number>(0);
   const [conditionNotes, setConditionNotes] = useState('');
   const [yardLocation, setYardLocation] = useState('Amen Mart Main Yard — Bay A');
-  const [photoUrl, setPhotoUrl] = useState('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80');
+  const [photos, setPhotos] = useState<string[]>([]);
 
   // Movable Vehicle Fields
   const [chassisNumber, setChassisNumber] = useState('');
@@ -108,13 +108,6 @@ export default function LotIntakePage() {
     setCategory(newCat);
     if (newCat === 'GOVERNMENT') {
       setAssetType('MOVABLE');
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCourtOrderDocUrl(`/docs/${file.name}`);
     }
   };
 
@@ -159,7 +152,10 @@ export default function LotIntakePage() {
         courtOrderDocUrl: category === 'JUDICIAL' ? courtOrderDocUrl : undefined,
 
         conditionNotes,
-        photos: [photoUrl],
+        photos:
+          photos.length > 0
+            ? photos
+            : ['https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'],
         yardLocation,
         reservePriceGhs,
         startingBidGhs: startingBidGhs || reservePriceGhs,
@@ -339,33 +335,12 @@ export default function LotIntakePage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-rose-900 dark:text-rose-200 mb-1">
-                    Attached Court Order Document Reference / URL
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="text"
-                      value={courtOrderDocUrl}
-                      onChange={(e) => setCourtOrderDocUrl(e.target.value)}
-                      className="flex-1 px-3 py-2 text-sm rounded-lg border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-xs"
-                    />
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      accept=".pdf,image/*"
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      icon={<Upload className="h-4 w-4" />}
-                    >
-                      Upload Order
-                    </Button>
-                  </div>
+                  <DocumentUploader
+                    documentUrl={courtOrderDocUrl}
+                    onChange={(url) => setCourtOrderDocUrl(url || '')}
+                    entityType="AUCTION"
+                    label="Sheriff Writ of Execution / Court Order Document (PDF/Scan)"
+                  />
                 </div>
               </div>
             </div>
@@ -773,15 +748,15 @@ export default function LotIntakePage() {
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Photo URL
+                  Asset Intake &amp; Inspection Photos
                 </label>
-                <input
-                  type="url"
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                <ProductPhotoUploader
+                  photos={photos}
+                  onChange={setPhotos}
+                  entityType="AUCTION"
+                  maxPhotos={10}
                 />
               </div>
 

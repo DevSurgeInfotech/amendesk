@@ -135,7 +135,7 @@ export function WaybillModal({ isOpen, onClose, lot, onSuccess }: WaybillModalPr
                   Licensed Auctioneers &bull; Government, Judicial &amp; Private Liquidators
                 </p>
                 <p className="text-[9px] text-slate-500">
-                  Tema Motorway Heavy Industrial Area &bull; Spintex Showroom &bull; Tel: +233 24 412 8990 / +233 30 223 9011
+                  Tema Motorway Heavy Industrial Area &bull; Amen Mart Showroom &bull; Tel: +233 24 412 8990 / +233 30 223 9011
                 </p>
               </div>
 

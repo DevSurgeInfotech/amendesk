@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import {
   Fuel,
   Gauge,
@@ -18,6 +19,7 @@ import {
   Search,
   CheckCircle2,
   Lock,
+  Images,
 } from 'lucide-react';
 
 export default function ShowroomPage() {
@@ -26,6 +28,7 @@ export default function ShowroomPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [fuelFilter, setFuelFilter] = useState<string>('ALL');
   const [selectedVehicleForDeposit, setSelectedVehicleForDeposit] = useState<DealershipVehicle | null>(null);
+  const [galleryVehicle, setGalleryVehicle] = useState<DealershipVehicle | null>(null);
 
   // Online Paystack Deposit state
   const [buyerName, setBuyerName] = useState('');
@@ -187,7 +190,7 @@ export default function ShowroomPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            Spintex Showroom Stock
+            Showroom Stock
           </span>
           <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
             Direct Imported Vehicle Showroom
@@ -236,17 +239,27 @@ export default function ShowroomPage() {
             className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
           >
             <div>
-              <div className="relative h-56 bg-slate-200 dark:bg-slate-800">
+              <div
+                onClick={() => setGalleryVehicle(car)}
+                className="relative h-56 bg-slate-200 dark:bg-slate-800 cursor-pointer group"
+                title="Click to view all vehicle photos"
+              >
                 <Image
                   src={car.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
                   alt={`${car.make} ${car.model}`}
                   fill
                   unoptimized
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3">
                   <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
                     {car.stockNumber}
+                  </span>
+                </div>
+                <div className="absolute bottom-3 left-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                    <Images className="h-3 w-3 text-indigo-400" />
+                    <span>{car.photos?.length || 1} Photos</span>
                   </span>
                 </div>
                 <div className="absolute bottom-3 right-3">
@@ -419,6 +432,17 @@ export default function ShowroomPage() {
             </form>
           )}
         </Modal>
+      )}
+
+      {/* Full Photo Lightbox Gallery */}
+      {galleryVehicle && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryVehicle)}
+          onClose={() => setGalleryVehicle(null)}
+          title={`${galleryVehicle.year} ${galleryVehicle.make} ${galleryVehicle.model}`}
+          subtitle={`Stock #${galleryVehicle.stockNumber} • VIN: ${galleryVehicle.vin}`}
+          photos={galleryVehicle.photos}
+        />
       )}
     </div>
   );

@@ -9,12 +9,14 @@ import { formatGHS } from '@/lib/utils/currency';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import { MapPin, Bed, Bath, CheckCircle2 } from 'lucide-react';
+import { MapPin, Bed, Bath, CheckCircle2, Images } from 'lucide-react';
 
 export default function PublicPropertiesPage() {
   const properties = useLiveQuery(() => db.propertyUnits.toArray(), []) || [];
   const [selectedProp, setSelectedProp] = useState<PropertyUnit | null>(null);
+  const [galleryProp, setGalleryProp] = useState<PropertyUnit | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<'ALL' | 'RESIDENTIAL' | 'COMMERCIAL' | 'INDUSTRIAL'>('ALL');
@@ -92,7 +94,7 @@ export default function PublicPropertiesPage() {
             Residential Townhouses &amp; Commercial Warehouses
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Direct sale properties across Cantonments, Airport Residential, and Spintex Industrial Area.
+            Direct sale properties across Cantonments, Airport Residential, and Greater Accra Industrial Enclaves.
           </p>
         </div>
 
@@ -132,13 +134,17 @@ export default function PublicPropertiesPage() {
             className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
           >
             <div>
-              <div className="relative h-64 bg-slate-200 dark:bg-slate-800">
+              <div
+                className="relative h-64 bg-slate-200 dark:bg-slate-800 cursor-pointer group overflow-hidden"
+                onClick={() => setGalleryProp(prop)}
+                title="Click to view photo gallery"
+              >
                 <Image
                   src={prop.photos[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'}
                   alt={prop.title}
                   fill
                   unoptimized
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3 flex gap-2">
                   <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
@@ -159,6 +165,12 @@ export default function PublicPropertiesPage() {
                   >
                     {prop.status}
                   </Badge>
+                </div>
+                <div className="absolute bottom-3 left-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                    <Images className="h-3 w-3 text-indigo-400" />
+                    <span>{prop.photos?.length || 1} Photos</span>
+                  </span>
                 </div>
               </div>
 
@@ -303,6 +315,16 @@ export default function PublicPropertiesPage() {
             </form>
           )}
         </Modal>
+      )}
+
+      {galleryProp && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryProp)}
+          onClose={() => setGalleryProp(null)}
+          title={galleryProp.title}
+          subtitle={`${galleryProp.unitRef} • ${galleryProp.location}`}
+          photos={galleryProp.photos || []}
+        />
       )}
     </div>
   );

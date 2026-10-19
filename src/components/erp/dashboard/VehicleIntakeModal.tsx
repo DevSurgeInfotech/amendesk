@@ -6,6 +6,7 @@ import { syncEngine } from '@/lib/sync/syncEngine';
 import type { DealershipVehicle } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
 import { Car, CheckCircle } from 'lucide-react';
 
 interface VehicleIntakeModalProps {
@@ -29,8 +30,9 @@ export function VehicleIntakeModal({
   const [color, setColor] = useState('Pearl White');
   const [landedCostGhs, setLandedCostGhs] = useState<number>(0);
   const [askingPriceGhs, setAskingPriceGhs] = useState<number>(0);
-  const [location, setLocation] = useState('Amen Mart Spintex Showroom');
+  const [location, setLocation] = useState('Amen Mart Showroom');
   const [description, setDescription] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -57,9 +59,12 @@ export function VehicleIntakeModal({
         landedCostGhs,
         askingPriceGhs,
         status: 'AVAILABLE',
-        photos: [
-          'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
-        ],
+        photos:
+          photos.length > 0
+            ? photos
+            : [
+                'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
+              ],
         description: description.trim() || `${year} ${make} ${model} in ${color}`,
         featured: true,
         location,
@@ -81,6 +86,7 @@ export function VehicleIntakeModal({
         setLandedCostGhs(0);
         setAskingPriceGhs(0);
         setDescription('');
+        setPhotos([]);
       }, 1000);
     } catch (err) {
       console.error('Failed to add vehicle:', err);
@@ -266,6 +272,15 @@ export function VehicleIntakeModal({
               />
             </div>
           </div>
+
+          <ProductPhotoUploader
+            photos={photos}
+            onChange={setPhotos}
+            entityType="DEALERSHIP"
+            label="Vehicle Photos (Exterior, Cockpit, Engine)"
+            helperText="Upload or take live photos. First photo is showroom cover."
+            maxPhotos={8}
+          />
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">

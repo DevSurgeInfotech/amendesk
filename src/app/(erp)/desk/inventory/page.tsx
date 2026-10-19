@@ -396,7 +396,7 @@ function InventoryContent() {
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
               >
                 <option value="AUCTION_YARD">Auction Yard (Tema)</option>
-                <option value="DEALERSHIP_SHOWROOM">Dealership Showroom (Spintex)</option>
+                <option value="DEALERSHIP_SHOWROOM">Dealership Showroom</option>
                 <option value="WORKSHOP">Workshop &amp; Reconditioning Bay</option>
               </select>
             </div>
@@ -410,7 +410,7 @@ function InventoryContent() {
                 rows={2}
                 value={transferReason}
                 onChange={(e) => setTransferReason(e.target.value)}
-                placeholder="e.g. Moved to Spintex showroom for executive client viewing..."
+                placeholder="e.g. Moved to showroom floor for executive client viewing..."
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
               />
             </div>
@@ -482,7 +482,7 @@ function InventoryContent() {
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
               >
                 <option value="AUCTION_YARD">Auction Yard (Tema)</option>
-                <option value="DEALERSHIP_SHOWROOM">Dealership Showroom (Spintex)</option>
+                <option value="DEALERSHIP_SHOWROOM">Dealership Showroom</option>
                 <option value="WORKSHOP">Workshop &amp; Reconditioning Bay</option>
               </select>
             </div>

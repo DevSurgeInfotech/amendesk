@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { LandParcel } from '@/lib/types';
@@ -10,9 +11,12 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { SaleTransferModal } from '@/components/erp/SaleTransferModal';
+import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
+import { DocumentUploader } from '@/components/erp/DocumentUploader';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Link from 'next/link';
-import { MapPin, PlusCircle, CreditCard, FileCheck, Search, ArrowRight } from 'lucide-react';
+import { MapPin, PlusCircle, CreditCard, FileCheck, Search, ArrowRight, Images, FileText } from 'lucide-react';
 
 function generateLandId(): string {
   return `land-${Date.now()}`;
@@ -30,6 +34,7 @@ function LandContent() {
   const parcels = useLiveQuery(() => db.landParcels.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedDeedLand, setSelectedDeedLand] = useState<LandParcel | null>(null);
+  const [galleryLand, setGalleryLand] = useState<LandParcel | null>(null);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'AVAILABLE' | 'RESERVED' | 'SOLD'>(
@@ -52,6 +57,9 @@ function LandContent() {
   const [priceGhs, setPriceGhs] = useState<number>(0);
   const [titleType, setTitleType] = useState<'FREEHOLD' | 'LEASEHOLD' | 'INDENTURE'>('INDENTURE');
   const [description, setDescription] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [sitePlanUrl, setSitePlanUrl] = useState<string | undefined>();
+  const [indentureDocUrl, setIndentureDocUrl] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddParcel = async (e: React.FormEvent) => {
@@ -72,6 +80,14 @@ function LandContent() {
         titleType,
         features: ['Demarcated', 'Survey Plan Attached', 'Clear Documentation'],
         description,
+        photos:
+          photos.length > 0
+            ? photos
+            : [
+                'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+              ],
+        sitePlanUrl,
+        indentureDocUrl,
         createdAt: nowIso,
       };
 
@@ -83,6 +99,9 @@ function LandContent() {
       setLocation('');
       setPriceGhs(0);
       setDescription('');
+      setPhotos([]);
+      setSitePlanUrl(undefined);
+      setIndentureDocUrl(undefined);
     } catch (err) {
       console.error('Failed to add parcel:', err);
     } finally {
@@ -195,31 +214,81 @@ function LandContent() {
           {filteredParcels.map((parcel) => (
             <div
               key={parcel.id}
-              className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between"
+              className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                    {parcel.siteRef}
-                  </span>
-                  <div className="flex gap-2">
-                    <Badge variant="outline" size="sm">
-                      {parcel.titleType}
-                    </Badge>
-                    <Badge
-                      variant={
-                        parcel.status === 'AVAILABLE'
-                          ? 'success'
-                          : parcel.status === 'RESERVED'
-                          ? 'warning'
-                          : 'default'
-                      }
-                      size="sm"
-                    >
-                      {parcel.status}
-                    </Badge>
+              <div>
+                {parcel.photos && parcel.photos.length > 0 && (
+                  <div
+                    onClick={() => setGalleryLand(parcel)}
+                    className="relative h-44 bg-slate-200 dark:bg-slate-800 cursor-pointer group"
+                    title="Click to view site photos"
+                  >
+                    <Image
+                      src={parcel.photos[0]}
+                      alt={parcel.title}
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-3 left-3">
+                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900/80 text-white backdrop-blur-xs">
+                        {parcel.siteRef}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-3 left-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                        <Images className="h-3 w-3 text-indigo-400" />
+                        <span>{parcel.photos.length} Photos</span>
+                      </span>
+                    </div>
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                      {parcel.sitePlanUrl && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 text-[10px] font-bold backdrop-blur-xs border border-emerald-800">
+                          <FileText className="h-3 w-3 text-emerald-400" />
+                          <span>Survey Plan</span>
+                        </span>
+                      )}
+                      <Badge
+                        variant={
+                          parcel.status === 'AVAILABLE'
+                            ? 'success'
+                            : parcel.status === 'RESERVED'
+                            ? 'warning'
+                            : 'default'
+                        }
+                        size="sm"
+                      >
+                        {parcel.status}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      {parcel.siteRef}
+                    </span>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" size="sm">
+                        {parcel.titleType}
+                      </Badge>
+                      {(!parcel.photos || parcel.photos.length === 0) && (
+                        <Badge
+                          variant={
+                            parcel.status === 'AVAILABLE'
+                              ? 'success'
+                              : parcel.status === 'RESERVED'
+                              ? 'warning'
+                              : 'default'
+                          }
+                          size="sm"
+                        >
+                          {parcel.status}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
 
                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{parcel.title}</h3>
 
@@ -246,8 +315,9 @@ function LandContent() {
                   ))}
                 </div>
               </div>
+            </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 space-y-2">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[11px] text-slate-400">Direct Sale Price:</span>
@@ -388,6 +458,34 @@ function LandContent() {
               />
             </div>
             <div className="col-span-2">
+              <ProductPhotoUploader
+                photos={photos}
+                onChange={setPhotos}
+                entityType="LAND"
+                label="Land Parcel Site & Aerial Photos"
+                helperText="Upload photos of boundary beacon markers, site topography, and access roads."
+                maxPhotos={8}
+              />
+            </div>
+            <div className="col-span-2">
+              <DocumentUploader
+                documentUrl={sitePlanUrl}
+                onChange={setSitePlanUrl}
+                entityType="LAND"
+                label="Cadastral Survey Plan (PDF or Scan)"
+                helperText="Official survey plan approved by Lands Commission / Stool authority."
+              />
+            </div>
+            <div className="col-span-2">
+              <DocumentUploader
+                documentUrl={indentureDocUrl}
+                onChange={setIndentureDocUrl}
+                entityType="LAND"
+                label="Customary Indenture / Land Title Deed (PDF or Scan)"
+                helperText="Optional legal title deed or customary indenture document."
+              />
+            </div>
+            <div className="col-span-2">
               <label className="block text-xs font-semibold mb-1">Description &amp; Access Details</label>
               <textarea
                 rows={2}
@@ -417,6 +515,17 @@ function LandContent() {
           onClose={() => setSelectedDeedLand(null)}
           land={selectedDeedLand}
           onSuccess={() => setSelectedDeedLand(null)}
+        />
+      )}
+
+      {/* Photo Gallery Modal */}
+      {galleryLand && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryLand)}
+          onClose={() => setGalleryLand(null)}
+          title={`${galleryLand.siteRef}: ${galleryLand.title}`}
+          subtitle={`${galleryLand.sizeAcres} Acres • ${galleryLand.location} (${galleryLand.titleType})`}
+          photos={galleryLand.photos}
         />
       )}
     </div>

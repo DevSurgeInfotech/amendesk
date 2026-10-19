@@ -14,6 +14,7 @@ import { PaymentModal } from '@/components/erp/PaymentModal';
 import { ExtensionModal } from '@/components/erp/ExtensionModal';
 import { WaybillModal } from '@/components/erp/WaybillModal';
 import { SaleTransferModal } from '@/components/erp/SaleTransferModal';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,6 +31,7 @@ import {
   MapPin,
   CheckCircle2,
   FileText,
+  Images,
 } from 'lucide-react';
 
 function generateReceiptNumber(): string {
@@ -69,6 +71,7 @@ function AuctionsContent() {
   const [extensionLot, setExtensionLot] = useState<AuctionLot | null>(null);
   const [waybillLot, setWaybillLot] = useState<AuctionLot | null>(null);
   const [saleTransferLot, setSaleTransferLot] = useState<AuctionLot | null>(null);
+  const [galleryLot, setGalleryLot] = useState<AuctionLot | null>(null);
 
   // Yard fast bidding state
   const [activeBidLotId, setActiveBidLotId] = useState<string | null>(null);
@@ -333,13 +336,17 @@ function AuctionsContent() {
             >
               <div>
                 {/* Photo Header */}
-                <div className="relative h-48 bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div
+                  className="relative h-48 bg-slate-200 dark:bg-slate-800 overflow-hidden cursor-pointer group"
+                  onClick={() => setGalleryLot(lot)}
+                  title="Click to view photo gallery"
+                >
                   <Image
                     src={lot.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
                     alt={lot.title}
                     fill
                     unoptimized
-                    className="object-cover"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                     <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
@@ -360,6 +367,13 @@ function AuctionsContent() {
                     <Badge variant="outline" size="sm" className="bg-white/90 dark:bg-slate-900/90">
                       {lot.assetType}
                     </Badge>
+                  </div>
+
+                  <div className="absolute bottom-3 left-3">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                      <Images className="h-3 w-3 text-indigo-400" />
+                      <span>{lot.photos?.length || 1} Photos</span>
+                    </span>
                   </div>
 
                   <div className="absolute bottom-3 right-3">
@@ -675,6 +689,17 @@ function AuctionsContent() {
           onClose={() => setSaleTransferLot(null)}
           lot={saleTransferLot}
           onSuccess={() => setSaleTransferLot(null)}
+        />
+      )}
+
+      {/* Product Gallery Modal */}
+      {galleryLot && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryLot)}
+          onClose={() => setGalleryLot(null)}
+          title={galleryLot.title}
+          subtitle={`${galleryLot.category} • ${galleryLot.lotNumber} • ${galleryLot.yardLocation}`}
+          photos={galleryLot.photos || []}
         />
       )}
     </div>

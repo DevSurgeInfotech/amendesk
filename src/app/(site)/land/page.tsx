@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { LandParcel } from '@/lib/types';
@@ -8,12 +9,14 @@ import { formatGHS } from '@/lib/utils/currency';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, Images, FileText } from 'lucide-react';
 
 export default function PublicLandPage() {
   const parcels = useLiveQuery(() => db.landParcels.toArray(), []) || [];
   const [selectedParcel, setSelectedParcel] = useState<LandParcel | null>(null);
+  const [galleryParcel, setGalleryParcel] = useState<LandParcel | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [titleTypeFilter, setTitleTypeFilter] = useState<'ALL' | 'FREEHOLD' | 'LEASEHOLD' | 'INDENTURE'>('ALL');
@@ -128,31 +131,81 @@ export default function PublicLandPage() {
         {filteredParcels.map((parcel) => (
           <div
             key={parcel.id}
-            className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between"
+            className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
           >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                  {parcel.siteRef}
-                </span>
-                <div className="flex gap-2">
-                  <Badge variant="outline" size="sm">
-                    {parcel.titleType}
-                  </Badge>
-                  <Badge
-                    variant={
-                      parcel.status === 'AVAILABLE'
-                        ? 'success'
-                        : parcel.status === 'RESERVED'
-                        ? 'warning'
-                        : 'default'
-                    }
-                    size="sm"
-                  >
-                    {parcel.status}
-                  </Badge>
+            <div>
+              {parcel.photos && parcel.photos.length > 0 && (
+                <div
+                  onClick={() => setGalleryParcel(parcel)}
+                  className="relative h-52 bg-slate-200 dark:bg-slate-800 cursor-pointer group"
+                  title="Click to view site photos"
+                >
+                  <Image
+                    src={parcel.photos[0]}
+                    alt={parcel.title}
+                    fill
+                    unoptimized
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900/80 text-white backdrop-blur-xs">
+                      {parcel.siteRef}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 left-3">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                      <Images className="h-3 w-3 text-indigo-400" />
+                      <span>{parcel.photos.length} Photos</span>
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                    {parcel.sitePlanUrl && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 text-[10px] font-bold backdrop-blur-xs border border-emerald-800">
+                        <FileText className="h-3 w-3 text-emerald-400" />
+                        <span>Survey Plan</span>
+                      </span>
+                    )}
+                    <Badge
+                      variant={
+                        parcel.status === 'AVAILABLE'
+                          ? 'success'
+                          : parcel.status === 'RESERVED'
+                          ? 'warning'
+                          : 'default'
+                      }
+                      size="sm"
+                    >
+                      {parcel.status}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              <div className="p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {parcel.siteRef}
+                  </span>
+                  <div className="flex gap-2">
+                    <Badge variant="outline" size="sm">
+                      {parcel.titleType}
+                    </Badge>
+                    {(!parcel.photos || parcel.photos.length === 0) && (
+                      <Badge
+                        variant={
+                          parcel.status === 'AVAILABLE'
+                            ? 'success'
+                            : parcel.status === 'RESERVED'
+                            ? 'warning'
+                            : 'default'
+                        }
+                        size="sm"
+                      >
+                        {parcel.status}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
 
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 {parcel.title}
@@ -177,6 +230,7 @@ export default function PublicLandPage() {
                   </span>
                 ))}
               </div>
+            </div>
             </div>
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 flex items-center justify-between">
@@ -280,6 +334,16 @@ export default function PublicLandPage() {
             </form>
           )}
         </Modal>
+      )}
+
+      {galleryParcel && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryParcel)}
+          onClose={() => setGalleryParcel(null)}
+          title={galleryParcel.title}
+          subtitle={`${galleryParcel.sizeAcres} Acres • ${galleryParcel.location}`}
+          photos={galleryParcel.photos || []}
+        />
       )}
     </div>
   );

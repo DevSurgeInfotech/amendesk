@@ -219,7 +219,7 @@ export default function HomePage() {
               Car Dealership Showroom
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Direct-sale imported vehicle showroom at Spintex Road. Inspected SUVs, sedans, and commercial haulers with online deposit reservations.
+              Direct-sale imported vehicle showroom. Inspected SUVs, sedans, and commercial haulers with online deposit reservations.
             </p>
             <Link
               href="/showroom"
@@ -261,7 +261,7 @@ export default function HomePage() {
                 Direct Dealership
               </span>
               <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-                Spintex Showroom Stock
+                Showroom Stock
               </h2>
               <p className="text-xs text-slate-500">
                 Premium imported vehicles ready for immediate ownership transfer.

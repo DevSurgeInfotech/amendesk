@@ -288,7 +288,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
             photos: ['https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80'],
             description: `${make} ${model} imported direct from overseas auction with full landed customs documentation.`,
             featured: true,
-            location: 'Main Showroom, Spintex Road',
+            location: 'Amen Mart Showroom',
             createdAt: getIsoTimestamp(),
           });
         });
@@ -335,6 +335,7 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
             status: 'AVAILABLE',
             features: ['Litigation Free', 'Cadastral Survey Done', 'Accessible Roads'],
             description: `${title} located at ${location}. Ready for immediate development with clear title.`,
+            photos: ['https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80'],
             sitePlanUrl: 'https://example.com/siteplan.pdf',
             createdAt: getIsoTimestamp(),
           });

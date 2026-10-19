@@ -91,6 +91,8 @@ export const initialLots: AuctionLot[] = [
     conditionNotes: 'Excellent runner, well maintained, minor scuff on rear bumper. Complete service record.',
     photos: [
       'https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
     ],
     yardLocation: 'Amen Mart Main Yard — Bay A-12',
     courtCaseNumber: 'HC/ACR/COMM/2026/049',
@@ -130,6 +132,8 @@ export const initialLots: AuctionLot[] = [
     conditionNotes: 'Gated compound with swimming pool, security post, and 2-bedroom boys quarters. Clean title verified by Lands Commission.',
     photos: [
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&w=1200&q=80',
     ],
     yardLocation: 'On-site Inspection via Amen Mart Escort',
     courtCaseNumber: 'HC/ACR/GEN/2025/118',
@@ -227,6 +231,8 @@ export const initialLots: AuctionLot[] = [
     conditionNotes: 'Showroom condition, panoramic sunroof, Burmester sound, full ceramic coating, single expatriate owner.',
     photos: [
       'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1200&q=80',
     ],
     yardLocation: 'Amen Mart VIP Indoor Showroom Bay 1',
     reservePriceGhs: 780000,
@@ -441,10 +447,12 @@ export const initialVehicles: DealershipVehicle[] = [
     status: 'AVAILABLE',
     photos: [
       'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80',
     ],
     description: 'Direct imported Japan spec SUV. Full leather interior, Apple CarPlay, power tailgate, lane keep assist.',
     featured: true,
-    location: 'Amen Mart Spintex Showroom',
+    location: 'Amen Mart Showroom',
     createdAt: '2026-09-20T10:00:00Z',
   },
   {
@@ -463,10 +471,11 @@ export const initialVehicles: DealershipVehicle[] = [
     status: 'AVAILABLE',
     photos: [
       'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
     ],
     description: 'Clean modern crossover with panoramic sunroof, heated seats, reverse camera with guidelines.',
     featured: true,
-    location: 'Amen Mart Spintex Showroom',
+    location: 'Amen Mart Showroom',
     createdAt: '2026-09-22T14:30:00Z',
   },
   {
@@ -485,10 +494,11 @@ export const initialVehicles: DealershipVehicle[] = [
     status: 'AVAILABLE',
     photos: [
       'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
     ],
     description: 'V6 luxury SUV. Mark Levinson premium audio system, heads-up display, blind spot monitor.',
     featured: true,
-    location: 'Amen Mart Spintex Showroom',
+    location: 'Amen Mart Showroom',
     createdAt: '2026-10-01T09:15:00Z',
   },
 ];
@@ -505,6 +515,11 @@ export const initialLandParcels: LandParcel[] = [
     titleType: 'LEASEHOLD',
     features: ['Direct Beachfront Access', 'Titled & Demarcated', 'Electricity Grid Connected', 'Ideal for Eco-Resort'],
     description: 'Pristine 10-acre parcel on the estuary coast. Clear documentation with stool and Lands Commission clearance.',
+    photos: [
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1628624747186-a941c476b7ef?auto=format&fit=crop&w=1200&q=80',
+    ],
+    sitePlanUrl: '/docs/siteplan_sample.pdf',
     createdAt: '2026-09-10T10:00:00Z',
   },
   {
@@ -518,6 +533,11 @@ export const initialLandParcels: LandParcel[] = [
     titleType: 'INDENTURE',
     features: ['Gated Community', 'Paved Access Road', 'Water & Electricity Ready', 'Scenic Aburi Mountain Views'],
     description: 'High-elevation serviced residential plots situated in a fast-growing executive community.',
+    photos: [
+      'https://images.unsplash.com/photo-1628624747186-a941c476b7ef?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+    ],
+    sitePlanUrl: '/docs/siteplan_sample.pdf',
     createdAt: '2026-09-18T12:00:00Z',
   },
 ];
@@ -537,6 +557,9 @@ export const initialProperties: PropertyUnit[] = [
     description: 'Architecturally designed executive residence in prime Cantonments. High rental yield asset for investors.',
     photos: [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80',
     ],
     createdAt: '2026-09-12T08:00:00Z',
   },
@@ -552,6 +575,8 @@ export const initialProperties: PropertyUnit[] = [
     description: 'Strategically located warehousing complex with immediate access to the Tema Motorway.',
     photos: [
       'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=80',
     ],
     createdAt: '2026-09-14T11:00:00Z',
   },
@@ -647,11 +672,11 @@ export const initialAccounts: Account[] = [
   {
     id: 'acc-1020',
     code: '1020',
-    name: 'Front-Desk Cash Till — Spintex Showroom',
+    name: 'Front-Desk Cash Till — Showroom',
     type: 'ASSET',
     category: 'CURRENT_ASSET',
     balanceGhs: 12800,
-    description: 'Cash drawer at Spintex vehicle & luxury showroom',
+    description: 'Cash drawer at vehicle showroom',
     isSystem: true,
     currency: 'GHS',
     createdAt: '2026-08-01T00:00:00Z',
@@ -1081,7 +1106,7 @@ export const initialAccounts: Account[] = [
     type: 'EXPENSE',
     category: 'OPERATING_EXPENSE',
     balanceGhs: 35000,
-    description: 'Lease rentals for Tema main auction yard and Spintex showroom',
+    description: 'Lease rentals for Tema main auction yard and Showroom premises',
     isSystem: true,
     currency: 'GHS',
     createdAt: '2026-08-01T00:00:00Z',
@@ -1705,11 +1730,11 @@ export const initialAccountingLocations: AccountingLocation[] = [
     createdAt: '2026-08-01T00:00:00Z',
   },
   {
-    id: 'loc-spintex',
-    code: 'LOC_SPINTEX',
-    name: 'Spintex Luxury Vehicle Showroom',
+    id: 'loc-showroom',
+    code: 'LOC_SHOWROOM',
+    name: 'Amen Mart Vehicle Showroom',
     facilityType: 'SHOWROOM',
-    address: 'Spintex Road, Near Kasapreko Junction, Accra',
+    address: 'Amen Mart Showroom Facility, Accra',
     isActive: true,
     createdAt: '2026-08-01T00:00:00Z',
   },

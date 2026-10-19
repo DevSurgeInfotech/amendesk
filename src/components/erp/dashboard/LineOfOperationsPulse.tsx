@@ -259,7 +259,7 @@ export function LineOfOperationsPulse({
 
             <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200 dark:border-slate-800">
               <span className="text-slate-500">
-                Spintex Showroom &bull; {soldCars.length} vehicles sold &amp; delivered this quarter
+                Amen Mart Showroom &bull; {soldCars.length} vehicles sold &amp; delivered this quarter
               </span>
               <Link
                 href="/desk/dealership"

@@ -11,9 +11,11 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { SaleTransferModal } from '@/components/erp/SaleTransferModal';
+import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Link from 'next/link';
-import { PlusCircle, MapPin, Bed, Bath, CreditCard, FileCheck, Search, ArrowRight } from 'lucide-react';
+import { PlusCircle, MapPin, Bed, Bath, CreditCard, FileCheck, Search, ArrowRight, Images } from 'lucide-react';
 
 function generatePropertyId(): string {
   return `prop-${Date.now()}`;
@@ -31,6 +33,7 @@ function PropertyContent() {
   const properties = useLiveQuery(() => db.propertyUnits.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedDeedProp, setSelectedDeedProp] = useState<PropertyUnit | null>(null);
+  const [galleryProp, setGalleryProp] = useState<PropertyUnit | null>(null);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'AVAILABLE' | 'RESERVED' | 'SOLD'>(
@@ -54,9 +57,7 @@ function PropertyContent() {
   const [bathrooms, setBathrooms] = useState<number>(3);
   const [priceGhs, setPriceGhs] = useState<number>(0);
   const [description, setDescription] = useState('');
-  const [photoUrl, setPhotoUrl] = useState(
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80'
-  );
+  const [photos, setPhotos] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddProperty = async (e: React.FormEvent) => {
@@ -78,7 +79,10 @@ function PropertyContent() {
         status: 'AVAILABLE',
         features: ['Executive Finishing', '24/7 Security', 'Backup Power', 'Titled'],
         description,
-        photos: [photoUrl],
+        photos:
+          photos.length > 0
+            ? photos
+            : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80'],
         createdAt: nowIso,
       };
 
@@ -90,6 +94,7 @@ function PropertyContent() {
       setLocation('');
       setPriceGhs(0);
       setDescription('');
+      setPhotos([]);
     } catch (err) {
       console.error('Failed to add property:', err);
     } finally {
@@ -205,7 +210,11 @@ function PropertyContent() {
               className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
             >
               <div>
-                <div className="relative h-48 bg-slate-200 dark:bg-slate-800">
+                <div
+                  className="relative h-48 bg-slate-200 dark:bg-slate-800 cursor-pointer group overflow-hidden"
+                  onClick={() => setGalleryProp(prop)}
+                  title="Click to view high-resolution photo gallery"
+                >
                   <Image
                     src={
                       prop.photos[0] ||
@@ -214,7 +223,7 @@ function PropertyContent() {
                     alt={prop.title}
                     fill
                     unoptimized
-                    className="object-cover"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-3 left-3 flex gap-2">
                     <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
@@ -223,6 +232,12 @@ function PropertyContent() {
                     <Badge variant="outline" size="sm" className="bg-white/90 dark:bg-slate-900/90 font-bold">
                       {prop.propertyType}
                     </Badge>
+                  </div>
+                  <div className="absolute bottom-3 left-3">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                      <Images className="h-3 w-3 text-indigo-400" />
+                      <span>{prop.photos?.length || 1} Photos</span>
+                    </span>
                   </div>
                   <div className="absolute bottom-3 right-3">
                     <Badge
@@ -430,12 +445,12 @@ function PropertyContent() {
               </>
             )}
             <div className="col-span-2">
-              <label className="block text-xs font-semibold mb-1">Photo URL</label>
-              <input
-                type="url"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+              <label className="block text-xs font-semibold mb-1">Property Photos</label>
+              <ProductPhotoUploader
+                photos={photos}
+                onChange={setPhotos}
+                entityType="PROPERTY"
+                maxPhotos={10}
               />
             </div>
             <div className="col-span-2">
@@ -468,6 +483,17 @@ function PropertyContent() {
           onClose={() => setSelectedDeedProp(null)}
           property={selectedDeedProp}
           onSuccess={() => setSelectedDeedProp(null)}
+        />
+      )}
+
+      {/* Product Gallery Lightbox */}
+      {galleryProp && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryProp)}
+          onClose={() => setGalleryProp(null)}
+          title={galleryProp.title}
+          subtitle={`${galleryProp.unitRef} • ${galleryProp.location}`}
+          photos={galleryProp.photos || []}
         />
       )}
     </div>

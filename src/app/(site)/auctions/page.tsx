@@ -10,6 +10,7 @@ import { formatGHS } from '@/lib/utils/currency';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import {
   Gavel,
@@ -18,6 +19,7 @@ import {
   Layers,
   MapPin,
   CheckCircle2,
+  Images,
 } from 'lucide-react';
 
 function PublicAuctionsCatalog() {
@@ -31,6 +33,7 @@ function PublicAuctionsCatalog() {
   );
   const [assetTypeFilter, setAssetTypeFilter] = useState<'ALL' | AssetType>('ALL');
   const [inquiryLot, setInquiryLot] = useState<AuctionLot | null>(null);
+  const [galleryLot, setGalleryLot] = useState<AuctionLot | null>(null);
 
   const [bidderName, setBidderName] = useState('');
   const [bidderPhone, setBidderPhone] = useState('');
@@ -176,13 +179,17 @@ function PublicAuctionsCatalog() {
             className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
           >
             <div>
-              <div className="relative h-56 bg-slate-200 dark:bg-slate-800">
+              <div
+                className="relative h-56 bg-slate-200 dark:bg-slate-800 cursor-pointer group overflow-hidden"
+                onClick={() => setGalleryLot(lot)}
+                title="Click to view photo gallery"
+              >
                 <Image
                   src={lot.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
                   alt={lot.title}
                   fill
                   unoptimized
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                   <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
@@ -217,6 +224,12 @@ function PublicAuctionsCatalog() {
                   >
                     {lot.status.replace('_', ' ')}
                   </Badge>
+                </div>
+                <div className="absolute bottom-3 left-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                    <Images className="h-3 w-3 text-indigo-400" />
+                    <span>{lot.photos?.length || 1} Photos</span>
+                  </span>
                 </div>
               </div>
 
@@ -348,6 +361,16 @@ function PublicAuctionsCatalog() {
             </form>
           )}
         </Modal>
+      )}
+
+      {galleryLot && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryLot)}
+          onClose={() => setGalleryLot(null)}
+          title={galleryLot.title}
+          subtitle={`${galleryLot.category} • ${galleryLot.lotNumber} • ${galleryLot.yardLocation}`}
+          photos={galleryLot.photos || []}
+        />
       )}
     </div>
   );

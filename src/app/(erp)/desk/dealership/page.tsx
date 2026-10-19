@@ -12,7 +12,9 @@ import { Modal } from '@/components/ui/Modal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PlusCircle, Fuel, Gauge, CreditCard, Search, ArrowRight } from 'lucide-react';
+import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
+import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
+import { PlusCircle, Fuel, Gauge, CreditCard, Search, ArrowRight, Images } from 'lucide-react';
 
 function generateVehicleId(): string {
   return `car-${Date.now()}`;
@@ -33,6 +35,7 @@ function DealershipContent() {
 
   const vehicles = useLiveQuery(() => db.dealershipVehicles.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [galleryCar, setGalleryCar] = useState<DealershipVehicle | null>(null);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'AVAILABLE' | 'RESERVED' | 'SOLD'>(
@@ -57,10 +60,8 @@ function DealershipContent() {
   const [askingPriceGhs, setAskingPriceGhs] = useState<number>(0);
   const [color, setColor] = useState('Pearl White');
   const [mileageKm, setMileageKm] = useState<number>(30000);
-  const [location, setLocation] = useState('Amen Mart Spintex Showroom');
-  const [photoUrl, setPhotoUrl] = useState(
-    'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80'
-  );
+  const [location, setLocation] = useState('Amen Mart Showroom');
+  const [photos, setPhotos] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,7 +88,12 @@ function DealershipContent() {
         landedCostGhs,
         askingPriceGhs,
         status: 'AVAILABLE',
-        photos: [photoUrl],
+        photos:
+          photos.length > 0
+            ? photos
+            : [
+                'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
+              ],
         description,
         featured: true,
         location,
@@ -104,6 +110,8 @@ function DealershipContent() {
       setVin('');
       setLandedCostGhs(0);
       setAskingPriceGhs(0);
+      setPhotos([]);
+      setDescription('');
     } catch (err) {
       console.error('Failed to add vehicle:', err);
     } finally {
@@ -139,7 +147,7 @@ function DealershipContent() {
             <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
               Direct Car Dealership
             </span>
-            <span className="text-xs text-slate-400">Spintex Showroom &bull; Landed Margin Engine</span>
+            <span className="text-xs text-slate-400">Showroom &bull; Landed Margin Engine</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Imported Vehicle Inventory
@@ -224,7 +232,11 @@ function DealershipContent() {
                 className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
               >
                 <div>
-                  <div className="relative h-48 bg-slate-200 dark:bg-slate-800">
+                  <div
+                    onClick={() => setGalleryCar(car)}
+                    className="relative h-48 bg-slate-200 dark:bg-slate-800 cursor-pointer group"
+                    title="Click to view full photo gallery"
+                  >
                     <Image
                       src={
                         car.photos[0] ||
@@ -233,11 +245,17 @@ function DealershipContent() {
                       alt={`${car.make} ${car.model}`}
                       fill
                       unoptimized
-                      className="object-cover"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-3 left-3 flex gap-2">
                       <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
                         {car.stockNumber}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-3 left-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                        <Images className="h-3 w-3 text-indigo-400" />
+                        <span>{car.photos?.length || 1} Photos</span>
                       </span>
                     </div>
                     <div className="absolute bottom-3 right-3">
@@ -346,7 +364,7 @@ function DealershipContent() {
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         title="Add Direct Dealership Vehicle"
-        subtitle="Log new imported car stock into Spintex Showroom registry."
+        subtitle="Log new imported car stock into Showroom registry."
         maxWidth="lg"
       >
         <form onSubmit={handleAddVehicle} className="space-y-4">
@@ -437,7 +455,7 @@ function DealershipContent() {
                 required
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Amen Mart Spintex Showroom"
+                placeholder="e.g. Amen Mart Showroom"
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
               />
             </div>
@@ -468,12 +486,13 @@ function DealershipContent() {
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-semibold mb-1">Photo URL</label>
-              <input
-                type="url"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+              <ProductPhotoUploader
+                photos={photos}
+                onChange={setPhotos}
+                entityType="DEALERSHIP"
+                label="Vehicle Exterior & Cockpit Photos"
+                helperText="Upload or take photos via camera. The first image will be the primary showroom listing cover."
+                maxPhotos={10}
               />
             </div>
             <div className="col-span-2">
@@ -498,6 +517,17 @@ function DealershipContent() {
           </div>
         </form>
       </Modal>
+
+      {/* Full Photo Lightbox Gallery */}
+      {galleryCar && (
+        <ProductGalleryModal
+          isOpen={Boolean(galleryCar)}
+          onClose={() => setGalleryCar(null)}
+          title={`${galleryCar.year} ${galleryCar.make} ${galleryCar.model}`}
+          subtitle={`Stock #${galleryCar.stockNumber} • VIN: ${galleryCar.vin}`}
+          photos={galleryCar.photos}
+        />
+      )}
     </div>
   );
 }

@@ -51,7 +51,7 @@ export function InvoiceViewerModal({
                 </div>
               </div>
               <p className="text-[11px] text-slate-500 mt-2">
-                Tema Main Yard, Off Harbour Road &bull; Spintex Showroom, Accra
+                Tema Main Yard, Off Harbour Road &bull; Amen Mart Showroom, Accra
               </p>
               <p className="text-[11px] text-slate-500">
                 TIN: C0009128490 &bull; Tel: +233 (0) 30 223 9011

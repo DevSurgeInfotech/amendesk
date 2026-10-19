@@ -43,7 +43,7 @@ export function SiteFooter() {
             <li>
               <Link href="/showroom" className="hover:text-indigo-600 transition-colors flex items-center gap-1.5">
                 <Car className="h-3.5 w-3.5 text-indigo-600" />
-                <span>Spintex Car Showroom</span>
+                <span>Vehicle Showroom</span>
               </Link>
             </li>
             <li>
