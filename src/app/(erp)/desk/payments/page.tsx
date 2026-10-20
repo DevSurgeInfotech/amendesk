@@ -666,7 +666,7 @@ function RecordPaymentContent() {
       {/* Till Shift Summary Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard
-          theme={0}
+          theme="emerald"
           title="Today's Total Collections"
           value={formatGHS(todayTotal)}
           subtitle={`${todayReceipts.length} receipts issued today`}
@@ -674,7 +674,7 @@ function RecordPaymentContent() {
         />
 
         <GlassCard
-          theme={1}
+          theme="amber"
           title="Drawer Cash Till"
           value={formatGHS(todayCash)}
           subtitle="Physical notes &amp; coins in till"
@@ -682,7 +682,7 @@ function RecordPaymentContent() {
         />
 
         <GlassCard
-          theme={2}
+          theme="purple"
           title="Mobile Money (MoMo)"
           value={formatGHS(todayMomo)}
           subtitle="MTN &bull; Telecel &bull; Hubtel"
@@ -690,7 +690,7 @@ function RecordPaymentContent() {
         />
 
         <GlassCard
-          theme={3}
+          theme="blue"
           title="Bank Wires &amp; Drafts"
           value={formatGHS(todayBank)}
           subtitle="GCB &bull; Stanbic &bull; Ecobank Escrow"

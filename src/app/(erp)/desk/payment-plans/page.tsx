@@ -75,7 +75,7 @@ function PaymentPlansContent() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <GlassCard
-          theme={0}
+          theme="amber"
           title="Total Outstanding Balance"
           value={formatGHS(totalOutstanding)}
           subtitle={`${plans.length} total payment plans`}
@@ -83,7 +83,7 @@ function PaymentPlansContent() {
         />
 
         <GlassCard
-          theme={1}
+          theme="indigo"
           title="Active Within 14-Day Window"
           value={`${activeCount} Plans`}
           subtitle="Scheduled for balance settlement"

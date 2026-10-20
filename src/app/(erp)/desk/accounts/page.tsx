@@ -336,7 +336,7 @@ function AccountsContent() {
           {/* KPI Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <GlassCard
-              theme={0}
+              theme="emerald"
               title="Total Liquid Funds"
               value={formatGHS(totalLiquidity)}
               subtitle="Cash Tills + MoMo + Bank Accounts"
@@ -344,7 +344,7 @@ function AccountsContent() {
             />
 
             <GlassCard
-              theme={1}
+              theme="amber"
               title="Accounts Receivable (AR)"
               value={formatGHS(totalReceivables)}
               subtitle="14-day auction &amp; showroom debtor balances"
@@ -352,7 +352,7 @@ function AccountsContent() {
             />
 
             <GlassCard
-              theme={2}
+              theme="purple"
               title="Payables &amp; Judicial Escrow"
               value={formatGHS(totalPayablesAndEscrow)}
               subtitle="Court registrar, consignor &amp; vendor liabilities"
@@ -360,7 +360,7 @@ function AccountsContent() {
             />
 
             <GlassCard
-              theme={3}
+              theme="indigo"
               title="Net Operating Margin"
               value={formatGHS(netOperatingProfit)}
               subtitle={`Revenue ${formatGHS(totalRevenue)} − Opex ${formatGHS(totalOperatingExpenses)}`}

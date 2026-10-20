@@ -412,7 +412,7 @@ export default function DeskDashboardPage() {
       {/* Tier-1 Executive KPI Ribbon */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard
-          theme={0}
+          theme="amber"
           title="14-Day Receivables Due"
           value={formatGHS(totalReceivablesGhs)}
           subtitle={`Across ${awaitingBalanceLots.length} hammer settlements & debtor plans`}
@@ -421,7 +421,7 @@ export default function DeskDashboardPage() {
         />
 
         <GlassCard
-          theme={1}
+          theme="emerald"
           title="Collections to Date"
           value={formatGHS(totalCollectedGhs)}
           subtitle={`${receipts.length} verified receipts issued (Cash, MoMo, Bank, Card)`}
@@ -430,7 +430,7 @@ export default function DeskDashboardPage() {
         />
 
         <GlassCard
-          theme={2}
+          theme="indigo"
           title="Total Asset Valuation"
           value={formatGHS(totalAssetValuation)}
           subtitle={`${totalInventoryUnits} items across Showroom, Land, Property & Auctions`}
@@ -439,7 +439,7 @@ export default function DeskDashboardPage() {
         />
 
         <GlassCard
-          theme={3}
+          theme="purple"
           title="Realized 7% Margin & Gross"
           value={formatGHS(totalRealizedMarginGhs)}
           subtitle="Earned 7% auction commissions + showroom car gross"
