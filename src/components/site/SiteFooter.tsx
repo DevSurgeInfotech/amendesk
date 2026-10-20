@@ -88,11 +88,6 @@ export function SiteFooter() {
                 Online Reservation Deposits
               </Link>
             </li>
-            <li>
-              <Link href="/desk" className="hover:text-indigo-600 transition-colors text-indigo-700 font-semibold">
-                Staff AmenDesk ERP &rarr;
-              </Link>
-            </li>
           </ul>
         </div>
 

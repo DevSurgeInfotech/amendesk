@@ -182,9 +182,28 @@ export function Sidebar() {
   useEffect(() => {
     if (navTimerRef.current) clearTimeout(navTimerRef.current);
     const activeMod = erpModules.find((mod) => {
-      if (mod.href === '/desk') return pathname === '/desk';
-      if (pathname === mod.href || pathname.startsWith(mod.href + '/')) return true;
-      if (mod.submodules?.some((s) => currentFullUrl === s.href || pathname === s.href.split('?')[0])) {
+      if (mod.href === '/desk') return pathname === '/desk' || pathname === '/';
+      const strippedMod = mod.href.replace(/^\/desk/, '') || '/';
+      if (
+        pathname === mod.href ||
+        pathname.startsWith(mod.href + '/') ||
+        pathname === strippedMod ||
+        (strippedMod !== '/' && pathname.startsWith(strippedMod + '/'))
+      ) {
+        return true;
+      }
+      if (
+        mod.submodules?.some((s) => {
+          const subClean = s.href.split('?')[0];
+          const subStripped = subClean.replace(/^\/desk/, '') || '/';
+          return (
+            currentFullUrl === s.href ||
+            currentFullUrl === s.href.replace(/^\/desk/, '') ||
+            pathname === subClean ||
+            pathname === subStripped
+          );
+        })
+      ) {
         return true;
       }
       return false;
@@ -306,12 +325,26 @@ export function Sidebar() {
             const isExpanded = expandedSection === module.id;
 
             // Determine if any item in this module is currently active
+            const strippedHref = module.href.replace(/^\/desk/, '') || '/';
             const hasSectionActive =
               module.href === '/desk'
-                ? pathname === '/desk'
+                ? pathname === '/desk' || pathname === '/'
                 : pathname === module.href ||
                   (pathname.startsWith(module.href + '/') && module.href !== '/desk') ||
-                  Boolean(module.submodules?.some((s) => currentFullUrl === s.href || pathname === s.href.split('?')[0]));
+                  pathname === strippedHref ||
+                  (strippedHref !== '/' && pathname.startsWith(strippedHref + '/')) ||
+                  Boolean(
+                    module.submodules?.some((s) => {
+                      const subClean = s.href.split('?')[0];
+                      const subStripped = subClean.replace(/^\/desk/, '') || '/';
+                      return (
+                        currentFullUrl === s.href ||
+                        currentFullUrl === s.href.replace(/^\/desk/, '') ||
+                        pathname === subClean ||
+                        pathname === subStripped
+                      );
+                    })
+                  );
 
             return (
               <div key={i} className="mb-0.5">
@@ -511,7 +544,13 @@ export function Sidebar() {
                         }
                       >
                         {module.submodules?.map((sub) => {
-                          const isSubActive = currentFullUrl === sub.href;
+                          const subClean = sub.href.split('?')[0];
+                          const isSubActive = sub.href.includes('?')
+                            ? currentFullUrl === sub.href || currentFullUrl === sub.href.replace(/^\/desk/, '')
+                            : currentFullUrl === sub.href ||
+                              currentFullUrl === sub.href.replace(/^\/desk/, '') ||
+                              pathname === subClean ||
+                              pathname === subClean.replace(/^\/desk/, '');
                           const isNavigating = navigatingHref === sub.href;
 
                           return (
@@ -627,7 +666,7 @@ export function Sidebar() {
           style={{ borderColor: 'var(--sidebar-divider, #f1f5f9)' }}
         >
           <Link
-            href="/"
+            href={process.env.NEXT_PUBLIC_SITE_URL || 'https://amenmartgh.com'}
             className={cn(
               'flex items-center rounded-xl text-xs font-bold transition-all border',
               collapsed

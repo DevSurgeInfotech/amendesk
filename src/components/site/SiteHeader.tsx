@@ -10,7 +10,6 @@ import {
   Building2,
   Phone,
   ShieldCheck,
-  Lock,
   Menu,
   X,
   Award,
@@ -45,13 +44,6 @@ export function SiteHeader() {
           <div className="flex items-center gap-4 text-[10px] text-slate-600">
             <span>Accra Live Auctions &bull; Online Bidding</span>
             <span>Tel: +233 24 412 8990</span>
-            <Link
-              href="/desk"
-              className="text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-0.5 rounded font-bold transition-colors flex items-center gap-1 shadow-xs"
-            >
-              <Lock className="h-3 w-3" />
-              <span>Staff AmenDesk ERP</span>
-            </Link>
           </div>
         </div>
       </div>
@@ -143,14 +135,6 @@ export function SiteHeader() {
               className="w-full text-center py-2 px-4 rounded-lg bg-indigo-600 text-white text-xs font-bold"
             >
               Explore Showroom
-            </Link>
-            <Link
-              href="/desk"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-2 px-4 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5"
-            >
-              <Lock className="h-3 w-3" />
-              <span>Staff AmenDesk ERP</span>
             </Link>
           </div>
         </div>
