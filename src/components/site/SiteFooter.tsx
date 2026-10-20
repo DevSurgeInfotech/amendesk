@@ -22,8 +22,8 @@ export function SiteFooter() {
             A best and trusted name in Ghana&apos;s auction industry. Owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, delivering professional auction services across real estate, vehicles, industrial equipment, and collectibles.
           </p>
           <div className="flex items-center gap-2 text-indigo-700 font-semibold">
-            <ShieldCheck className="h-4 w-4" />
-            <span>Licensed by Ghana Auctioneers Association (GAA)</span>
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            <span>Approved by Auctioneers Registration Board &amp; Ministry of the Interior</span>
           </div>
         </div>
 

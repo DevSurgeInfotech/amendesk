@@ -18,17 +18,17 @@ import {
 import { Button } from '@/components/ui/Button';
 
 export const metadata: Metadata = {
-  title: 'About Amen Mart Auctioning Services — Dr. Francis Kwaku Yeboah | Ghana Auctioneers Association',
+  title: 'About Us — Amen Mart Auctioning Services | Approved by Auctioneers Registration Board & Ministry of the Interior',
   description:
-    'Learn about Amen Mart Auctioning Services, Ghana’s trusted licensed auction house led by Dr. Francis Kwaku Yeboah. Member of Ghana Auctioneers Association offering live Accra auctions, property, vehicles, equipment, and online bidding.',
+    'Amen Mart is an Auctioning Service, approved by the Auctioneers Registration Board and the Ministry of the Interior to offer sale of Properties under the legal means of Ghana’s Constitution. Led by Dr. Francis Kwaku Yeboah.',
 };
 
 const trustPillars = [
   {
     icon: ShieldCheck,
-    title: 'Licensed Professionals',
+    title: 'Statutory & Licensed Authority',
     description:
-      'Fully certified and recognized by the Ghana Auctioneers Association, ensuring strict regulatory compliance, statutory mandate execution, and professional integrity in every transaction.',
+      'Approved by the Auctioneers Registration Board and the Ministry of the Interior, and recognized by the Ghana Auctioneers Association, executing property and asset sales under the legal means of Ghana’s Constitution.',
   },
   {
     icon: Layers,
@@ -64,13 +64,16 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-semibold shadow-2xs">
             <ShieldCheck className="h-4 w-4 text-indigo-600" />
-            <span>Amen Mart Auctioning Services &bull; Ghana Auctioneers Association Licensed</span>
+            <span>Auctioneers Registration Board &bull; Ministry of the Interior &bull; GAA</span>
           </div>
 
           <div className="max-w-3xl space-y-4">
             <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-              A Best and Trusted Name in Ghana&apos;s Auction Industry
+              About Amen Mart Auctioning Services
             </h1>
+            <p className="text-lg sm:text-xl text-slate-800 font-semibold leading-relaxed border-l-4 border-indigo-600 pl-4 bg-indigo-50/60 dark:bg-indigo-950/40 dark:text-slate-200 py-3 rounded-r-xl">
+              Amen Mart is an Auctioning Service, approved by the Auctioneers Registration Board and the Ministry of the Interior to offer sale of Properties under the legal means of Ghana&apos;s Constitution.
+            </p>
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
               When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
             </p>
@@ -121,15 +124,19 @@ export default function AboutPage() {
             <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                Affiliated with Ghana Auctioneers Association
+                Approved by Auctioneers Registration Board &amp; Ministry of the Interior
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                Statutory Sheriff &amp; Bailiff Liquidation Compliance
+                Affiliated with Ghana Auctioneers Association (GAA)
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                Full AML KYC Diligence
+                Sale of Properties under Ghana&apos;s Constitution
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                Full AML KYC &amp; Title Diligence
               </span>
             </div>
           </div>

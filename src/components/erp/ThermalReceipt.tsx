@@ -42,8 +42,8 @@ export function ThermalReceipt({ receipt, onClose }: ThermalReceiptProps) {
           <h1 className="text-sm font-black tracking-wider uppercase">
             AMEN MART AUCTIONING SERVICES
           </h1>
-          <p className="text-[10px] font-bold">LICENSED AUCTIONEERS IN GHANA (GAA)</p>
-          <p className="text-[9px] font-semibold text-slate-800">LEAD: DR. FRANCIS KWAKU YEBOAH</p>
+          <p className="text-[9px] font-bold">AUCTIONEERS REGISTRATION BOARD &amp; MIN. OF INTERIOR APPROVED</p>
+          <p className="text-[9px] font-semibold text-slate-800">LEAD: DR. FRANCIS KWAKU YEBOAH &bull; GAA MEMBER</p>
           <p className="text-[10px]">Accra Yard &bull; P.O. Box GP 22451, Accra — Ghana</p>
           <p className="text-[10px]">Tel: +233 24 412 8990 / +233 30 223 9011</p>
           <p className="text-[10px] font-bold mt-1 bg-black text-white py-0.5">OFFICIAL CASH OFFICE RECEIPT</p>
