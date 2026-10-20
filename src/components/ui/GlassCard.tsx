@@ -399,28 +399,68 @@ export interface GlassCardProps {
 }
 
 /**
- * Automatically computes responsive, non-overflowing font size classes
+ * Automatically computes responsive, impactful font size classes
  * based on the character length of the metric figure.
+ * Uses modern font-sans font-black with tabular-nums so figures look
+ * bold, large, and authoritative without overflowing.
  */
 function getValueFontSize(value: React.ReactNode): string {
   if (typeof value === 'string' || typeof value === 'number') {
     const str = String(value).trim();
-    const len = str.length;
-    // Multi-million/eight-figure amounts: e.g. "GH₵17,665,000.00" (16 chars)
-    if (len >= 15) {
-      return 'text-lg sm:text-xl lg:text-base xl:text-lg 2xl:text-2xl';
+    // Count numeric digits excluding the GH₵ currency symbol
+    const cleanStr = str.replace(/^GH[₵c\s]*/i, '');
+    const len = cleanStr.length;
+
+    // Multi-million/eight-figure amounts: e.g. "17,665,000.00" (13 chars)
+    if (len >= 13) {
+      return 'text-2xl sm:text-[26px] lg:text-[22px] xl:text-[25px] 2xl:text-[28px]';
     }
-    // Hundred-thousand amounts: e.g. "GH₵928,650.00", "GH₵100,000.00" (13-14 chars)
-    if (len >= 12) {
-      return 'text-xl sm:text-2xl lg:text-lg xl:text-xl 2xl:text-[26px]';
+    // Hundred-thousand amounts: e.g. "928,650.00", "556,600.00", "100,000.00" (10 chars)
+    if (len >= 10) {
+      return 'text-[26px] sm:text-3xl lg:text-[24px] xl:text-[28px] 2xl:text-[32px]';
     }
-    // Five-figure amounts: e.g. "GH₵74,550.00" (12 chars)
-    if (len >= 9) {
-      return 'text-xl sm:text-2xl lg:text-xl xl:text-2xl 2xl:text-3xl';
+    // Five-figure amounts: e.g. "74,550.00", "50,000.00" (9 chars)
+    if (len >= 7) {
+      return 'text-[28px] sm:text-3xl lg:text-[26px] xl:text-3xl 2xl:text-4xl';
     }
   }
-  // Short counts/percentages: e.g. "203", "13", "98.2%", "GH₵0.00"
-  return 'text-2xl sm:text-3xl';
+  // Short counts/percentages: e.g. "203", "13", "98.2%", "0.00"
+  return 'text-3xl sm:text-4xl lg:text-3xl xl:text-4xl';
+}
+
+/**
+ * Renders currency values with an elegant slightly scaled prefix
+ * to maximize visual impact and size of the numeric figure without overflowing.
+ */
+function renderMetricValue(value: React.ReactNode, valueFontSize: string, valueTextClass: string) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const match = trimmed.match(/^(GH[₵c])\s*(.*)$/i);
+    if (match) {
+      const prefix = match[1];
+      const rest = match[2];
+      return (
+        <p
+          className={`font-black font-sans tracking-tight tabular-nums truncate drop-shadow-2xs leading-none ${valueFontSize} ${valueTextClass}`}
+          title={trimmed}
+        >
+          <span className="text-[0.72em] font-extrabold opacity-85 mr-1 inline-block align-baseline tracking-normal">
+            {prefix}
+          </span>
+          <span>{rest}</span>
+        </p>
+      );
+    }
+  }
+
+  return (
+    <p
+      className={`font-black font-sans tracking-tight tabular-nums truncate drop-shadow-2xs leading-none ${valueFontSize} ${valueTextClass}`}
+      title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
+    >
+      {value}
+    </p>
+  );
 }
 
 /**
@@ -452,7 +492,7 @@ export function GlassCard({
   const cardContent = (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 transition-all duration-200 min-w-0 group ${
+      className={`relative overflow-hidden rounded-2xl p-5 sm:p-5.5 transition-all duration-200 min-w-0 group ${
         isGlass ? 'border backdrop-blur-md ring-1 ring-inset ring-white/70 dark:ring-white/10' : ''
       } ${
         onClick || href ? 'cursor-pointer hover:-translate-y-0.5' : ''
@@ -480,7 +520,7 @@ export function GlassCard({
             <div className="space-y-1 min-w-0 pr-1 flex-1">
               {title && (
                 <span
-                  className={`block text-[11px] font-bold uppercase tracking-wider truncate ${cfg.titleText}`}
+                  className={`block text-[11px] font-bold uppercase tracking-wider leading-snug line-clamp-2 ${cfg.titleText}`}
                   title={typeof title === 'string' ? title : undefined}
                 >
                   {title}
@@ -508,19 +548,14 @@ export function GlassCard({
 
           {/* Value Figure */}
           {value !== undefined && (
-            <div className="mt-3 sm:mt-4 min-w-0 w-full">
-              <p
-                className={`font-black font-mono tracking-tight tabular-nums truncate drop-shadow-2xs ${valueFontSize} ${cfg.valueText}`}
-                title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
-              >
-                {value}
-              </p>
+            <div className="mt-4 sm:mt-5 min-w-0 w-full">
+              {renderMetricValue(value, valueFontSize, cfg.valueText)}
             </div>
           )}
 
           {/* Subtitle / Helper / Trend */}
           {(subtitle || trend) && (
-            <div className="mt-2.5 flex items-center justify-between text-xs min-w-0 gap-2">
+            <div className="mt-3 sm:mt-4 flex items-center justify-between text-xs min-w-0 gap-2">
               {subtitle && (
                 <p className={`font-medium text-[11.5px] leading-snug line-clamp-2 min-w-0 flex-1 ${cfg.subtitleText}`}>
                   {subtitle}
