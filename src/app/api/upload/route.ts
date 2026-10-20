@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
-export const runtime = 'nodejs';
-
 // Allowed MIME types
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',

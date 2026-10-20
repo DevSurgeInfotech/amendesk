@@ -59,13 +59,13 @@ export default function ContactPage() {
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-2">
         <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-          Get in Touch
+          Amen Mart Auctioning Services &bull; Ghana Auctioneers Association (GAA)
         </span>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-          Contact Amen Mart &amp; Cash Office
+          Contact Dr. Francis Kwaku Yeboah &amp; Auction Desk
         </h1>
         <p className="text-xs text-slate-500">
-          Reach our auction yard, dealership showroom, and legal registry teams in Accra and Tema.
+          Reach our Accra auction yard, dealership showroom, online bidding desk, and executive cash office.
         </p>
       </div>
 
@@ -146,10 +146,10 @@ export default function ContactPage() {
           <div className="p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 space-y-2">
             <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 font-bold text-sm">
               <ShieldCheck className="h-5 w-5 text-indigo-600" />
-              <span>Government &amp; Judicial Service Credential</span>
+              <span>Licensed Auctioneers in Ghana (GAA Affiliated)</span>
             </div>
             <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
-              Amen Mart operates with official licenses for statutory auctioneering, bailiff disposals, and asset liquidation across Ghana. All hammer sales and title deeds are legally guaranteed.
+              Amen Mart Auctioning Services is owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, recognized by the Ghana Auctioneers Association. We conduct live auctions in Accra and provide secure online real-time bidding platforms for participants across Ghana and worldwide.
             </p>
           </div>
         </div>
@@ -225,11 +225,12 @@ export default function ContactPage() {
                   onChange={(e) => setInquiryType(e.target.value)}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
                 >
-                  <option value="AUCTION_INQUIRY">Auction Bidding (Judicial / Govt / Private)</option>
-                  <option value="SHOWROOM_VEHICLE">Dealership Vehicle Purchase</option>
+                  <option value="AUCTION_INQUIRY">Accra Live Auction Bidding (Judicial / Govt / Private)</option>
+                  <option value="ONLINE_BIDDING">Online Auction Platform Bidding Support</option>
+                  <option value="PROPERTY_AUCTION">Property &amp; Real Estate Auction Inquiry</option>
+                  <option value="SHOWROOM_VEHICLE">Dealership Vehicle Purchase / Reservation</option>
                   <option value="LAND_PURCHASE">Titled Land Parcel Inquiry</option>
-                  <option value="PROPERTY_PURCHASE">Property / Warehouse Inquiry</option>
-                  <option value="CONSIGNMENT">Consign an Asset for Auction Disposal</option>
+                  <option value="CONSIGNMENT">Consign an Asset / Seller Advisory with Dr. Francis Kwaku Yeboah</option>
                 </select>
               </div>
 

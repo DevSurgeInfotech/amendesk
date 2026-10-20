@@ -20,6 +20,8 @@ import {
   MapPin,
   CheckCircle2,
   Images,
+  Globe2,
+  ShieldCheck,
 } from 'lucide-react';
 
 function PublicAuctionsCatalog() {
@@ -94,14 +96,19 @@ function PublicAuctionsCatalog() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
-            Public Notifications &amp; Gazetted Notices
-          </span>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+              Amen Mart Auctioning Services
+            </span>
+            <span className="text-[11px] font-semibold text-slate-500">
+              Ghana Auctioneers Association (GAA) Licensed
+            </span>
+          </div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
             Auction Notices &amp; Public Catalog
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Filterable across Judicial, Government (Movable Only), and Private auctions. Synced live from AmenDesk.
+            Led by Dr. Francis Kwaku Yeboah. Filterable across Judicial court liquidations, Government surplus fleet, and Private consignments. Attend Live in Accra or Bid Online from anywhere.
           </p>
         </div>
 
@@ -168,6 +175,29 @@ function PublicAuctionsCatalog() {
               {t}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Live Accra & Online Bidding Info Strip */}
+      <div className="surface-card bg-indigo-50/70 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-200/80 dark:border-indigo-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
+            <Globe2 className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="font-bold text-slate-900 dark:text-slate-100">
+              Live Accra Yard Auctions &amp; Real-Time Online Bidding Available
+            </p>
+            <p className="text-slate-500 text-[11px]">
+              Bid in-person at our Accra facilities or join remotely from anywhere in Ghana and internationally.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-300">
+            <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
+            <span>Ghana Auctioneers Association Affiliated</span>
+          </span>
         </div>
       </div>
 

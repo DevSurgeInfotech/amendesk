@@ -23,7 +23,9 @@ export default function DeskLayout({
             <Topbar />
           </div>
           <main className="flex-1 p-6 overflow-y-auto">
-            {children}
+            <Suspense fallback={<div className="p-6 text-slate-500 text-xs">Loading terminal...</div>}>
+              {children}
+            </Suspense>
           </main>
         </div>
       </div>

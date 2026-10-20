@@ -21,6 +21,13 @@ import {
   Fuel,
   CreditCard,
   Send,
+  Award,
+  Globe2,
+  Building2,
+  TrendingUp,
+  Layers,
+  Sparkles,
+  Users2,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -108,15 +115,15 @@ export default function HomePage() {
           <div className="max-w-3xl space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-semibold shadow-2xs">
               <ShieldCheck className="h-4 w-4 text-indigo-600" />
-              <span>Official Government &amp; Judicial Service Auctioneers</span>
+              <span>Amen Mart Auctioning Services &bull; Licensed by Ghana Auctioneers Association</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-tight">
-              Ghana&apos;s Foremost Asset Auction House &amp; Dealership Showroom
+              A Best and Trusted Name in Ghana&apos;s Auction Industry
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
-              Specialized disposal of court-ordered Judicial assets, official Government surplus fleet &amp; earthmoving machinery, direct luxury vehicle imports, and titled land parcels.
+              When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -130,26 +137,156 @@ export default function HomePage() {
                   Explore Car Showroom
                 </Button>
               </Link>
+              <Link href="/about">
+                <Button size="lg" variant="outline" icon={<Award className="h-5 w-5" />}>
+                  About Dr. Yeboah &amp; Firm
+                </Button>
+              </Link>
             </div>
 
             {/* Trust Metrics */}
             <div className="pt-10 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-slate-200 text-left">
               <div>
-                <p className="text-2xl font-black text-indigo-600 font-mono">3 Categories</p>
-                <p className="text-xs text-slate-600 font-medium">Judicial &bull; Govt &bull; Private</p>
+                <p className="text-2xl font-black text-indigo-600 font-mono">10+ Years</p>
+                <p className="text-xs text-slate-600 font-medium">Proven Industry Reputation</p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-indigo-600 font-mono">GAA Licensed</p>
+                <p className="text-xs text-slate-600 font-medium">Ghana Auctioneers Association</p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-indigo-600 font-mono">Accra &bull; Online</p>
+                <p className="text-xs text-slate-600 font-medium">Live Events &amp; Real-Time Bidding</p>
               </div>
               <div>
                 <p className="text-2xl font-black text-indigo-600 font-mono">100%</p>
                 <p className="text-xs text-slate-600 font-medium">Clear Title &amp; Court Certified</p>
               </div>
-              <div>
-                <p className="text-2xl font-black text-indigo-600 font-mono">GH₵ 45M+</p>
-                <p className="text-xs text-slate-600 font-medium">Assets Disposed Under Hammer</p>
-              </div>
-              <div>
-                <p className="text-2xl font-black text-indigo-600 font-mono">14 Days</p>
-                <p className="text-xs text-slate-600 font-medium">Standard Balance Window</p>
-              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Auctions Near Me & Real-Time Online Bidding Hub */}
+      <section className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Auctions Near Me in Accra */}
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+            <div className="h-10 w-10 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center font-bold">
+              <MapPin className="h-5 w-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Looking for &quot;Auctions Near Me&quot;?
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              If you&apos;re searching for &quot;auctions near me&quot; in Ghana, Amen Mart Auctioning Services should be your first stop. Strategically located in Accra, our auction house serves as a dynamic hub for asset auctions—from vehicles and industrial equipment to real estate and collectibles.
+            </p>
+            <Link
+              href="/auctions"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline pt-1"
+            >
+              <span>Accra Live Auctions</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          {/* Card 2: Ghana's Booming Market & GAA Licensing */}
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+            <div className="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center font-bold">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Ghana&apos;s Auction Market Is Booming
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Auctions are an increasingly popular method for buying and selling goods in Ghana, offering a structured, transparent alternative to traditional sales. As licensed auctioneers affiliated with the Ghana Auctioneers Association, we ensure every auction meets the highest standards of legality, fairness, and accountability.
+            </p>
+            <Link
+              href="/about"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline pt-1"
+            >
+              <span>Learn About GAA Affiliation</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          {/* Card 3: Bid From Anywhere Online */}
+          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold">
+              <Globe2 className="h-5 w-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Bid From Anywhere Online
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Recognizing the evolving needs of clients, Amen Mart also offers online auction services. This allows participants from across Ghana—and even internationally—to join auctions in real time. Our secure, user-friendly bidding platform ensures safe and convenient engagement anywhere.
+            </p>
+            <Link
+              href="/auctions"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline pt-1"
+            >
+              <span>Explore Online Lots</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Thousands Trust Amen Mart Auctioning Services Section */}
+      <section className="max-w-7xl mx-auto px-6">
+        <div className="surface-card bg-gradient-to-br from-white via-indigo-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-850 dark:to-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 sm:p-12 shadow-sm space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+              <span>Official Credentials &bull; Ghana Auctioneers Association</span>
+            </div>
+            <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+              Why Thousands Trust Amen Mart Auctioning Services
+            </h2>
+            <p className="text-xs text-slate-500">
+              Upholding the highest standards of legality, fairness, and accountability under the guidance of Dr. Francis Kwaku Yeboah.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 space-y-2">
+              <ShieldCheck className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Licensed Professionals</h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Fully certified and recognized by the Ghana Auctioneers Association, ensuring regulatory compliance and professional integrity.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 space-y-2">
+              <Layers className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Diverse Auction Offerings</h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                From real estate and vehicles to equipment and collectibles, Amen Mart handles a wide range of high-value assets.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 space-y-2">
+              <Award className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Experienced Leadership</h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Under the guidance of Dr. Francis Kwaku Yeboah the company brings years of expertise and insight to every auction.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 space-y-2">
+              <MapPin className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Accessible Locations</h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Regular auctions held in Accra and other major cities, with online bidding options available for broader reach.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 space-y-2">
+              <Users2 className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Client-Centered</h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Both buyers and sellers enjoy a smooth, transparent process tailored to meet their financial and asset goals.
+              </p>
             </div>
           </div>
         </div>
@@ -230,22 +367,22 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Pillar 4: Land & Property */}
+          {/* Pillar 4: Property Auctions Made Easy */}
           <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <div className="h-12 w-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold">
-              <MapPin className="h-6 w-6" />
+              <Building2 className="h-6 w-6" />
             </div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Titled Land &amp; Properties
+              Property Auctions Made Easy
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Direct parcel sales in beachfront, residential gated, and commercial enclaves. Verified cadastral survey plans and Lands Commission clearances.
+              Residential homes, commercial buildings, and titled land parcels. Verified listings, cadastral site plans, Lands Commission clearances, and high-visibility buyer-seller matching.
             </p>
             <Link
-              href="/land"
+              href="/properties"
               className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline"
             >
-              <span>View Land Parcels</span>
+              <span>Explore Verified Properties</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>

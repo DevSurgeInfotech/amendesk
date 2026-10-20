@@ -158,7 +158,7 @@ export default function DeskDashboardPage() {
   // 1. Chart Data: Daily Collections Trend (Continuous 7-Day Window)
   const collectionTrendData: DailyCollectionPoint[] = useMemo(() => {
     // Determine the anchor date: latest receipt date or fallback to current date
-    let anchorDate = new Date();
+    let anchorDate = new Date('2026-10-20T00:00:00Z');
     if (receipts.length > 0) {
       const sortedDates = receipts
         .map((r) => r.printedAt)
@@ -333,7 +333,7 @@ export default function DeskDashboardPage() {
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="px-2.5 py-0.5 rounded text-[11px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Amen Mart Field &amp; Central Desk
+              Amen Mart Auctioning Services &bull; GAA Licensed
             </span>
 
             {/* Offline-First Network Status Pill */}

@@ -13,15 +13,17 @@ import {
   Lock,
   Menu,
   X,
+  Award,
 } from 'lucide-react';
 import clsx from 'clsx';
 
 const navLinks = [
   { label: 'Home', href: '/' },
-  { label: 'Car Showroom', href: '/showroom', icon: Car },
+  { label: 'About Us', href: '/about', icon: Award },
   { label: 'Auction Notices', href: '/auctions', icon: Gavel },
-  { label: 'Land', href: '/land', icon: MapPin },
+  { label: 'Car Showroom', href: '/showroom', icon: Car },
   { label: 'Properties', href: '/properties', icon: Building2 },
+  { label: 'Land', href: '/land', icon: MapPin },
   { label: 'Contact', href: '/contact', icon: Phone },
 ];
 
@@ -37,11 +39,11 @@ export function SiteHeader() {
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
             <span className="font-semibold text-slate-800">
-              Amen Mart — Government &amp; Judicial Service Registered Auctioneers
+              Amen Mart Auctioning Services &bull; Licensed by Ghana Auctioneers Association &bull; Led by Dr. Francis Kwaku Yeboah
             </span>
           </div>
           <div className="flex items-center gap-4 text-[10px] text-slate-600">
-            <span>Accra &bull; Tema Heavy Industrial Area</span>
+            <span>Accra Live Auctions &bull; Online Bidding</span>
             <span>Tel: +233 24 412 8990</span>
             <Link
               href="/desk"
@@ -66,7 +68,7 @@ export function SiteHeader() {
               AMEN MART
             </span>
             <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-              Auctioneers &bull; Showroom &bull; Realty
+              Auctioning Services &bull; Showroom &bull; Realty
             </span>
           </div>
         </Link>

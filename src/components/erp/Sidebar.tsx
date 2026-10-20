@@ -21,6 +21,7 @@ import {
   Globe,
   Building,
   ShieldCheck,
+  Award,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -597,16 +598,20 @@ export function Sidebar() {
           {!collapsed && (
             <div className="pt-4 pb-1">
               <div className="px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Affiliations &amp; Compliance
+                Licensing &amp; Affiliation
               </div>
               <div className="px-2 space-y-1 mt-1">
                 <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-slate-850/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <Building className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <span className="truncate">Govt Fleet Disposals</span>
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="truncate">Ghana Auctioneers Assoc. (GAA)</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-slate-850/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <span className="truncate">Judicial Court Auctions</span>
+                  <Award className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span className="truncate">Lead: Dr. Francis Kwaku Yeboah</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-slate-850/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                  <Building className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="truncate">Accra Yard &amp; Field Auctions</span>
                 </div>
               </div>
             </div>

@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AmenDesk — Amen Mart ERP & Showroom',
-  description: 'Offline-First ERP, Public Showroom and Multi-Category Auction Platform for Amen Mart, Ghana',
+  title: 'Amen Mart Auctioning Services — Licensed Auctioneers in Ghana | AmenDesk',
+  description:
+    'Amen Mart Auctioning Services, led by Dr. Francis Kwaku Yeboah, is a trusted name in Ghana’s auction industry. Affiliated with the Ghana Auctioneers Association for live Accra auctions, property, vehicles, industrial equipment, and real-time online auctions.',
   manifest: '/manifest.json',
 };
 

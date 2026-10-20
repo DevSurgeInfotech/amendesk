@@ -13,14 +13,17 @@ export function SiteFooter() {
             <div className="h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-xs">
               AM
             </div>
-            <span className="text-lg font-black text-slate-900 tracking-tight">AMEN MART</span>
+            <div>
+              <span className="text-base font-black text-slate-900 tracking-tight block">AMEN MART</span>
+              <span className="text-[10px] font-bold text-indigo-700 tracking-wider uppercase block">Auctioning Services</span>
+            </div>
           </div>
           <p className="text-slate-600 leading-relaxed text-xs">
-            Ghana&apos;s leading government-affiliated auctioneer and asset merchant. Specialized in Judicial Sheriff auctions, Ministry fleet liquidations, direct vehicle imports, and titled land parcels.
+            A best and trusted name in Ghana&apos;s auction industry. Owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, delivering professional auction services across real estate, vehicles, industrial equipment, and collectibles.
           </p>
           <div className="flex items-center gap-2 text-indigo-700 font-semibold">
             <ShieldCheck className="h-4 w-4" />
-            <span>Official Government &amp; Judicial Partner</span>
+            <span>Licensed by Ghana Auctioneers Association (GAA)</span>
           </div>
         </div>
 
@@ -63,11 +66,16 @@ export function SiteFooter() {
 
         {/* Col 3: Quick Links */}
         <div className="space-y-2">
-          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Public Notices</h4>
+          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Company &amp; Auctions</h4>
           <ul className="space-y-1.5 text-xs">
             <li>
+              <Link href="/about" className="hover:text-indigo-600 transition-colors font-medium">
+                About Amen Mart &amp; Leadership
+              </Link>
+            </li>
+            <li>
               <Link href="/auctions" className="hover:text-indigo-600 transition-colors">
-                Upcoming Auction Calendar
+                Upcoming Live &amp; Online Auctions
               </Link>
             </li>
             <li>
@@ -82,7 +90,7 @@ export function SiteFooter() {
             </li>
             <li>
               <Link href="/desk" className="hover:text-indigo-600 transition-colors text-indigo-700 font-semibold">
-                Staff ERP Terminal &rarr;
+                Staff AmenDesk ERP &rarr;
               </Link>
             </li>
           </ul>
