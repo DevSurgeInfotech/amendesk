@@ -1177,41 +1177,29 @@ function AccountsContent() {
 
               {/* Escrow KPI Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    Ecobank Escrow Bank Asset (1070)
-                  </span>
-                  <p className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">
-                    {formatGHS(totalEscrowBankBalance)}
-                  </p>
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">
-                    Physical liquid funds held on trust at Ecobank Airport branch
-                  </span>
-                </div>
+                <GlassCard
+                  theme="blue"
+                  title="Ecobank Escrow Bank Asset (1070)"
+                  value={formatGHS(totalEscrowBankBalance)}
+                  subtitle="Physical liquid funds held on trust at Ecobank Airport branch"
+                  iconName="bank"
+                />
 
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    High Court Remittance Liability (2030)
-                  </span>
-                  <p className="mt-2 text-xl font-black text-rose-600 dark:text-rose-400">
-                    {formatGHS(totalEscrowLiability)}
-                  </p>
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">
-                    Execution sums payable to the Registrar of the High Court
-                  </span>
-                </div>
+                <GlassCard
+                  theme="rose"
+                  title="High Court Remittance Liability (2030)"
+                  value={formatGHS(totalEscrowLiability)}
+                  subtitle="Execution sums payable to the Registrar of the High Court"
+                  iconName="scale"
+                />
 
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    Amen Mart 7% Earned Commission
-                  </span>
-                  <p className="mt-2 text-xl font-black text-emerald-600 dark:text-emerald-400">
-                    {formatGHS(judicialLots.reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0))}
-                  </p>
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">
-                    Statutory margin fees booked to Operating Revenue (4010)
-                  </span>
-                </div>
+                <GlassCard
+                  theme="purple"
+                  title="Amen Mart 7% Earned Commission"
+                  value={formatGHS(judicialLots.reduce((acc, l) => acc + (l.marginFeeGhs || 0), 0))}
+                  subtitle="Statutory margin fees booked to Operating Revenue (4010)"
+                  iconName="profit"
+                />
               </div>
 
               {/* Case-by-Case Judicial Lots Ledger */}
@@ -1594,53 +1582,37 @@ function AccountsContent() {
 
           {/* Clearance KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Total In Clearance Queue
-              </span>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
-                {formatGHS(undepositedTotal)}
-              </p>
-              <span className="text-xs text-amber-600 font-semibold block">
-                {undepositedReceipts.length} collections awaiting bank deposit
-              </span>
-            </div>
+            <GlassCard
+              theme="amber"
+              title="Total In Clearance Queue"
+              value={formatGHS(undepositedTotal)}
+              subtitle={`${undepositedReceipts.length} collections awaiting bank deposit`}
+              iconName="receivables"
+            />
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Undeposited Till Cash (1015)
-              </span>
-              <p className="text-2xl font-black text-emerald-600 font-mono">
-                {formatGHS(undepositedCashTotal)}
-              </p>
-              <span className="text-xs text-slate-500 block">
-                Physical drawer cash waiting for branch deposit
-              </span>
-            </div>
+            <GlassCard
+              theme="emerald"
+              title="Undeposited Till Cash (1015)"
+              value={formatGHS(undepositedCashTotal)}
+              subtitle="Physical drawer cash waiting for branch deposit"
+              iconName="cash"
+            />
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Undeposited MoMo Float (1035)
-              </span>
-              <p className="text-2xl font-black text-amber-500 font-mono">
-                {formatGHS(undepositedMoMoTotal)}
-              </p>
-              <span className="text-xs text-slate-500 block">
-                Hubtel aggregator collections ready to sweep
-              </span>
-            </div>
+            <GlassCard
+              theme="purple"
+              title="Undeposited MoMo Float (1035)"
+              value={formatGHS(undepositedMoMoTotal)}
+              subtitle="Hubtel aggregator collections ready to sweep"
+              iconName="momo"
+            />
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Banked Deposits Completed
-              </span>
-              <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
-                {formatGHS(totalBankedDeposits)}
-              </p>
-              <span className="text-xs text-slate-500 block">
-                {bankDeposits.length} deposits cleared to GCB/Stanbic
-              </span>
-            </div>
+            <GlassCard
+              theme="blue"
+              title="Banked Deposits Completed"
+              value={formatGHS(totalBankedDeposits)}
+              subtitle={`${bankDeposits.length} deposits cleared to GCB/Stanbic`}
+              iconName="bank"
+            />
           </div>
 
           {/* Section 1: Uncleared Collections Table */}

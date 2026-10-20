@@ -399,6 +399,31 @@ export interface GlassCardProps {
 }
 
 /**
+ * Automatically computes responsive, non-overflowing font size classes
+ * based on the character length of the metric figure.
+ */
+function getValueFontSize(value: React.ReactNode): string {
+  if (typeof value === 'string' || typeof value === 'number') {
+    const str = String(value).trim();
+    const len = str.length;
+    // Multi-million/eight-figure amounts: e.g. "GH₵17,665,000.00" (16 chars)
+    if (len >= 15) {
+      return 'text-lg sm:text-xl lg:text-base xl:text-lg 2xl:text-2xl';
+    }
+    // Hundred-thousand amounts: e.g. "GH₵928,650.00", "GH₵100,000.00" (13-14 chars)
+    if (len >= 12) {
+      return 'text-xl sm:text-2xl lg:text-lg xl:text-xl 2xl:text-[26px]';
+    }
+    // Five-figure amounts: e.g. "GH₵74,550.00" (12 chars)
+    if (len >= 9) {
+      return 'text-xl sm:text-2xl lg:text-xl xl:text-2xl 2xl:text-3xl';
+    }
+  }
+  // Short counts/percentages: e.g. "203", "13", "98.2%", "GH₵0.00"
+  return 'text-2xl sm:text-3xl';
+}
+
+/**
  * AmenDesk Metric Card
  * Supports pure solid color cards (default) and curated frosted glassmorphic cards.
  */
@@ -422,11 +447,12 @@ export function GlassCard({
   const cfg = isGlass ? glassThemeStyles[resolvedTheme] : pureThemeStyles[resolvedTheme];
 
   const resolvedIcon = icon ?? (iconName ? renderNamedCardIcon(iconName) : null);
+  const valueFontSize = getValueFontSize(value);
 
   const cardContent = (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl p-5 sm:p-6 transition-all duration-200 group ${
+      className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 transition-all duration-200 min-w-0 group ${
         isGlass ? 'border backdrop-blur-md ring-1 ring-inset ring-white/70 dark:ring-white/10' : ''
       } ${
         onClick || href ? 'cursor-pointer hover:-translate-y-0.5' : ''
@@ -448,12 +474,15 @@ export function GlassCard({
 
       {/* Standard Metric Content if title or value is provided */}
       {(title || value || resolvedIcon) && (
-        <div className="relative z-10 flex flex-col justify-between h-full">
+        <div className="relative z-10 flex flex-col justify-between h-full min-w-0 w-full">
           {/* Header Row: Title & Circular/Glassmorphic Icon Badge */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1 min-w-0 pr-2">
+          <div className="flex items-start justify-between gap-3 min-w-0">
+            <div className="space-y-1 min-w-0 pr-1 flex-1">
               {title && (
-                <span className={`block text-[11px] font-bold uppercase tracking-wider ${cfg.titleText}`}>
+                <span
+                  className={`block text-[11px] font-bold uppercase tracking-wider truncate ${cfg.titleText}`}
+                  title={typeof title === 'string' ? title : undefined}
+                >
                   {title}
                 </span>
               )}
@@ -479,8 +508,11 @@ export function GlassCard({
 
           {/* Value Figure */}
           {value !== undefined && (
-            <div className="mt-4">
-              <p className={`text-2xl sm:text-3xl font-black font-mono tracking-tight drop-shadow-2xs ${cfg.valueText}`}>
+            <div className="mt-3 sm:mt-4 min-w-0 w-full">
+              <p
+                className={`font-black font-mono tracking-tight tabular-nums truncate drop-shadow-2xs ${valueFontSize} ${cfg.valueText}`}
+                title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
+              >
                 {value}
               </p>
             </div>
@@ -488,9 +520,9 @@ export function GlassCard({
 
           {/* Subtitle / Helper / Trend */}
           {(subtitle || trend) && (
-            <div className="mt-2.5 flex items-center justify-between text-xs">
+            <div className="mt-2.5 flex items-center justify-between text-xs min-w-0 gap-2">
               {subtitle && (
-                <p className={`font-medium text-[11.5px] leading-snug ${cfg.subtitleText}`}>
+                <p className={`font-medium text-[11.5px] leading-snug line-clamp-2 min-w-0 flex-1 ${cfg.subtitleText}`}>
                   {subtitle}
                 </p>
               )}
@@ -498,10 +530,10 @@ export function GlassCard({
                 <span
                   className={
                     isGlass
-                      ? `inline-flex items-center text-[11px] font-bold ml-auto ${
+                      ? `inline-flex items-center text-[11px] font-bold ml-auto shrink-0 ${
                           trend.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                         }`
-                      : 'inline-flex items-center text-[11px] font-bold ml-auto text-white bg-white/20 px-2 py-0.5 rounded-full border border-white/25'
+                      : 'inline-flex items-center text-[11px] font-bold ml-auto shrink-0 text-white bg-white/20 px-2 py-0.5 rounded-full border border-white/25'
                   }
                 >
                   {trend.isPositive ? '↑' : '↓'} {trend.value}
