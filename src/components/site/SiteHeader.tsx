@@ -18,11 +18,11 @@ import clsx from 'clsx';
 
 const navLinks = [
   { label: 'Home', href: '/' },
-  { label: 'About Us', href: '/about', icon: Award },
   { label: 'Auction Notices', href: '/auctions', icon: Gavel },
   { label: 'Car Showroom', href: '/showroom', icon: Car },
   { label: 'Properties', href: '/properties', icon: Building2 },
   { label: 'Land', href: '/land', icon: MapPin },
+  { label: 'About Us', href: '/about', icon: Award },
   { label: 'Contact', href: '/contact', icon: Phone },
 ];
 
