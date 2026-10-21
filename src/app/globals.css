@@ -164,3 +164,18 @@ body {
 .print-only {
   display: none;
 }
+
+/* AmenDesk KPI Shimmer & Pulse Animations */
+@keyframes kpiShimmerSweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  50%, 100% {
+    transform: translateX(220%);
+  }
+}
+
+.animate-kpi-shimmer {
+  animation: kpiShimmerSweep 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
