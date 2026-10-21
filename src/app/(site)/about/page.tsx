@@ -170,9 +170,6 @@ export default function AboutPage() {
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               If you&apos;re searching for &quot;auctions near me&quot; in Ghana, Amen Mart Auctioning Services should be your first stop. Strategically located in Accra, this auction house serves as a dynamic hub for asset auctions—from vehicles and industrial equipment to real estate and collectibles.
             </p>
-            <p className="text-xs text-slate-500">
-              For those based in the capital, <em>&quot;Auction Accra&quot;</em> is a phrase to remember. Amen Mart frequently organizes live auctions in Accra, making it easy for residents to attend and participate in an energetic, rewarding environment powered by Dr. Yeboah and his team.
-            </p>
           </div>
         </div>
       </section>
