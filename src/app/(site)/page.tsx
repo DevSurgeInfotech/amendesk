@@ -621,7 +621,7 @@ export default function HomePage() {
               Pay Vehicle &amp; Auction Reservation Deposits Online
             </h2>
             <p className="text-sm text-indigo-100">
-              Secure your lot or showroom vehicle instantly with Ghana Cards, MTN/Vodafone MoMo, and Visa/Mastercard. All online payments route through Dev Surge-managed escrow with instant receipt generation.
+              Secure your lot or showroom vehicle instantly with Ghana Cards, MTN/Vodafone MoMo, and Visa/Mastercard.
             </p>
           </div>
 
