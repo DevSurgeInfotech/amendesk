@@ -140,7 +140,7 @@ export default function ContactPage() {
               <span>Licensed Auctioneers in Ghana (GAA Affiliated)</span>
             </div>
             <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
-              Amen Mart Auctioning Services is owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, recognized by the Ghana Auctioneers Association. We conduct live auctions in Accra and provide secure online real-time bidding platforms for participants across Ghana and worldwide.
+              Amen Mart Auctioning Services is led by Managing Director <strong>Dr. Francis Kwaku Yeboah</strong>, recognized by the Ghana Auctioneers Association. We conduct live auctions in Accra and provide secure online real-time bidding platforms for participants across Ghana and worldwide.
             </p>
           </div>
         </div>

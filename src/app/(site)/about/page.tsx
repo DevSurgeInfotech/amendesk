@@ -75,7 +75,7 @@ export default function AboutPage() {
               Amen Mart is an Auctioning Service, approved by the Auctioneers Registration Board and the Ministry of the Interior to offer sale of Properties under the legal means of Ghana&apos;s Constitution.
             </p>
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
-              When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
+              When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Led by Managing Director <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
             </p>
           </div>
 
@@ -106,7 +106,7 @@ export default function AboutPage() {
                 Dr. Francis Kwaku Yeboah
               </h2>
               <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                Owner, Principal Auctioneer &amp; Managing Director
+                Managing Director &amp; Principal Auctioneer
               </p>
               <p className="text-xs text-slate-500 mt-1 font-mono">
                 Ghana Auctioneers Association (GAA) &bull; 10+ Years Licensed Leadership

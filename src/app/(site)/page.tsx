@@ -123,7 +123,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
-              When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
+              When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Led by Managing Director <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-2">

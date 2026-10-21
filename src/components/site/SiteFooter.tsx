@@ -19,7 +19,7 @@ export function SiteFooter() {
             </div>
           </div>
           <p className="text-slate-600 leading-relaxed text-xs">
-            A best and trusted name in Ghana&apos;s auction industry. Owned and led by <strong>Dr. Francis Kwaku Yeboah</strong>, delivering professional auction services across real estate, vehicles, industrial equipment, and collectibles.
+            A best and trusted name in Ghana&apos;s auction industry. Led by Managing Director <strong>Dr. Francis Kwaku Yeboah</strong>, delivering professional auction services across real estate, vehicles, industrial equipment, and collectibles.
           </p>
           <div className="flex items-center gap-2 text-indigo-700 font-semibold">
             <ShieldCheck className="h-4 w-4 shrink-0" />
