@@ -58,3 +58,28 @@ export function calculateGhanaTaxes(taxableAmount: number) {
     totalWithTax,
   };
 }
+
+/**
+ * Formats a Ghana Cedis amount in compact form for chart labels and axes
+ * (e.g. GH₵ 950, GH₵ 12.5K, GH₵ 1.2M).
+ */
+export function formatGHSCompact(amount: number | undefined | null): string {
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    return 'GH₵ 0';
+  }
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
+  const units: Array<[number, string]> = [
+    [1_000_000_000, 'B'],
+    [1_000_000, 'M'],
+    [1_000, 'K'],
+  ];
+  for (const [threshold, suffix] of units) {
+    if (abs >= threshold) {
+      const scaled = abs / threshold;
+      const digits = scaled >= 100 ? 0 : 1;
+      return `${sign}GH₵ ${Number(scaled.toFixed(digits))}${suffix}`;
+    }
+  }
+  return `${sign}GH₵ ${Math.round(abs)}`;
+}

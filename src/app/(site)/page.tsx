@@ -115,92 +115,38 @@ export default function HomePage() {
         {/* Subtle decorative radial grid backdrop */}
         <div className="absolute inset-0 bg-[radial-gradient(#4f46e5_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] dark:opacity-[0.06] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto relative z-10 space-y-12 sm:space-y-14">
-          {/* Top: 2-Column Hero Header & Authority Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Left Column: Headline, Bio & Primary CTAs */}
-            <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300 text-xs font-semibold shadow-2xs">
-                <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                <span>Amen Mart Auctioning Services &bull; Licensed by Ghana Auctioneers Association</span>
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
-                A Best and Trusted Name in Ghana&apos;s Auction Industry
-              </h1>
-
-              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-                When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Led by Managing Director <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-1">
-                <Link href="/auctions">
-                  <Button size="lg" variant="primary" icon={<Gavel className="h-5 w-5" />}>
-                    View Upcoming Auctions
-                  </Button>
-                </Link>
-                <Link href="/showroom">
-                  <Button size="lg" variant="outline" icon={<Car className="h-5 w-5" />}>
-                    Explore Car Showroom
-                  </Button>
-                </Link>
-                <Link href="/about">
-                  <Button size="lg" variant="outline" icon={<Award className="h-5 w-5" />}>
-                    About Dr. Yeboah &amp; Firm
-                  </Button>
-                </Link>
-              </div>
+        <div className="max-w-7xl mx-auto relative z-10 space-y-10 sm:space-y-12">
+          {/* Hero Header & Primary CTAs */}
+          <div className="max-w-4xl space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300 text-xs font-semibold shadow-2xs">
+              <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <span>Amen Mart Auctioning Services &bull; Licensed by Ghana Auctioneers Association</span>
             </div>
 
-            {/* Right Column: High-Trust Executive Verification & Accreditation Card */}
-            <div className="lg:col-span-5 xl:col-span-4">
-              <div className="surface-card bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-7 shadow-sm space-y-5">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 text-white flex items-center justify-center font-black text-lg shadow-md ring-2 ring-indigo-100 dark:ring-indigo-950">
-                      FY
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                        Dr. Francis Kwaku Yeboah
-                      </h3>
-                      <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-                        Managing Director &bull; GAA
-                      </p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/70">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Verified Desk
-                  </span>
-                </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+              A Best and Trusted Name in Ghana&apos;s Auction Industry
+            </h1>
 
-                <div className="space-y-2.5 text-xs">
-                  <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                    <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                    <span>Approved by the <strong>Auctioneers Registration Board</strong></span>
-                  </div>
-                  <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                    <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                    <span>Recognized under the <strong>Ministry of the Interior</strong></span>
-                  </div>
-                  <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                    <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                    <span>Judicial &amp; constitutional disposals under Ghana&apos;s Constitution</span>
-                  </div>
-                </div>
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+              When it comes to acquiring valuable assets through competitive bidding, Amen Mart Auctioning Services stands out as one of Ghana&apos;s best auctioneers. Led by Managing Director <strong>Dr. Francis Kwaku Yeboah</strong>, the company has earned a solid reputation over the past decade by delivering reliable, professional auction services for both buyers and sellers across the country.
+            </p>
 
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">Headquarters in Accra</span>
-                  <Link
-                    href="/about"
-                    className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline"
-                  >
-                    <span>Firm Profile</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              <Link href="/auctions" className="w-full sm:w-auto">
+                <Button size="lg" variant="primary" icon={<Gavel className="h-5 w-5" />} className="w-full sm:w-auto">
+                  View Upcoming Auctions
+                </Button>
+              </Link>
+              <Link href="/showroom" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" icon={<Car className="h-5 w-5" />} className="w-full sm:w-auto">
+                  Explore Car Showroom
+                </Button>
+              </Link>
+              <Link href="/about" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" icon={<Award className="h-5 w-5" />} className="w-full sm:w-auto">
+                  About Firm
+                </Button>
+              </Link>
             </div>
           </div>
 
