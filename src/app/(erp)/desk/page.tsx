@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import type { AuctionLot } from '@/lib/types';
+import type { AuctionLot, PaymentMethod } from '@/lib/types';
 import { useTerminal } from '@/context/TerminalContext';
 import { formatGHS } from '@/lib/utils/currency';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -17,15 +17,42 @@ import { VehicleIntakeModal } from '@/components/erp/dashboard/VehicleIntakeModa
 import { OperationalAlerts } from '@/components/erp/dashboard/OperationalAlerts';
 import { LineOfOperationsPulse } from '@/components/erp/dashboard/LineOfOperationsPulse';
 import { SettlementWatchlist } from '@/components/erp/dashboard/SettlementWatchlist';
-import { TrendBarChart, type DailyCollectionPoint } from '@/components/erp/dashboard/charts/TrendBarChart';
-import { DonutMetricChart, type DonutSegment } from '@/components/erp/dashboard/charts/DonutMetricChart';
+import {
+  CollectionsTrendChart,
+  type CollectionsTrendData,
+  type DailyChannelPoint,
+} from '@/components/erp/dashboard/charts/CollectionsTrendChart';
+import {
+  ReceivablesAgingChart,
+  type AgingBucket,
+  type AgingBucketId,
+} from '@/components/erp/dashboard/charts/ReceivablesAgingChart';
+import {
+  PortfolioMixChart,
+  type BusinessLineValue,
+} from '@/components/erp/dashboard/charts/PortfolioMixChart';
 import {
   Wifi,
   WifiOff,
   MapPin,
   UserCheck,
   RefreshCw,
+  Gavel,
+  Car,
+  Building2,
 } from 'lucide-react';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const TREND_WINDOW_DAYS = 14;
+
+/** UTC date key (YYYY-MM-DD). Ghana runs on GMT, so UTC equals local business time. */
+function toDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function emptyChannelTotals(): Record<PaymentMethod, number> {
+  return { CASH: 0, MOMO: 0, BANK_TRANSFER: 0, CARD_PAYSTACK: 0 };
+}
 
 export default function DeskDashboardPage() {
   const { currentStaffName, facilityLocation, isOnline, pendingSyncCount, triggerManualSync } =
@@ -62,50 +89,111 @@ export default function DeskDashboardPage() {
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [isBankDepositOpen, setIsBankDepositOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [donutMode, setDonutMode] = useState<'CHANNELS' | 'PORTFOLIO'>('CHANNELS');
 
   // Key Computed Metrics
   const activeLots = useMemo(
     () => lots.filter((l) => l.status === 'ACTIVE' || l.status === 'UPCOMING'),
     [lots]
   );
-  const awaitingBalanceLots = useMemo(
-    () => lots.filter((l) => l.status === 'AWAITING_BALANCE' || l.status === 'OVERDUE'),
-    [lots]
-  );
+  // Receivables Aging (payment plans + unpaid invoices + auction hammer balances).
+  // Each obligation is counted once: a plan supersedes an invoice for the same asset,
+  // and either supersedes the raw lot balance it was raised from.
+  const agingBuckets: AgingBucket[] = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-  // Receivables computation (auction balance + payment plans + unpaid invoices)
-  const planReceivables = useMemo(
-    () =>
-      paymentPlans
-        .filter((p) => p.status !== 'PAID_IN_FULL')
-        .reduce((acc, p) => acc + p.balanceRemainingGhs, 0),
-    [paymentPlans]
-  );
+    const totals: Record<AgingBucketId, { amountGhs: number; count: number }> = {
+      NOT_DUE: { amountGhs: 0, count: 0 },
+      DUE_THIS_WEEK: { amountGhs: 0, count: 0 },
+      OVERDUE_SHORT: { amountGhs: 0, count: 0 },
+      OVERDUE_LONG: { amountGhs: 0, count: 0 },
+    };
 
-  const invoiceReceivables = useMemo(
-    () =>
-      invoices
-        .filter(
-          (inv) =>
-            inv.status === 'ISSUED' ||
-            inv.status === 'PARTIALLY_PAID' ||
-            inv.status === 'OVERDUE'
-        )
-        .reduce((acc, inv) => acc + inv.balanceDueGhs, 0),
-    [invoices]
-  );
+    const addBalance = (amountGhs: number, dueDate: string | undefined, flaggedOverdue: boolean) => {
+      if (!(amountGhs > 0)) return;
+      const due = dueDate ? new Date(dueDate) : null;
+      let bucket: AgingBucketId;
+      if (!due || isNaN(due.getTime())) {
+        bucket = flaggedOverdue ? 'OVERDUE_SHORT' : 'NOT_DUE';
+      } else {
+        due.setHours(0, 0, 0, 0);
+        const daysUntilDue = Math.round((due.getTime() - todayStart.getTime()) / DAY_MS);
+        if (daysUntilDue > 7) bucket = 'NOT_DUE';
+        else if (daysUntilDue >= 0) bucket = 'DUE_THIS_WEEK';
+        else if (daysUntilDue >= -14) bucket = 'OVERDUE_SHORT';
+        else bucket = 'OVERDUE_LONG';
+      }
+      totals[bucket].amountGhs += amountGhs;
+      totals[bucket].count += 1;
+    };
 
-  const lotReceivables = useMemo(
-    () =>
-      awaitingBalanceLots.reduce(
-        (acc, l) => acc + (l.balanceDueGhs || 0),
-        0
-      ),
-    [awaitingBalanceLots]
-  );
+    const coveredRefs = new Set<string>();
 
-  const totalReceivablesGhs = Math.max(planReceivables + invoiceReceivables, lotReceivables);
+    paymentPlans
+      .filter((p) => p.status !== 'PAID_IN_FULL' && p.balanceRemainingGhs > 0)
+      .forEach((p) => {
+        coveredRefs.add(`${p.referenceType}:${p.referenceId}`);
+        addBalance(p.balanceRemainingGhs, p.currentDueDate, p.status === 'OVERDUE');
+      });
+
+    invoices
+      .filter(
+        (inv) =>
+          (inv.status === 'ISSUED' || inv.status === 'PARTIALLY_PAID' || inv.status === 'OVERDUE') &&
+          inv.balanceDueGhs > 0
+      )
+      .forEach((inv) => {
+        const refKey = inv.referenceId ? `${inv.referenceType}:${inv.referenceId}` : null;
+        if (refKey && coveredRefs.has(refKey)) return;
+        if (refKey) coveredRefs.add(refKey);
+        addBalance(inv.balanceDueGhs, inv.dueDate, inv.status === 'OVERDUE');
+      });
+
+    lots
+      .filter((l) => l.status === 'AWAITING_BALANCE' || l.status === 'OVERDUE')
+      .forEach((l) => {
+        if (coveredRefs.has(`AUCTION:${l.id}`)) return;
+        addBalance(l.balanceDueGhs || 0, l.balanceDueDate, l.status === 'OVERDUE');
+      });
+
+    return [
+      {
+        id: 'NOT_DUE',
+        label: 'Not yet due',
+        hint: 'more than 7 days left',
+        color: '#94a3b8',
+        isOverdue: false,
+        ...totals.NOT_DUE,
+      },
+      {
+        id: 'DUE_THIS_WEEK',
+        label: 'Due within 7 days',
+        hint: 'remind customers now',
+        color: '#f59e0b',
+        isOverdue: false,
+        ...totals.DUE_THIS_WEEK,
+      },
+      {
+        id: 'OVERDUE_SHORT',
+        label: 'Overdue 1\u201314 days',
+        hint: 'extension or recovery',
+        color: '#f97316',
+        isOverdue: true,
+        ...totals.OVERDUE_SHORT,
+      },
+      {
+        id: 'OVERDUE_LONG',
+        label: 'Overdue 15+ days',
+        hint: 'escalate / forfeit review',
+        color: '#e11d48',
+        isOverdue: true,
+        ...totals.OVERDUE_LONG,
+      },
+    ];
+  }, [paymentPlans, invoices, lots]);
+
+  const totalReceivablesGhs = agingBuckets.reduce((acc, b) => acc + b.amountGhs, 0);
+  const openBalanceCount = agingBuckets.reduce((acc, b) => acc + b.count, 0);
 
   // Total verified cash collections to date
   const totalCollectedGhs = useMemo(
@@ -155,149 +243,144 @@ export default function DeskDashboardPage() {
 
   const totalRealizedMarginGhs = realizedAuction7PercentMargin + realizedDealerGross;
 
-  // 1. Chart Data: Daily Collections Trend (Continuous 7-Day Window)
-  const collectionTrendData: DailyCollectionPoint[] = useMemo(() => {
-    // Determine the anchor date: latest receipt date or fallback to current date
-    let anchorDate = new Date('2026-10-20T00:00:00Z');
-    if (receipts.length > 0) {
-      const sortedDates = receipts
-        .map((r) => r.printedAt)
-        .filter(Boolean)
-        .sort();
-      if (sortedDates.length > 0) {
-        const parsed = new Date(sortedDates[sortedDates.length - 1]);
-        if (!isNaN(parsed.getTime())) {
-          anchorDate = parsed;
-        }
+  // 1. Chart Data: Collections over the last 14 days (matches the 14-day settlement cycle),
+  //    stacked by payment channel, plus the previous 14 days for comparison.
+  const collectionsTrend: CollectionsTrendData | null = useMemo(() => {
+    if (receipts.length === 0) return null;
+
+    // Aggregate receipts per day and per channel (honouring split payments)
+    const daily = new Map<string, { byChannel: Record<PaymentMethod, number>; count: number }>();
+    receipts.forEach((r) => {
+      const parsed = r.printedAt ? new Date(r.printedAt) : null;
+      if (!parsed || isNaN(parsed.getTime())) return;
+      const key = toDateKey(parsed);
+      const entry = daily.get(key) ?? { byChannel: emptyChannelTotals(), count: 0 };
+      entry.count += 1;
+
+      const splits = r.splitPayments ?? [];
+      const splitSum = splits.reduce((acc, s) => acc + s.amountGhs, 0);
+      if (splits.length > 0 && Math.abs(splitSum - r.amountPaidGhs) < 0.01) {
+        splits.forEach((s) => {
+          const method: PaymentMethod = s.method in entry.byChannel ? s.method : 'CASH';
+          entry.byChannel[method] += s.amountGhs;
+        });
+      } else {
+        const method: PaymentMethod = r.paymentMethod in entry.byChannel ? r.paymentMethod : 'CASH';
+        entry.byChannel[method] += r.amountPaidGhs;
       }
-    }
+      daily.set(key, entry);
+    });
 
-    const days: DailyCollectionPoint[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(anchorDate);
-      d.setDate(d.getDate() - i);
-      const dateKey = d.toISOString().split('T')[0];
-      const parts = dateKey.split('-');
-      const displayLabel = `${parts[2]}/${parts[1]}`;
+    // Anchor on today; if nothing was collected in the last 14 days, anchor on the
+    // most recent collection day so the chart never shows an empty window by default.
+    const now = new Date();
+    const todayKey = toDateKey(now);
+    const windowStartKey = toDateKey(new Date(now.getTime() - (TREND_WINDOW_DAYS - 1) * DAY_MS));
+    const dayKeys = [...daily.keys()].sort();
+    const latestKey = dayKeys[dayKeys.length - 1];
+    const hasRecent = dayKeys.some((k) => k >= windowStartKey && k <= todayKey);
+    const anchor = hasRecent || !latestKey ? now : new Date(`${latestKey}T00:00:00Z`);
 
-      const dayReceipts = receipts.filter((r) => r.printedAt?.startsWith(dateKey));
-      const amountGhs = dayReceipts.reduce((acc, r) => acc + r.amountPaidGhs, 0);
+    const dayOf = (offset: number) => new Date(anchor.getTime() - offset * DAY_MS);
+    const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) =>
+      d.toLocaleDateString('en-GB', { ...opts, timeZone: 'UTC' });
 
+    const days: DailyChannelPoint[] = [];
+    for (let i = TREND_WINDOW_DAYS - 1; i >= 0; i--) {
+      const d = dayOf(i);
+      const key = toDateKey(d);
+      const entry = daily.get(key);
+      const byChannel = entry ? { ...entry.byChannel } : emptyChannelTotals();
       days.push({
-        dateKey,
-        displayLabel,
-        amountGhs,
-        count: dayReceipts.length,
+        dateKey: key,
+        dayLabel: fmt(d, { day: '2-digit' }),
+        monthLabel: fmt(d, { month: 'short' }),
+        weekdayLabel: fmt(d, { weekday: 'short' }),
+        isToday: key === todayKey,
+        totalGhs: Object.values(byChannel).reduce((acc, v) => acc + v, 0),
+        receiptCount: entry?.count ?? 0,
+        byChannel,
       });
     }
 
-    return days;
-  }, [receipts]);
-
-  // 2. Chart Data: Payment Methods Channel Split
-  const paymentChannelSegments: DonutSegment[] = useMemo(() => {
-    let cash = 0;
-    let momo = 0;
-    let bank = 0;
-    let card = 0;
-
-    receipts.forEach((r) => {
-      switch (r.paymentMethod) {
-        case 'CASH':
-          cash += r.amountPaidGhs;
-          break;
-        case 'MOMO':
-          momo += r.amountPaidGhs;
-          break;
-        case 'BANK_TRANSFER':
-          bank += r.amountPaidGhs;
-          break;
-        case 'CARD_PAYSTACK':
-          card += r.amountPaidGhs;
-          break;
-        default:
-          cash += r.amountPaidGhs;
+    let previousPeriodTotalGhs = 0;
+    for (let i = TREND_WINDOW_DAYS * 2 - 1; i >= TREND_WINDOW_DAYS; i--) {
+      const entry = daily.get(toDateKey(dayOf(i)));
+      if (entry) {
+        previousPeriodTotalGhs += Object.values(entry.byChannel).reduce((acc, v) => acc + v, 0);
       }
-    });
-
-    const total = cash + momo + bank + card;
-    if (total === 0) {
-      return [
-        {
-          id: 'cash',
-          label: 'Physical Cash Drawer',
-          value: 1,
-          color: '#10b981',
-          formattedValue: 'GH₵ 0.00',
-        },
-      ];
     }
 
-    return [
-      {
-        id: 'momo',
-        label: 'Mobile Money (Hubtel)',
-        value: momo,
-        color: '#eab308', // Amber/yellow for MTN/Vodafone
-        formattedValue: formatGHS(momo),
-      },
-      {
-        id: 'cash',
-        label: 'Cash in Hand / Drawer',
-        value: cash,
-        color: '#10b981', // Emerald green
-        formattedValue: formatGHS(cash),
-      },
-      {
-        id: 'bank',
-        label: 'Bank Wires / Transfer',
-        value: bank,
-        color: '#6366f1', // Indigo
-        formattedValue: formatGHS(bank),
-      },
-      {
-        id: 'card',
-        label: 'Card POS (Paystack)',
-        value: card,
-        color: '#3b82f6', // Blue
-        formattedValue: formatGHS(card),
-      },
-    ].filter((s) => s.value > 0);
+    const first = dayOf(TREND_WINDOW_DAYS - 1);
+    const last = dayOf(0);
+    const rangeLabel = `${fmt(first, { day: '2-digit', month: 'short' })} \u2013 ${fmt(last, {
+      day: '2-digit',
+      month: 'short',
+    })}`;
+
+    return { days, previousPeriodTotalGhs, rangeLabel };
   }, [receipts]);
 
-  // 3. Chart Data: Asset Portfolio Valuation Split
-  const assetValuationSegments: DonutSegment[] = useMemo(() => {
-    return [
-      {
-        id: 'dealership',
-        label: 'Showroom Cars',
-        value: totalVehiclesValue,
-        color: '#6366f1',
-        formattedValue: formatGHS(totalVehiclesValue),
-      },
+  // 2. Chart Data: Inventory value per business line (all four lines shown together)
+  const businessLineValues: BusinessLineValue[] = useMemo(
+    () => [
       {
         id: 'auctions',
         label: 'Auction Yard Lots',
-        value: totalAuctionReserveValue,
+        href: '/desk/auctions',
+        icon: Gavel,
         color: '#f59e0b',
-        formattedValue: formatGHS(totalAuctionReserveValue),
+        valueGhs: totalAuctionReserveValue,
+        unitCount: lots.length,
+        availableCount: activeLots.length,
+        unitNoun: 'lots',
+      },
+      {
+        id: 'dealership',
+        label: 'Showroom Cars',
+        href: '/desk/dealership',
+        icon: Car,
+        color: '#6366f1',
+        valueGhs: totalVehiclesValue,
+        unitCount: vehicles.length,
+        availableCount: vehicles.filter((v) => v.status === 'AVAILABLE').length,
+        unitNoun: 'cars',
       },
       {
         id: 'land',
         label: 'Land Parcels',
-        value: totalLandValue,
+        href: '/desk/land',
+        icon: MapPin,
         color: '#10b981',
-        formattedValue: formatGHS(totalLandValue),
+        valueGhs: totalLandValue,
+        unitCount: landParcels.length,
+        availableCount: landParcels.filter((p) => p.status === 'AVAILABLE').length,
+        unitNoun: 'parcels',
       },
       {
         id: 'property',
         label: 'Property Units',
-        value: totalPropertyValue,
+        href: '/desk/property',
+        icon: Building2,
         color: '#8b5cf6',
-        formattedValue: formatGHS(totalPropertyValue),
+        valueGhs: totalPropertyValue,
+        unitCount: properties.length,
+        availableCount: properties.filter((p) => p.status === 'AVAILABLE').length,
+        unitNoun: 'units',
       },
-    ].filter((s) => s.value > 0);
-  }, [totalVehiclesValue, totalAuctionReserveValue, totalLandValue, totalPropertyValue]);
+    ],
+    [
+      lots.length,
+      activeLots.length,
+      vehicles,
+      landParcels,
+      properties,
+      totalAuctionReserveValue,
+      totalVehiclesValue,
+      totalLandValue,
+      totalPropertyValue,
+    ]
+  );
 
   // Handle manual sync trigger
   const handleSyncClick = async () => {
@@ -415,7 +498,7 @@ export default function DeskDashboardPage() {
           theme="amber"
           title="14-Day Receivables Due"
           value={formatGHS(totalReceivablesGhs)}
-          subtitle={`Across ${awaitingBalanceLots.length} hammer settlements & debtor plans`}
+          subtitle={`${openBalanceCount} open balances across hammer settlements, plans & invoices`}
           iconName="receivables"
           href="/desk/payment-plans"
         />
@@ -456,63 +539,14 @@ export default function DeskDashboardPage() {
         onSelectLotForWaybill={(lot) => setSelectedLotForWaybill(lot)}
       />
 
-      {/* Visual Analytics & Interactive Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Daily Cash Collections Trend (Takes 7 Columns on Desktop) */}
-        <div className="lg:col-span-7 min-w-0">
-          <TrendBarChart
-            data={collectionTrendData}
-            title="Daily Cash Collections Velocity"
-            subtitle="Real-time multi-mode receipts flow across past 7 days"
-            height={190}
-          />
-        </div>
+      {/* Visual Analytics: every figure is visible at once - no toggles or tabs */}
+      {/* Row 1: Cash in - collections trend by payment channel */}
+      <CollectionsTrendChart data={collectionsTrend} />
 
-        {/* Payment Methods / Portfolio Split (Takes 5 Columns on Desktop) */}
-        <div className="lg:col-span-5 min-w-0">
-          <DonutMetricChart
-            title={donutMode === 'CHANNELS' ? 'Payment Channels Inflow' : 'Asset Portfolio Valuation'}
-            subtitle={
-              donutMode === 'CHANNELS'
-                ? 'Verified receipt settlement methods'
-                : 'Valuation split across operating inventory'
-            }
-            segments={donutMode === 'CHANNELS' ? paymentChannelSegments : assetValuationSegments}
-            centerLabel={donutMode === 'CHANNELS' ? 'Total Inflow' : 'Portfolio'}
-            centerValue={
-              donutMode === 'CHANNELS'
-                ? formatGHS(totalCollectedGhs)
-                : formatGHS(totalAssetValuation)
-            }
-            size={140}
-            headerAction={
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => setDonutMode('CHANNELS')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
-                    donutMode === 'CHANNELS'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  Channels
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDonutMode('PORTFOLIO')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${
-                    donutMode === 'PORTFOLIO'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
-                >
-                  Portfolio
-                </button>
-              </div>
-            }
-          />
-        </div>
+      {/* Row 2: Cash owed (aging) and value on hand (inventory by business line) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <ReceivablesAgingChart buckets={agingBuckets} />
+        <PortfolioMixChart lines={businessLineValues} />
       </div>
 
       {/* Multi-Line Operations Matrix Pulse */}
