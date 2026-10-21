@@ -38,7 +38,7 @@ export function SiteHeader() {
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
             <span className="font-semibold text-slate-800">
-              Amen Mart Auctioning Services &bull; Approved by Auctioneers Registration Board &amp; Ministry of the Interior &bull; Led by Dr. Francis Kwaku Yeboah
+              Amen Mart Auctioning Services &bull; Approved by Auctioneers Registration Board &amp; Ministry of the Interior
             </span>
           </div>
           <div className="flex items-center gap-4 text-[10px] text-slate-600">

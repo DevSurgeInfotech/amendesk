@@ -108,7 +108,7 @@ function PublicAuctionsCatalog() {
             Auction Notices &amp; Public Catalog
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Led by Dr. Francis Kwaku Yeboah. Filterable across Judicial court liquidations, Government surplus fleet, and Private consignments. Attend Live in Accra or Bid Online from anywhere.
+            Filterable across Judicial court liquidations, Government surplus fleet, and Private consignments. Attend Live in Accra or Bid Online from anywhere.
           </p>
         </div>
 
