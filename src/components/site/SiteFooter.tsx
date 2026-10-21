@@ -93,22 +93,22 @@ export function SiteFooter() {
 
         {/* Col 4: Ghana Head Office */}
         <div className="space-y-2">
-          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Accra Headquarters</h4>
+          <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Office &amp; Yard</h4>
           <div className="space-y-1.5 text-xs text-slate-600">
             <p className="flex items-start gap-2">
               <MapPin className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
-              <span>Tema Motorway Heavy Industrial Area, Greater Accra, Ghana</span>
+              <span>Gbawe, Flower Junction, Accra, Ghana</span>
             </p>
             <p className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-indigo-600 shrink-0" />
-              <span>+233 24 412 8990 / +233 30 223 9011</span>
+              <span>0548517277 / 0558314744</span>
             </p>
             <p className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-indigo-600 shrink-0" />
-              <span>info@amenmartgh.com</span>
+              <span>amenmart2291@gmail.com</span>
             </p>
             <p className="pt-2 text-[11px] text-slate-500">
-              P.O. Box GP 22451, Accra — Ghana
+              P. O. Box DC 1013, Dansoman, Accra — Ghana
             </p>
           </div>
         </div>

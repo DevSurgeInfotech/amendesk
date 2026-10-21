@@ -51,10 +51,10 @@ export function InvoiceViewerModal({
                 </div>
               </div>
               <p className="text-[11px] text-slate-500 mt-2">
-                Tema Main Yard, Off Harbour Road &bull; Amen Mart Showroom, Accra
+                Location: Gbawe, Flower Junction &bull; P. O. Box DC 1013, Dansoman
               </p>
               <p className="text-[11px] text-slate-500">
-                TIN: C0009128490 &bull; Tel: +233 (0) 30 223 9011
+                TIN: C0009128490 &bull; Tel: 0548517277 / 0558314744 &bull; amenmart2291@gmail.com
               </p>
             </div>
 

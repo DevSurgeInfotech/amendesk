@@ -80,7 +80,7 @@ export default function HomePage() {
           id: customerId,
           fullName: inquiryName,
           phone: inquiryPhone,
-          email: inquiryEmail || 'web-inquiry@amenmartgh.com',
+          email: inquiryEmail || 'amenmart2291@gmail.com',
           ghanaCardNumber: 'PENDING_ONLINE_KYC',
           address: 'Website Online Inquiry',
           customerType: 'INDIVIDUAL' as const,

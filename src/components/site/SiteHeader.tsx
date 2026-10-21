@@ -42,8 +42,8 @@ export function SiteHeader() {
             </span>
           </div>
           <div className="flex items-center gap-4 text-[10px] text-slate-600">
-            <span>Accra Live Auctions &bull; Online Bidding</span>
-            <span>Tel: +233 24 412 8990</span>
+            <span>Gbawe, Flower Junction &bull; Online Bidding</span>
+            <span>Tel: 0548517277 / 0558314744</span>
           </div>
         </div>
       </div>

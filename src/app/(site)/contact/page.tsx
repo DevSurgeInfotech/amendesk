@@ -26,7 +26,7 @@ export default function ContactPage() {
         id: customerId,
         fullName: name,
         phone,
-        email: email || 'contact@amenmartgh.com',
+        email: email || 'amenmart2291@gmail.com',
         ghanaCardNumber: 'WEB_GENERAL_CONTACT',
         address: 'Direct Contact Inbound',
         customerType: 'INDIVIDUAL',
@@ -74,7 +74,7 @@ export default function ContactPage() {
         <div className="space-y-8">
           <div className="surface-card bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              Corporate Headquarters &amp; Heavy Auction Yard
+              Auction Office, Yard &amp; Cash Office
             </h2>
 
             <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300">
@@ -82,25 +82,13 @@ export default function ContactPage() {
                 <MapPin className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-slate-900 dark:text-slate-100">
-                    Main Auction Yard &amp; Cash Office
+                    Physical Location
                   </p>
                   <p className="text-slate-500">
-                    Tema Motorway Heavy Industrial Area, Greater Accra, Ghana
+                    Gbawe, Flower Junction, Accra, Ghana
                   </p>
                   <p className="text-slate-500 mt-0.5">
-                    Postal: P.O. Box GP 22451, Accra — Ghana
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-slate-900 dark:text-slate-100">
-                    Dealership Showroom
-                  </p>
-                  <p className="text-slate-500">
-                    Amen Mart Showroom Facility, Accra, Ghana
+                    Postal: P. O. Box DC 1013, Dansoman, Accra — Ghana
                   </p>
                 </div>
               </div>
@@ -111,8 +99,11 @@ export default function ContactPage() {
                   <p className="font-bold text-slate-900 dark:text-slate-100">
                     Telephone Lines
                   </p>
-                  <p className="text-slate-500">
-                    +233 24 412 8990 &bull; +233 30 223 9011
+                  <p className="text-slate-500 font-mono text-sm font-semibold">
+                    0548517277 / 0558314744
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    International: +233 54 851 7277 / +233 55 831 4744
                   </p>
                 </div>
               </div>
@@ -123,8 +114,8 @@ export default function ContactPage() {
                   <p className="font-bold text-slate-900 dark:text-slate-100">
                     Official Email
                   </p>
-                  <p className="text-slate-500">
-                    info@amenmartgh.com &bull; auctions@amenmartgh.com
+                  <p className="text-slate-500 font-semibold">
+                    amenmart2291@gmail.com
                   </p>
                 </div>
               </div>

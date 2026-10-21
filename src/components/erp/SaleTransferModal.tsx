@@ -173,7 +173,7 @@ export function SaleTransferModal({
               <p className="text-xs font-sans uppercase font-bold text-slate-600 dark:text-slate-400 mt-1">
                 Official Memorandum &amp; Deed of Sale / Conveyance (Immovable Property)
               </p>
-              <p className="text-xs font-sans text-slate-500">Tema Heavy Industrial Area &bull; P.O. Box GP 22451, Accra</p>
+              <p className="text-xs font-sans text-slate-500">Location: Gbawe, Flower Junction &bull; P. O. Box DC 1013, Dansoman &bull; Tel: 0548517277 / 0558314744</p>
               <div className="mt-3 flex justify-between font-sans text-xs border-t pt-2">
                 <span>Certificate No: <strong className="font-mono">{createdDoc.docNumber}</strong></span>
                 <span>Date of Execution: <strong>{formatDateTime(createdDoc.executedDate)}</strong></span>
