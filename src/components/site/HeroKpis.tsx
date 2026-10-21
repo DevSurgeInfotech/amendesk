@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Award, ShieldCheck, Globe2, Gavel, CheckCircle2 } from 'lucide-react';
+import { Award, ShieldCheck, Globe2, Gavel } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface HeroKpisProps {
   className?: string;
@@ -13,7 +14,7 @@ interface HeroKpisProps {
  */
 function AnimatedCounter({
   target,
-  duration = 1400,
+  duration = 1300,
   onComplete,
 }: {
   target: number;
@@ -30,7 +31,7 @@ function AnimatedCounter({
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Exponential ease-out for a snappy deceleration
+      // Exponential ease-out for snappy, natural deceleration
       const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       const current = Math.min(target, Math.round(ease * target));
       setCount(current);
@@ -64,144 +65,103 @@ export function HeroKpis({ className }: HeroKpisProps) {
   }, []);
 
   return (
-    <div className={className}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-        {/* KPI 1: 10+ Years (Animated Counter + Shimmer & Pulse Accent) */}
+    <div
+      className={cn(
+        'w-full border-y border-slate-200/90 dark:border-slate-800/90 py-8 sm:py-10',
+        className
+      )}
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 gap-8 sm:gap-0">
+        {/* Metric 1: 10+ Years (Animated Counter) */}
         <div
           onMouseEnter={handleReplay}
-          className="surface-card relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between cursor-pointer"
+          className="group cursor-pointer sm:px-6 lg:px-8 first:sm:pl-0 last:sm:pr-0 pt-6 sm:pt-0 first:pt-0 space-y-2 select-none"
           title="Hover to replay 10+ Years counter"
         >
-          {/* Subtle decorative background gradient accent & light shimmer sweep */}
-          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500/10 via-amber-500/10 to-transparent blur-xl pointer-events-none" />
-          <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-indigo-500/10 dark:via-indigo-400/10 to-transparent pointer-events-none animate-kpi-shimmer" />
-
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/60 dark:to-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-200/80 dark:border-amber-800/80 group-hover:scale-110 transition-transform shadow-2xs">
-                <Award className="h-5 w-5" />
-              </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
-                Decade of Trust
-              </span>
-            </div>
-
-            {/* Animated 10+ Years Metric Display */}
-            <div className="flex items-baseline gap-1 mt-1 mb-1.5">
-              <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                <AnimatedCounter
-                  key={animKey}
-                  target={10}
-                  duration={1300}
-                  onComplete={handleComplete}
-                />
-              </span>
-              <span
-                className={`text-3xl sm:text-4xl font-black text-indigo-600 dark:text-indigo-400 transition-all duration-300 inline-block ${
-                  isCounterFinished ? 'scale-110' : 'scale-95'
-                }`}
-              >
-                +
-              </span>
-              <span className="text-xl sm:text-2xl font-bold text-slate-700 dark:text-slate-300 ml-0.5">
-                Years
-              </span>
-            </div>
-
-            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-              Proven Industry Reputation
-            </p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+              <AnimatedCounter
+                key={animKey}
+                target={10}
+                duration={1300}
+                onComplete={handleComplete}
+              />
+            </span>
+            <span
+              className={`text-3xl sm:text-4xl lg:text-5xl font-black text-indigo-600 dark:text-indigo-400 transition-all duration-300 inline-block ${
+                isCounterFinished ? 'scale-110' : 'scale-95'
+              }`}
+            >
+              +
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-700 dark:text-slate-300 ml-1">
+              Years
+            </span>
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+            <Award className="h-4 w-4 text-amber-500 shrink-0" />
+            <span>Proven Industry Reputation</span>
+          </h3>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Over a decade of continuous leadership and public asset disposals in Ghana.
           </p>
         </div>
 
-        {/* KPI 2: GAA Licensed */}
-        <div className="surface-card relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between">
-          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500/10 to-transparent blur-xl pointer-events-none" />
-
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950/60 dark:to-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-200/80 dark:border-indigo-800/80 group-hover:scale-110 transition-transform shadow-2xs">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 shadow-2xs">
-                <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                Accredited
-              </span>
-            </div>
-
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1 mb-1.5 whitespace-nowrap">
-              GAA <span className="text-indigo-600 dark:text-indigo-400">Licensed</span>
-            </div>
-
-            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-              Ghana Auctioneers Association
-            </p>
+        {/* Metric 2: GAA Licensed */}
+        <div className="sm:px-6 lg:px-8 first:sm:pl-0 last:sm:pr-0 pt-6 sm:pt-0 space-y-2">
+          <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight whitespace-nowrap">
+            GAA <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">Licensed</span>
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <span>Ghana Auctioneers Association</span>
+          </h3>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Regulated by Auctioneers Registration Board &amp; Ministry of the Interior.
           </p>
         </div>
 
-        {/* KPI 3: Accra • Online */}
-        <div className="surface-card relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between">
-          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500/10 to-transparent blur-xl pointer-events-none" />
-
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-950/60 dark:to-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-200/80 dark:border-sky-800/80 group-hover:scale-110 transition-transform shadow-2xs">
-                <Globe2 className="h-5 w-5" />
-              </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Bidding
-              </span>
-            </div>
-
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1 mb-1.5 whitespace-nowrap">
+        {/* Metric 3: Accra • Online */}
+        <div className="sm:px-6 lg:px-8 first:sm:pl-0 last:sm:pr-0 pt-6 sm:pt-0 space-y-2">
+          <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight whitespace-nowrap flex items-center gap-2">
+            <span>
               Accra <span className="text-indigo-600 dark:text-indigo-400">&bull;</span> Online
-            </div>
-
-            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-              Live Events &amp; Real-Time Bidding
-            </p>
+            </span>
+            <span
+              className="relative flex h-2.5 w-2.5 shrink-0"
+              title="Live auction portal active"
+            >
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+            <Globe2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>Live Events &amp; Real-Time Bidding</span>
+          </h3>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Physical Accra floor auctions synchronized with instant nationwide digital bidding.
           </p>
         </div>
 
-        {/* KPI 4: 100% Clear Title */}
-        <div className="surface-card relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between">
-          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-gradient-to-br from-violet-500/10 to-transparent blur-xl pointer-events-none" />
-
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-950/60 dark:to-violet-900/40 text-violet-600 dark:text-violet-400 flex items-center justify-center border border-violet-200/80 dark:border-violet-800/80 group-hover:scale-110 transition-transform shadow-2xs">
-                <Gavel className="h-5 w-5" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-800/80 shadow-2xs">
-                <CheckCircle2 className="h-3 w-3 text-violet-600 dark:text-violet-400" />
-                Guaranteed
-              </span>
-            </div>
-
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1 mb-1.5 whitespace-nowrap">
-              100<span className="text-violet-600 dark:text-violet-400">%</span>
-            </div>
-
-            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-              Clear Title &amp; Court Certified
-            </p>
+        {/* Metric 4: 100% Clear Title */}
+        <div className="sm:px-6 lg:px-8 first:sm:pl-0 last:sm:pr-0 pt-6 sm:pt-0 space-y-2">
+          <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight whitespace-nowrap">
+            100<span className="text-indigo-600 dark:text-indigo-400 font-extrabold">%</span>
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+            <Gavel className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0" />
+            <span>Clear Title &amp; Court Certified</span>
+          </h3>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Constitutionally executed sales with verified ownership papers and court orders.
           </p>
         </div>

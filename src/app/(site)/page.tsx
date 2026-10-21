@@ -150,8 +150,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Key Performance Indicators (KPIs) Trust Bar - Full-Width of max-w-7xl */}
-          <div className="pt-4 sm:pt-6 border-t border-slate-200/80 dark:border-slate-800/80">
+          {/* Key Performance Indicators (KPIs) Trust Ribbon - Full-Width of max-w-7xl */}
+          <div className="pt-2 sm:pt-4">
             <HeroKpis />
           </div>
         </div>
