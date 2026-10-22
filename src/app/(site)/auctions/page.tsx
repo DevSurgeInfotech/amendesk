@@ -94,9 +94,9 @@ function PublicAuctionsCatalog() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div className="border-b border-slate-200 dark:border-slate-800 pb-6 space-y-5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
               Amen Mart Auctioning Services
             </span>
@@ -107,74 +107,79 @@ function PublicAuctionsCatalog() {
           <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
             Auction Notices &amp; Public Catalog
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 max-w-2xl">
             Filterable across Judicial court liquidations, Government surplus fleet, and Private consignments. Attend Live in Accra or Bid Online from anywhere.
           </p>
         </div>
 
-        {/* Category Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setCategoryFilter('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              categoryFilter === 'ALL'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
-            }`}
-          >
-            All Categories ({lots.length})
-          </button>
-          <button
-            onClick={() => setCategoryFilter('JUDICIAL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              categoryFilter === 'JUDICIAL'
-                ? 'bg-rose-600 text-white'
-                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
-            }`}
-          >
-            <ShieldAlert className="h-3.5 w-3.5" />
-            <span>Judicial</span>
-          </button>
-          <button
-            onClick={() => setCategoryFilter('GOVERNMENT')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              categoryFilter === 'GOVERNMENT'
-                ? 'bg-amber-600 text-white'
-                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-            }`}
-          >
-            <Building2 className="h-3.5 w-3.5" />
-            <span>Government Movable</span>
-          </button>
-          <button
-            onClick={() => setCategoryFilter('PRIVATE')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              categoryFilter === 'PRIVATE'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5" />
-            <span>Private</span>
-          </button>
-        </div>
-
-        {/* Asset Type Selector */}
-        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-          <span className="font-semibold text-slate-500">Asset Scope:</span>
-          {(['ALL', 'MOVABLE', 'IMMOVABLE'] as const).map((t) => (
+        {/* Filters Bar */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-1">
+          {/* Category Filters */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              key={t}
-              onClick={() => setAssetTypeFilter(t)}
-              className={`px-2.5 py-1 rounded font-medium ${
-                assetTypeFilter === t
-                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-bold'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              onClick={() => setCategoryFilter('ALL')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                categoryFilter === 'ALL'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/80'
               }`}
             >
-              {t}
+              All Categories ({lots.length})
             </button>
-          ))}
+            <button
+              onClick={() => setCategoryFilter('JUDICIAL')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                categoryFilter === 'JUDICIAL'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-950/70'
+              }`}
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              <span>Judicial</span>
+            </button>
+            <button
+              onClick={() => setCategoryFilter('GOVERNMENT')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                categoryFilter === 'GOVERNMENT'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-950/70'
+              }`}
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              <span>Government Movable</span>
+            </button>
+            <button
+              onClick={() => setCategoryFilter('PRIVATE')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                categoryFilter === 'PRIVATE'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-950/70'
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span>Private</span>
+            </button>
+          </div>
+
+          {/* Asset Type Selector */}
+          <div className="flex items-center gap-2 text-xs shrink-0">
+            <span className="font-semibold text-slate-500 dark:text-slate-400">Asset Scope:</span>
+            <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              {(['ALL', 'MOVABLE', 'IMMOVABLE'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setAssetTypeFilter(t)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    assetTypeFilter === t
+                      ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
