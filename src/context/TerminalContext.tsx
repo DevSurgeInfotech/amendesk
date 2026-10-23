@@ -69,7 +69,7 @@ const TerminalContext = createContext<TerminalContextType | undefined>(undefined
 
 export function TerminalProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole>('ADMIN');
-  const [facilityLocation] = useState('Amen Mart Yard & Cash Office — Tema');
+  const [facilityLocation] = useState('Amen Mart Yard & Cash Office — Gbawe');
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isDbReady, setIsDbReady] = useState(false);

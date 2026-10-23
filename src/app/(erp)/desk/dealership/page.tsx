@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import type { DealershipVehicle } from '@/lib/types';
+import type { DealershipVehicle, InventoryItem } from '@/lib/types';
 import { formatGHS } from '@/lib/utils/currency';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -102,6 +102,22 @@ function DealershipContent() {
 
       await db.dealershipVehicles.add(newCar);
       await syncEngine.queueMutation('dealershipVehicles', newCar.id, 'CREATE', newCar);
+
+      // Central stock inventory registration
+      const invId = `inv-${Date.now()}`;
+      const invItem: InventoryItem = {
+        id: invId,
+        name: `${year} ${make} ${model} (${stockNumber})`,
+        sku: stockNumber,
+        category: 'VEHICLE',
+        location: 'DEALERSHIP_SHOWROOM',
+        quantity: 1,
+        landedCostGhs,
+        condition: 'EXCELLENT',
+        lastCountDate: nowIso.split('T')[0],
+      };
+      await db.inventoryItems.add(invItem);
+      await syncEngine.queueMutation('inventoryItems', invId, 'CREATE', invItem);
 
       setIsAddOpen(false);
       // Reset form

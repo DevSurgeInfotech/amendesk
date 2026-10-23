@@ -6,6 +6,7 @@ import type {
   MoMoNetwork,
   PaymentSplit,
   Invoice,
+  AuctionCategory,
 } from '@/lib/types';
 import { syncEngine } from '@/lib/sync/syncEngine';
 
@@ -132,20 +133,31 @@ export async function postPaymentReceiptLedger(
   momoNetwork?: MoMoNetwork,
   bankName?: string,
   splitPayments?: PaymentSplit[],
-  locationName?: string
+  locationName?: string,
+  auctionCategory?: AuctionCategory
 ): Promise<JournalEntry> {
   const accounts = await db.accounts.toArray();
   const lines: JournalEntryLine[] = [];
 
   // Dimensional Class resolution
-  const classCodeMap: Record<string, string> = {
-    AUCTION: 'AUC_PRIV',
-    DEALERSHIP: 'DEALERSHIP',
-    LAND: 'LAND',
-    PROPERTY: 'PROPERTY',
-    GENERAL: 'ADMIN',
-  };
-  const targetClassCode = classCodeMap[referenceType] || 'ADMIN';
+  let targetClassCode = 'ADMIN';
+  if (referenceType === 'AUCTION') {
+    if (auctionCategory === 'GOVERNMENT') {
+      targetClassCode = 'AUC_GOV';
+    } else if (auctionCategory === 'JUDICIAL') {
+      targetClassCode = 'AUC_JUD';
+    } else {
+      targetClassCode = 'AUC_PRIV';
+    }
+  } else {
+    const classCodeMap: Record<string, string> = {
+      DEALERSHIP: 'DEALERSHIP',
+      LAND: 'LAND',
+      PROPERTY: 'PROPERTY',
+      GENERAL: 'ADMIN',
+    };
+    targetClassCode = classCodeMap[referenceType] || 'ADMIN';
+  }
   const matchingClass = await db.accountingClasses.where('code').equals(targetClassCode).first();
   const classId = matchingClass?.id;
   const className = matchingClass?.name;
@@ -245,7 +257,8 @@ export async function postPaymentReceiptLedger(
  */
 export async function postInvoiceIssuedLedger(
   invoice: Invoice,
-  createdBy = 'Accounts Office'
+  createdBy = 'Accounts Office',
+  auctionCategory?: AuctionCategory
 ): Promise<JournalEntry> {
   const accounts = await db.accounts.toArray();
   const arAcc = accounts.find((a) => a.code === '1200') || accounts[0];
@@ -264,14 +277,33 @@ export async function postInvoiceIssuedLedger(
     arAcc;
 
   // Resolve Class
-  const classCodeMap: Record<string, string> = {
-    AUCTION: 'AUC_PRIV',
-    DEALERSHIP: 'DEALERSHIP',
-    LAND: 'LAND',
-    PROPERTY: 'PROPERTY',
-    GENERAL: 'ADMIN',
-  };
-  const targetClassCode = classCodeMap[invoice.referenceType] || 'ADMIN';
+  let targetClassCode = 'ADMIN';
+  if (invoice.referenceType === 'AUCTION') {
+    if (
+      auctionCategory === 'GOVERNMENT' ||
+      invoice.referenceTitle?.toLowerCase().includes('govt') ||
+      invoice.referenceTitle?.toLowerCase().includes('ministry')
+    ) {
+      targetClassCode = 'AUC_GOV';
+    } else if (
+      auctionCategory === 'JUDICIAL' ||
+      invoice.referenceTitle?.toLowerCase().includes('judicial') ||
+      invoice.referenceTitle?.toLowerCase().includes('sheriff') ||
+      invoice.referenceTitle?.toLowerCase().includes('court')
+    ) {
+      targetClassCode = 'AUC_JUD';
+    } else {
+      targetClassCode = 'AUC_PRIV';
+    }
+  } else {
+    const classCodeMap: Record<string, string> = {
+      DEALERSHIP: 'DEALERSHIP',
+      LAND: 'LAND',
+      PROPERTY: 'PROPERTY',
+      GENERAL: 'ADMIN',
+    };
+    targetClassCode = classCodeMap[invoice.referenceType] || 'ADMIN';
+  }
   const matchingClass = await db.accountingClasses.where('code').equals(targetClassCode).first();
   const classId = matchingClass?.id;
   const className = matchingClass?.name;

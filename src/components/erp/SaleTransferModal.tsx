@@ -113,6 +113,22 @@ export function SaleTransferModal({
           saleTransferDocId: doc.id,
         });
       }
+      if (land) {
+        await db.landParcels.update(land.id, {
+          status: 'SOLD',
+        });
+        await syncEngine.queueMutation('landParcels', land.id, 'UPDATE', {
+          status: 'SOLD',
+        });
+      }
+      if (property) {
+        await db.propertyUnits.update(property.id, {
+          status: 'SOLD',
+        });
+        await syncEngine.queueMutation('propertyUnits', property.id, 'UPDATE', {
+          status: 'SOLD',
+        });
+      }
 
       setCreatedDoc(doc);
       onSuccess();

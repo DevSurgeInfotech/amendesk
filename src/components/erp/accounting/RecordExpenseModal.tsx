@@ -179,7 +179,7 @@ export function RecordExpenseModal({ isOpen, onClose, onSuccess }: RecordExpense
             <input
               type="text"
               required
-              placeholder="e.g. Omega Guard Force / GOIL Tema / ECG Ghana"
+              placeholder="e.g. Omega Guard Force / GOIL Ghana / ECG Ghana"
               value={payee}
               onChange={(e) => setPayee(e.target.value)}
               className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"

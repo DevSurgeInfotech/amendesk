@@ -15,7 +15,7 @@ import type {
 } from '@/lib/types';
 import { useTerminal } from '@/context/TerminalContext';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
+import { postPaymentReceiptLedger, postVehicleSaleCOGS } from '@/lib/accounting/ledger';
 import { formatGHS } from '@/lib/utils/currency';
 import { formatDateTime } from '@/lib/utils/date';
 import { Button } from '@/components/ui/Button';
@@ -129,7 +129,7 @@ function RecordPaymentContent() {
   // Active cashier & shift
   const { currentStaffName } = useTerminal();
   const cashierName = currentStaffName || 'Mary Afriyie';
-  const issuedLocation = 'Front Desk — Amen Mart Tema';
+  const issuedLocation = 'Front Desk — Amen Mart Gbawe';
 
   // Category & ID query parameters
   const categoryParam = searchParams.get('category');
@@ -428,6 +428,23 @@ function RecordPaymentContent() {
         await db.dealershipVehicles.update(selectedVehicleId, { status: newVehicleStatus });
         await syncEngine.queueMutation('dealershipVehicles', selectedVehicleId, 'UPDATE', { status: newVehicleStatus });
 
+        const targetVehicle = vehicles.find((car) => car.id === selectedVehicleId);
+        if (isSettled && targetVehicle) {
+          try {
+            await postVehicleSaleCOGS({
+              vehicleVin: targetVehicle.vin,
+              stockNumber: targetVehicle.stockNumber,
+              landedCostGhs: targetVehicle.landedCostGhs,
+              salePriceGhs: targetVehicle.askingPriceGhs,
+              customerName: finalCustomerName,
+              createdBy: cashierName,
+              locationName: issuedLocation,
+            });
+          } catch (cogsErr) {
+            console.warn('COGS Posting note:', cogsErr);
+          }
+        }
+
         const plan = paymentPlans.find((p) => p.referenceId === selectedVehicleId);
         if (plan) {
           await db.paymentPlans.update(plan.id, {
@@ -554,7 +571,8 @@ function RecordPaymentContent() {
 
       await syncEngine.queueMutation('receipts', receipt.id, 'CREATE', receipt);
 
-      // Post double-entry to General Ledger with split support
+      // Post double-entry to General Ledger with split support and category routing
+      const targetLot = selectedLotId ? lots.find((l) => l.id === selectedLotId) : undefined;
       try {
         await postPaymentReceiptLedger(
           receipt.receiptNumber,
@@ -566,7 +584,9 @@ function RecordPaymentContent() {
           cashierName,
           receipt.momoNetwork,
           singleBankName,
-          isSplitPayment ? splits : undefined
+          isSplitPayment ? splits : undefined,
+          issuedLocation,
+          targetLot?.category
         );
       } catch (glErr) {
         console.warn('GL Posting note:', glErr);

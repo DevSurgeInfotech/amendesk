@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import { postPaymentReceiptLedger } from '@/lib/accounting/ledger';
+import { postPaymentReceiptLedger, postVehicleSaleCOGS } from '@/lib/accounting/ledger';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import {
   Fuel,
@@ -171,6 +171,22 @@ export default function ShowroomPage() {
           'CARD_PAYSTACK',
           'Paystack Online Gateway'
         );
+
+        if (isFullSettlement) {
+          try {
+            await postVehicleSaleCOGS({
+              vehicleVin: selectedVehicleForDeposit.vin,
+              stockNumber: selectedVehicleForDeposit.stockNumber,
+              landedCostGhs: selectedVehicleForDeposit.landedCostGhs,
+              salePriceGhs: selectedVehicleForDeposit.askingPriceGhs,
+              customerName: buyerName,
+              createdBy: 'Paystack Online Gateway',
+              locationName: 'Amen Mart Showroom',
+            });
+          } catch (cogsErr) {
+            console.warn('Online COGS Posting note:', cogsErr);
+          }
+        }
       } catch (ledgerErr) {
         console.warn('Online deposit GL posting note:', ledgerErr);
       }

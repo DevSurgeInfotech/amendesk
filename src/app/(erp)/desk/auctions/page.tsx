@@ -103,7 +103,7 @@ function AuctionsContent() {
     if (!bidder) return;
 
     const hammerPrice = Math.max(quickBidAmount, lot.currentBidGhs);
-    const feeCalculation = calculateAuctionFee(hammerPrice, 7); // strictly 7% for all categories
+    const feeCalculation = calculateAuctionFee(hammerPrice, lot.marginRatePercent || 7);
     const totalPriceWithFee = feeCalculation.totalPayableGhs;
     const balanceDue = Math.max(0, totalPriceWithFee - depositInput);
     const balanceDueDate = calculate14DayDueDate();
@@ -112,7 +112,7 @@ function AuctionsContent() {
     // 1. Update lot
     await db.auctionLots.update(lot.id, {
       hammerPriceGhs: hammerPrice,
-      marginRatePercent: 7,
+      marginRatePercent: lot.marginRatePercent || 7,
       marginFeeGhs: feeCalculation.feeAmountGhs,
       winningBidderId: bidder.id,
       winningBidderName: bidder.fullName,
@@ -124,7 +124,7 @@ function AuctionsContent() {
     });
     await syncEngine.queueMutation('auctionLots', lot.id, 'UPDATE', {
       hammerPriceGhs: hammerPrice,
-      marginRatePercent: 7,
+      marginRatePercent: lot.marginRatePercent || 7,
       marginFeeGhs: feeCalculation.feeAmountGhs,
       winningBidderId: bidder.id,
       winningBidderName: bidder.fullName,
@@ -178,7 +178,7 @@ function AuctionsContent() {
       balanceRemainingGhs: balanceDue,
       balanceDueDate,
       cashierName: 'Yard Auctioneer',
-      issuedLocation: 'Auction Yard — Tema',
+      issuedLocation: lot.yardLocation || 'Amen Mart Yard — Gbawe',
       printedAt: getIsoTimestamp(),
       syncStatus: 'SYNCED',
     };
@@ -194,7 +194,12 @@ function AuctionsContent() {
         'AUCTION',
         depositInput,
         'CASH',
-        'Yard Auctioneer'
+        'Yard Auctioneer',
+        undefined,
+        undefined,
+        undefined,
+        lot.yardLocation || 'Amen Mart Yard — Gbawe',
+        lot.category
       );
     } catch (glErr) {
       console.warn('GL Posting note:', glErr);

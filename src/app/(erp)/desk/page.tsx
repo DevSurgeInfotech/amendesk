@@ -201,21 +201,24 @@ export default function DeskDashboardPage() {
     [receipts]
   );
 
-  // Total inventory valuation across all lines
+  // Total inventory valuation across available lines (excluding sold/disposed assets)
   const totalVehiclesValue = useMemo(
-    () => vehicles.reduce((acc, v) => acc + v.askingPriceGhs, 0),
+    () => vehicles.filter((v) => v.status !== 'SOLD').reduce((acc, v) => acc + v.askingPriceGhs, 0),
     [vehicles]
   );
   const totalLandValue = useMemo(
-    () => landParcels.reduce((acc, p) => acc + p.priceGhs, 0),
+    () => landParcels.filter((p) => p.status !== 'SOLD').reduce((acc, p) => acc + p.priceGhs, 0),
     [landParcels]
   );
   const totalPropertyValue = useMemo(
-    () => properties.reduce((acc, p) => acc + p.priceGhs, 0),
+    () => properties.filter((p) => p.status !== 'SOLD').reduce((acc, p) => acc + p.priceGhs, 0),
     [properties]
   );
   const totalAuctionReserveValue = useMemo(
-    () => lots.reduce((acc, l) => acc + (l.reservePriceGhs || l.currentBidGhs || 0), 0),
+    () =>
+      lots
+        .filter((l) => l.status !== 'DISPOSED' && l.status !== 'FULLY_PAID' && l.status !== 'CANCELLED')
+        .reduce((acc, l) => acc + (l.reservePriceGhs || l.currentBidGhs || 0), 0),
     [lots]
   );
   const totalAssetValuation =

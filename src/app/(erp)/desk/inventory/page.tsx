@@ -395,7 +395,7 @@ function InventoryContent() {
                 onChange={(e) => setToLocation(e.target.value as 'AUCTION_YARD' | 'DEALERSHIP_SHOWROOM' | 'WORKSHOP')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
               >
-                <option value="AUCTION_YARD">Auction Yard (Tema)</option>
+                <option value="AUCTION_YARD">Auction Yard (Gbawe)</option>
                 <option value="DEALERSHIP_SHOWROOM">Dealership Showroom</option>
                 <option value="WORKSHOP">Workshop &amp; Reconditioning Bay</option>
               </select>
@@ -481,7 +481,7 @@ function InventoryContent() {
                 onChange={(e) => setNewItemLocation(e.target.value as 'AUCTION_YARD' | 'DEALERSHIP_SHOWROOM' | 'WORKSHOP')}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold"
               >
-                <option value="AUCTION_YARD">Auction Yard (Tema)</option>
+                <option value="AUCTION_YARD">Auction Yard (Gbawe)</option>
                 <option value="DEALERSHIP_SHOWROOM">Dealership Showroom</option>
                 <option value="WORKSHOP">Workshop &amp; Reconditioning Bay</option>
               </select>

@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import type { DealershipVehicle } from '@/lib/types';
+import type { DealershipVehicle, InventoryItem } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
@@ -73,6 +73,22 @@ export function VehicleIntakeModal({
 
       await db.dealershipVehicles.add(newCar);
       await syncEngine.queueMutation('dealershipVehicles', newCar.id, 'CREATE', newCar);
+
+      // Central stock inventory registration
+      const invId = `inv-${Date.now()}`;
+      const invItem: InventoryItem = {
+        id: invId,
+        name: `${year} ${make} ${model} (${stockNumber})`,
+        sku: stockNumber,
+        category: 'VEHICLE',
+        location: 'DEALERSHIP_SHOWROOM',
+        quantity: 1,
+        landedCostGhs,
+        condition: 'EXCELLENT',
+        lastCountDate: nowIso.split('T')[0],
+      };
+      await db.inventoryItems.add(invItem);
+      await syncEngine.queueMutation('inventoryItems', invId, 'CREATE', invItem);
 
       setIsSuccess(true);
       setTimeout(() => {
