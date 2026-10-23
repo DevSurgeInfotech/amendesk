@@ -160,7 +160,9 @@ export function Topbar() {
     pendingSyncCount,
     isSyncing,
     triggerManualSync,
-    resetDatabase,
+    environmentMode,
+    isDevSurgeAuthorized,
+    openDevGate,
   } = useTerminal();
   const { theme, setTheme } = useTheme();
 
@@ -643,6 +645,19 @@ export function Topbar() {
             </span>
           </button>
 
+          {/* Dev Surge Sandbox Pill (Only visible when Dev Surge is authorized AND in Sandbox) */}
+          {isDevSurgeAuthorized && environmentMode === 'SANDBOX' && (
+            <button
+              type="button"
+              onClick={openDevGate}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-xs font-bold hover:bg-amber-200/70 transition-colors cursor-pointer"
+              title="Open Dev Surge Engineering Gate"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>🧪 Sandbox</span>
+            </button>
+          )}
+
           {/* Segmented High-Contrast Theme Switcher */}
           <div
             className="hidden sm:flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80"
@@ -1015,22 +1030,23 @@ export function Topbar() {
                     <span className="text-[10px] font-mono text-slate-400">{isSyncing ? 'Active' : 'Sync'}</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStaffMenuOpen(false);
-                      if (confirm('Reset local AmenDesk database to fresh demonstration seed data?')) {
-                        void resetDatabase();
-                      }
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2">
-                      <RotateCcw className="h-3.5 w-3.5" />
-                      <span>Reset Demo Dataset</span>
-                    </span>
-                    <span className="text-[10px] font-mono">Seed</span>
-                  </button>
+                  {/* Dev Surge Sandbox Controls: ONLY visible to authorized Dev Surge engineers inside Sandbox */}
+                  {isDevSurgeAuthorized && environmentMode === 'SANDBOX' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStaffMenuOpen(false);
+                        openDevGate();
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        <span>Dev Surge Sandbox Controls</span>
+                      </span>
+                      <span className="text-[10px] font-mono">Dev</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}

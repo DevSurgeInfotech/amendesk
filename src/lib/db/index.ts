@@ -45,8 +45,17 @@ import {
   initialSaleTransferDocs,
   initialCashShifts,
 } from './seed';
+import {
+  getActiveDbName,
+  getActiveEnvironmentMode,
+  type EnvironmentMode,
+} from './env';
+
+export * from './env';
 
 export class AmenDeskDB extends Dexie {
+  public readonly dbMode: EnvironmentMode;
+
   customers!: Table<Customer, string>;
   auctionLots!: Table<AuctionLot, string>;
   paymentPlans!: Table<PaymentPlan, string>;
@@ -72,8 +81,10 @@ export class AmenDeskDB extends Dexie {
   accountingLocations!: Table<AccountingLocation, string>;
   bankDeposits!: Table<BankDeposit, string>;
 
-  constructor() {
-    super('AmenDeskLocalDB');
+  constructor(databaseName = getActiveDbName(), mode = getActiveEnvironmentMode()) {
+    super(databaseName);
+    this.dbMode = mode;
+
     this.version(2).stores({
       customers: 'id, fullName, phone, ghanaCardNumber, kycVerified, customerType',
       auctionLots: 'id, eventId, lotNumber, category, assetType, status, balanceDueDate, winningBidderId, currentBidGhs',
@@ -108,40 +119,48 @@ export class AmenDeskDB extends Dexie {
   }
 
   async populateIfEmpty(): Promise<void> {
-    const customerCount = await this.customers.count();
-    if (customerCount === 0) {
-      await this.customers.bulkAdd(initialCustomers);
-      await this.auctionLots.bulkAdd(initialLots);
-      await this.paymentPlans.bulkAdd(initialPaymentPlans);
-      await this.receipts.bulkAdd(initialReceipts);
-      await this.waybills.bulkAdd(initialWaybills);
-      await this.saleTransferDocs.bulkAdd(initialSaleTransferDocs);
-      await this.dealershipVehicles.bulkAdd(initialVehicles);
-      await this.landParcels.bulkAdd(initialLandParcels);
-      await this.propertyUnits.bulkAdd(initialProperties);
-      await this.inventoryItems.bulkAdd(initialInventoryItems);
-      await this.stockMovements.bulkAdd(initialStockMovements);
-    }
-
+    // 1. Mandatory Core Accounting System Setup (always seeded if empty in both LIVE & SANDBOX)
     const accountCount = await this.accounts.count();
     if (accountCount === 0) {
       await this.accounts.bulkAdd(initialAccounts);
-      await this.journalEntries.bulkAdd(initialJournalEntries);
-      await this.expenses.bulkAdd(initialExpenses);
-      await this.invoices.bulkAdd(initialInvoices);
-      await this.cashShifts.bulkAdd(initialCashShifts);
-    }
-
-    const itemCount = await this.accountingItems.count();
-    if (itemCount === 0) {
-      await this.accountingItems.bulkAdd(initialAccountingItems);
       await this.accountingClasses.bulkAdd(initialAccountingClasses);
       await this.accountingLocations.bulkAdd(initialAccountingLocations);
-      await this.bankDeposits.bulkAdd(initialBankDeposits);
+      await this.accountingItems.bulkAdd(initialAccountingItems);
+    }
+
+    // 2. Mock Operational Seed Data:
+    // STRICTLY POPULATED IN SANDBOX (Dev Surge Dummy Yard) ONLY.
+    // Live Amen Mart database will NEVER be populated with dummy lots, vehicles, or test clients.
+    if (this.dbMode === 'SANDBOX') {
+      const customerCount = await this.customers.count();
+      if (customerCount === 0) {
+        await this.customers.bulkAdd(initialCustomers);
+        await this.auctionLots.bulkAdd(initialLots);
+        await this.paymentPlans.bulkAdd(initialPaymentPlans);
+        await this.receipts.bulkAdd(initialReceipts);
+        await this.waybills.bulkAdd(initialWaybills);
+        await this.saleTransferDocs.bulkAdd(initialSaleTransferDocs);
+        await this.dealershipVehicles.bulkAdd(initialVehicles);
+        await this.landParcels.bulkAdd(initialLandParcels);
+        await this.propertyUnits.bulkAdd(initialProperties);
+        await this.inventoryItems.bulkAdd(initialInventoryItems);
+        await this.stockMovements.bulkAdd(initialStockMovements);
+        await this.journalEntries.bulkAdd(initialJournalEntries);
+        await this.expenses.bulkAdd(initialExpenses);
+        await this.invoices.bulkAdd(initialInvoices);
+        await this.cashShifts.bulkAdd(initialCashShifts);
+        await this.bankDeposits.bulkAdd(initialBankDeposits);
+      }
     }
   }
 
   async resetToSeedData(): Promise<void> {
+    if (this.dbMode === 'LIVE') {
+      throw new Error(
+        'Safety Violation: Database reset is strictly prohibited in LIVE production mode. Switch to Sandbox to test reset operations.'
+      );
+    }
+
     await this.customers.clear();
     await this.auctionLots.clear();
     await this.paymentPlans.clear();
@@ -169,4 +188,3 @@ export class AmenDeskDB extends Dexie {
 }
 
 export const db = new AmenDeskDB();
-

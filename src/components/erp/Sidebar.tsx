@@ -28,6 +28,7 @@ import {
 import { cn } from '@/lib/utils';
 import { CurveStrip } from '@/components/ui/CurveStrip';
 import { useSidebar } from '@/context/SidebarContext';
+import { useTerminal } from '@/context/TerminalContext';
 
 interface SubmoduleItem {
   label: string;
@@ -169,6 +170,24 @@ export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
+  const { openDevGate } = useTerminal();
+
+  const devClicksRef = useRef(0);
+  const lastDevClickRef = useRef(0);
+  const handleSecretDevTrigger = () => {
+    const currentTime = Date.now();
+    if (currentTime - lastDevClickRef.current < 1500) {
+      devClicksRef.current += 1;
+    } else {
+      devClicksRef.current = 1;
+    }
+    lastDevClickRef.current = currentTime;
+
+    if (devClicksRef.current >= 5) {
+      devClicksRef.current = 0;
+      openDevGate();
+    }
+  };
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
@@ -683,6 +702,19 @@ export function Sidebar() {
               <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 font-semibold">&rarr;</span>
             )}
           </Link>
+
+          {!collapsed && (
+            <div className="mt-2 text-center">
+              <button
+                type="button"
+                onClick={handleSecretDevTrigger}
+                className="text-[10px] text-slate-400 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-400 font-mono transition-colors cursor-default select-none"
+                title="AmenDesk ERP System"
+              >
+                AmenDesk v1.2 &bull; Dev Surge
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Floating Desktop Collapse Toggle Button (Identical to Encore SMS) */}
