@@ -170,25 +170,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
-  const { openDevGate, isDevGateAvailable } = useTerminal();
-
-  const devClicksRef = useRef(0);
-  const lastDevClickRef = useRef(0);
-  const handleSecretDevTrigger = () => {
-    if (!isDevGateAvailable) return;
-    const currentTime = Date.now();
-    if (currentTime - lastDevClickRef.current < 1500) {
-      devClicksRef.current += 1;
-    } else {
-      devClicksRef.current = 1;
-    }
-    lastDevClickRef.current = currentTime;
-
-    if (devClicksRef.current >= 5) {
-      devClicksRef.current = 0;
-      openDevGate();
-    }
-  };
+  const { activeTenant } = useTerminal();
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
@@ -317,7 +299,7 @@ export function Sidebar() {
                     </span>
                   </div>
                   <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    Amen Mart Ghana
+                    {activeTenant.name}
                   </p>
                 </div>
               </Link>
@@ -706,14 +688,9 @@ export function Sidebar() {
 
           {!collapsed && (
             <div className="mt-2 text-center">
-              <button
-                type="button"
-                onClick={handleSecretDevTrigger}
-                className="text-[10px] text-slate-400 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-400 font-mono transition-colors cursor-default select-none"
-                title="AmenDesk ERP System"
-              >
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono select-none">
                 AmenDesk v1.2 &bull; Dev Surge
-              </button>
+              </span>
             </div>
           )}
         </div>

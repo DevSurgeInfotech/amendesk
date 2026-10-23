@@ -48,12 +48,15 @@ import {
 import {
   getActiveDbName,
   getActiveEnvironmentMode,
+  getActiveTenantId,
   type EnvironmentMode,
+  type TenantId,
 } from './env';
 
 export * from './env';
 
 export class AmenDeskDB extends Dexie {
+  public readonly tenantId: TenantId;
   public readonly dbMode: EnvironmentMode;
 
   customers!: Table<Customer, string>;
@@ -83,6 +86,7 @@ export class AmenDeskDB extends Dexie {
 
   constructor(databaseName = getActiveDbName(), mode = getActiveEnvironmentMode()) {
     super(databaseName);
+    this.tenantId = getActiveTenantId();
     this.dbMode = mode;
 
     this.version(2).stores({
@@ -129,9 +133,9 @@ export class AmenDeskDB extends Dexie {
     }
 
     // 2. Mock Operational Seed Data:
-    // STRICTLY POPULATED IN SANDBOX (Dev Surge Dummy Yard) ONLY.
+    // STRICTLY POPULATED IN SANDBOX (Amen Mart Demo Yard tenant) ONLY.
     // Live Amen Mart database will NEVER be populated with dummy lots, vehicles, or test clients.
-    if (this.dbMode === 'SANDBOX') {
+    if (this.tenantId === 'amen-mart-sandbox') {
       const customerCount = await this.customers.count();
       if (customerCount === 0) {
         await this.customers.bulkAdd(initialCustomers);
@@ -155,9 +159,9 @@ export class AmenDeskDB extends Dexie {
   }
 
   async resetToSeedData(): Promise<void> {
-    if (this.dbMode === 'LIVE') {
+    if (this.tenantId === 'amen-mart-live') {
       throw new Error(
-        'Safety Violation: Database reset is strictly prohibited in LIVE production mode. Switch to Sandbox to test reset operations.'
+        'Safety Violation: Database reset is strictly prohibited in Amen Mart Live mode. Switch to Demo Yard to test reset operations.'
       );
     }
 

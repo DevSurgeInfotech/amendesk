@@ -3,30 +3,29 @@
 import { Suspense, type ReactNode } from 'react';
 import { Sidebar } from '@/components/erp/Sidebar';
 import { Topbar } from '@/components/erp/Topbar';
-import { DevSurgeGateModal } from '@/components/erp/DevSurgeGateModal';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { useTerminal } from '@/context/TerminalContext';
 import { FlaskConical } from 'lucide-react';
 
 function SandboxModeBanner() {
-  const { environmentMode, isDevSurgeAuthorized, isDevGateAvailable, openDevGate } = useTerminal();
+  const { activeTenant, isProduction, switchTenant } = useTerminal();
 
-  // ONLY render if in internal staging/dev environment AND in sandbox
-  if (!isDevGateAvailable || !isDevSurgeAuthorized || environmentMode !== 'SANDBOX') return null;
+  // ONLY render if in Demo Yard sandbox and not in production
+  if (isProduction || !activeTenant.isSandbox) return null;
 
   return (
     <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-bold flex items-center justify-between shadow-xs z-30 select-none">
       <div className="flex items-center gap-2">
         <FlaskConical className="h-4 w-4" />
-        <span>DEV SURGE STAGING — Amen Mart Dummy Yard (Isolated testing environment)</span>
+        <span>🧪 AMEN MART DEMO YARD (SANDBOX) — Dev Surge test account with seeded Ghanaian records</span>
       </div>
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={openDevGate}
+          onClick={() => switchTenant('amen-mart-live')}
           className="px-2.5 py-0.5 rounded-lg bg-slate-950 text-amber-400 text-[11px] font-bold hover:bg-slate-900 transition-colors cursor-pointer"
         >
-          Staging Controls
+          Switch to Live
         </button>
       </div>
     </div>
@@ -59,7 +58,6 @@ export default function DeskLayout({
             </main>
           </div>
         </div>
-        <DevSurgeGateModal />
       </div>
     </SidebarProvider>
   );

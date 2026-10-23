@@ -10,12 +10,12 @@ import {
 } from 'react';
 import {
   db,
-  getActiveEnvironmentMode,
-  isDevGateAvailable as checkDevGateAvailable,
-  isDevSurgeAuthorized as checkDevSurgeAuth,
-  authorizeDevSurge as performDevSurgeAuth,
-  revokeDevSurgeAuth as performDevSurgeRevoke,
-  type EnvironmentMode,
+  type TenantId,
+  type Tenant,
+  SYSTEM_TENANTS,
+  getActiveTenantId,
+  setActiveTenantId,
+  isProductionDeployment,
 } from '@/lib/db';
 import { syncEngine, type SyncResult } from '@/lib/sync/syncEngine';
 
@@ -42,15 +42,11 @@ interface TerminalContextType {
   resetDatabase: () => Promise<void>;
   isDbReady: boolean;
 
-  // Staging & Sandbox Controls (Active strictly in Dev Surge internal environments)
-  isDevGateAvailable: boolean;
-  environmentMode: EnvironmentMode;
-  isDevSurgeAuthorized: boolean;
-  isDevGateOpen: boolean;
-  openDevGate: () => void;
-  closeDevGate: () => void;
-  authorizePasscode: (passcode: string) => boolean;
-  revokeDevSurge: () => void;
+  // Encore SMS Style Tenant Architecture
+  tenantId: TenantId;
+  activeTenant: Tenant;
+  switchTenant: (id: TenantId) => void;
+  isProduction: boolean;
 }
 
 const ROLE_STAFF_NAMES: Record<UserRole, string> = {
@@ -63,7 +59,7 @@ const ROLE_STAFF_NAMES: Record<UserRole, string> = {
 };
 
 const AVATAR_STORAGE_KEY = 'amendesk_staff_avatar';
-const DEVSURGE_EVENT = 'amendesk-devsurge-change';
+const TENANT_EVENT = 'amendesk-tenant-change';
 
 function subscribeAvatar(callback: () => void) {
   window.addEventListener('storage', callback);
@@ -86,29 +82,21 @@ function getServerAvatarSnapshot(): string | null {
   return null;
 }
 
-function subscribeDevSurge(callback: () => void) {
+function subscribeTenant(callback: () => void) {
   window.addEventListener('storage', callback);
-  window.addEventListener(DEVSURGE_EVENT, callback);
+  window.addEventListener(TENANT_EVENT, callback);
   return () => {
     window.removeEventListener('storage', callback);
-    window.removeEventListener(DEVSURGE_EVENT, callback);
+    window.removeEventListener(TENANT_EVENT, callback);
   };
 }
 
-function getAuthSnapshot(): boolean {
-  return checkDevSurgeAuth();
+function getTenantSnapshot(): TenantId {
+  return getActiveTenantId();
 }
 
-function getServerAuthSnapshot(): boolean {
-  return false;
-}
-
-function getEnvSnapshot(): EnvironmentMode {
-  return getActiveEnvironmentMode();
-}
-
-function getServerEnvSnapshot(): EnvironmentMode {
-  return 'LIVE';
+function getServerTenantSnapshot(): TenantId {
+  return 'amen-mart-sandbox';
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
@@ -122,27 +110,20 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
 
-  // Dev Surge Staging Gate UI State
-  const [isDevGateOpen, setIsDevGateOpen] = useState(false);
-  const isDevGateAvailable = checkDevGateAvailable();
-
   const staffAvatarUrl = useSyncExternalStore(
     subscribeAvatar,
     getAvatarSnapshot,
     getServerAvatarSnapshot
   );
 
-  const isDevSurgeAuthorized = useSyncExternalStore(
-    subscribeDevSurge,
-    getAuthSnapshot,
-    getServerAuthSnapshot
+  const tenantId = useSyncExternalStore(
+    subscribeTenant,
+    getTenantSnapshot,
+    getServerTenantSnapshot
   );
 
-  const environmentMode = useSyncExternalStore(
-    subscribeDevSurge,
-    getEnvSnapshot,
-    getServerEnvSnapshot
-  );
+  const activeTenant: Tenant = SYSTEM_TENANTS[tenantId] || SYSTEM_TENANTS['amen-mart-sandbox'];
+  const isProduction = isProductionDeployment();
 
   const setStaffAvatarUrl = (dataUrl: string | null) => {
     try {
@@ -158,23 +139,6 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Only process developer triggers if this is an internal staging/dev environment.
-    // In client production deployments, these are strictly inert.
-    if (isDevGateAvailable) {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('devsurge_token');
-        if (token && performDevSurgeAuth(token)) {
-          window.dispatchEvent(new Event(DEVSURGE_EVENT));
-          setTimeout(() => setIsDevGateOpen(true), 0);
-        } else if (urlParams.get('devsurge_gate') === '1') {
-          setTimeout(() => setIsDevGateOpen(true), 0);
-        }
-      } catch {
-        // Ignored
-      }
-    }
-
     // Populate DB on client-side boot if empty
     db.populateIfEmpty()
       .then(() => {
@@ -195,44 +159,14 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Keyboard shortcut: Ctrl + Shift + D (or Cmd + Shift + D) to open Dev Surge Gate
-    // Strictly active ONLY in Dev Surge staging/development environments.
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isDevGateAvailable) return;
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
-        e.preventDefault();
-        setIsDevGateOpen((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
     return () => {
       unsubscribe();
-      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isDevGateAvailable]);
+  }, []);
 
-  const openDevGate = () => {
-    if (isDevGateAvailable) {
-      setIsDevGateOpen(true);
-    }
-  };
-
-  const closeDevGate = () => setIsDevGateOpen(false);
-
-  const authorizePasscode = (passcode: string): boolean => {
-    if (!isDevGateAvailable) return false;
-    const success = performDevSurgeAuth(passcode);
-    if (success) {
-      window.dispatchEvent(new Event(DEVSURGE_EVENT));
-    }
-    return success;
-  };
-
-  const revokeDevSurge = () => {
-    performDevSurgeRevoke();
-    window.dispatchEvent(new Event(DEVSURGE_EVENT));
+  const switchTenant = (id: TenantId) => {
+    setActiveTenantId(id);
+    window.dispatchEvent(new Event(TENANT_EVENT));
   };
 
   const triggerManualSync = async (): Promise<SyncResult> => {
@@ -261,14 +195,10 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         triggerManualSync,
         resetDatabase,
         isDbReady,
-        isDevGateAvailable,
-        environmentMode,
-        isDevSurgeAuthorized,
-        isDevGateOpen,
-        openDevGate,
-        closeDevGate,
-        authorizePasscode,
-        revokeDevSurge,
+        tenantId,
+        activeTenant,
+        switchTenant,
+        isProduction,
       }}
     >
       {children}
