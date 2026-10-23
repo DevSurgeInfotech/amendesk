@@ -2,6 +2,7 @@ export type EnvironmentMode = 'LIVE' | 'SANDBOX';
 
 export const ENV_MODE_KEY = 'amendesk_environment_mode';
 export const DEV_SURGE_AUTH_KEY = 'amendesk_dev_surge_authorized';
+export const DEV_SURGE_LOCK_KEY = 'amendesk_dev_surge_locked';
 
 // Authorized engineer passcodes for Dev Surge Infotech staging environments
 export const DEV_SURGE_PASSCODES = ['surge@amen2026', 'devsurge2026'];
@@ -37,10 +38,23 @@ export function isDevGateAvailable(): boolean {
 /**
  * Checks whether Dev Surge staging authorization is active on this device.
  * Always returns false in client production deployments.
+ * Defaults to true in local development (npm run dev) unless explicitly locked.
  */
 export function isDevSurgeAuthorized(): boolean {
   if (isProductionDeployment()) return false;
   if (typeof window === 'undefined') return false;
+
+  // In local development, Dev Surge engineers working on the codebase
+  // are authorized by default unless explicitly locked.
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const isLocked = localStorage.getItem(DEV_SURGE_LOCK_KEY) === 'true';
+      if (!isLocked) return true;
+    } catch {
+      return true;
+    }
+  }
+
   try {
     return localStorage.getItem(DEV_SURGE_AUTH_KEY) === 'true';
   } catch {
@@ -51,8 +65,8 @@ export function isDevSurgeAuthorized(): boolean {
 /**
  * Returns the active environment mode.
  *
- * In Production: ALWAYS returns 'LIVE'.
- * In Dev Surge Staging / Local Dev: Defaults to 'SANDBOX' (The Dummy Yard).
+ * In Production: ALWAYS returns 'LIVE' (AmenDesk_Live).
+ * In Dev Surge Staging / Local Dev: Returns 'SANDBOX' (The Dummy Yard) when authorized.
  */
 export function getActiveEnvironmentMode(): EnvironmentMode {
   // In production client deployments: 100% hard-locked to LIVE
@@ -60,7 +74,11 @@ export function getActiveEnvironmentMode(): EnvironmentMode {
     return 'LIVE';
   }
 
-  // In internal development / staging environments: default to the Dummy Yard (SANDBOX)
+  // In development, if unauthorized/locked, fall back to clean client LIVE view
+  if (!isDevSurgeAuthorized()) {
+    return 'LIVE';
+  }
+
   if (typeof window === 'undefined') return 'SANDBOX';
   try {
     const mode = localStorage.getItem(ENV_MODE_KEY);
@@ -102,6 +120,7 @@ export function authorizeDevSurge(passcode: string): boolean {
   const isValid = DEV_SURGE_PASSCODES.some((code) => code.toLowerCase() === normalized);
   if (isValid) {
     localStorage.setItem(DEV_SURGE_AUTH_KEY, 'true');
+    localStorage.removeItem(DEV_SURGE_LOCK_KEY);
     return true;
   }
   return false;
@@ -113,6 +132,7 @@ export function authorizeDevSurge(passcode: string): boolean {
 export function revokeDevSurgeAuth(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(DEV_SURGE_AUTH_KEY);
+  localStorage.setItem(DEV_SURGE_LOCK_KEY, 'true');
   localStorage.removeItem(ENV_MODE_KEY);
   window.location.reload();
 }
