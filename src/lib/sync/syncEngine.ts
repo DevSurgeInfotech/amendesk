@@ -111,6 +111,7 @@ export class SyncEngine {
       payload,
       timestamp: new Date().toISOString(),
       status: 'PENDING',
+      tenantId: db.tenantId,
     };
 
     await db.syncOutbox.add(item);

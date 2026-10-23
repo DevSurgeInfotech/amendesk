@@ -16,6 +16,8 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
+  Building2,
+  FlaskConical,
   Menu,
   Search,
   Bell,
@@ -159,6 +161,8 @@ export function Topbar() {
     pendingSyncCount,
     isSyncing,
     triggerManualSync,
+    activeTenant,
+    openWorkspaceModal,
   } = useTerminal();
   const { theme, setTheme } = useTheme();
 
@@ -641,6 +645,37 @@ export function Topbar() {
             </span>
           </button>
 
+          {/* Encore SMS Multi-Tenant Workspace Selector Pill */}
+          <button
+            type="button"
+            onClick={openWorkspaceModal}
+            className={`hidden sm:flex items-center gap-1.5 h-10 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+              activeTenant.isSandbox
+                ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200 hover:bg-amber-100/80 shadow-2xs'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 hover:bg-emerald-100/80 shadow-2xs'
+            }`}
+            title={`Active Workspace: ${activeTenant.name} (${activeTenant.code}). Click to switch workspace.`}
+            aria-label="Switch workspace"
+          >
+            {activeTenant.isSandbox ? (
+              <FlaskConical className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            ) : (
+              <Building2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            )}
+            <span className="truncate max-w-[90px] xl:max-w-[125px]">
+              {activeTenant.shortName || activeTenant.name}
+            </span>
+            <span
+              className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${
+                activeTenant.isSandbox
+                  ? 'bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-300'
+                  : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-300'
+              }`}
+            >
+              {activeTenant.code}
+            </span>
+          </button>
+
           {/* Segmented High-Contrast Theme Switcher */}
           <div
             className="hidden sm:flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80"
@@ -997,6 +1032,29 @@ export function Topbar() {
 
                 {/* System & Terminal Controls */}
                 <div className="p-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStaffMenuOpen(false);
+                      openWorkspaceModal();
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Building2 className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>Switch Workspace / Tenant...</span>
+                    </span>
+                    <span
+                      className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${
+                        activeTenant.isSandbox
+                          ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300'
+                          : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300'
+                      }`}
+                    >
+                      {activeTenant.code}
+                    </span>
+                  </button>
+
                   <button
                     type="button"
                     disabled={isSyncing}

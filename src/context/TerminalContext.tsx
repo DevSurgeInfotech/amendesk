@@ -46,6 +46,10 @@ interface TerminalContextType {
   tenantId: TenantId;
   activeTenant: Tenant;
   switchTenant: (id: TenantId) => void;
+  loginToTenant: (id: TenantId, role?: UserRole) => void;
+  isWorkspaceModalOpen: boolean;
+  openWorkspaceModal: () => void;
+  closeWorkspaceModal: () => void;
   isProduction: boolean;
 }
 
@@ -59,7 +63,9 @@ const ROLE_STAFF_NAMES: Record<UserRole, string> = {
 };
 
 const AVATAR_STORAGE_KEY = 'amendesk_staff_avatar';
+const ROLE_STORAGE_KEY = 'amendesk_staff_role';
 const TENANT_EVENT = 'amendesk-tenant-change';
+const ROLE_EVENT = 'amendesk-role-change';
 
 function subscribeAvatar(callback: () => void) {
   window.addEventListener('storage', callback);
@@ -82,6 +88,31 @@ function getServerAvatarSnapshot(): string | null {
   return null;
 }
 
+function subscribeRole(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener(ROLE_EVENT, callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener(ROLE_EVENT, callback);
+  };
+}
+
+function getRoleSnapshot(): UserRole {
+  try {
+    const saved = localStorage.getItem(ROLE_STORAGE_KEY) as UserRole | null;
+    if (saved && ROLE_STAFF_NAMES[saved]) {
+      return saved;
+    }
+  } catch {
+    // Ignore
+  }
+  return 'ADMIN';
+}
+
+function getServerRoleSnapshot(): UserRole {
+  return 'ADMIN';
+}
+
 function subscribeTenant(callback: () => void) {
   window.addEventListener('storage', callback);
   window.addEventListener(TENANT_EVENT, callback);
@@ -102,13 +133,19 @@ function getServerTenantSnapshot(): TenantId {
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
 
 export function TerminalProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<UserRole>('ADMIN');
   const [facilityLocation] = useState('Amen Mart Yard & Cash Office — Gbawe');
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+
+  const role = useSyncExternalStore(
+    subscribeRole,
+    getRoleSnapshot,
+    getServerRoleSnapshot
+  );
 
   const staffAvatarUrl = useSyncExternalStore(
     subscribeAvatar,
@@ -125,6 +162,9 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   const activeTenant: Tenant = SYSTEM_TENANTS[tenantId] || SYSTEM_TENANTS['amen-mart-sandbox'];
   const isProduction = isProductionDeployment();
 
+  const openWorkspaceModal = () => setIsWorkspaceModalOpen(true);
+  const closeWorkspaceModal = () => setIsWorkspaceModalOpen(false);
+
   const setStaffAvatarUrl = (dataUrl: string | null) => {
     try {
       if (dataUrl) {
@@ -136,6 +176,23 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('Failed to persist staff avatar in localStorage:', err);
     }
+  };
+
+  const handleSetRole = (newRole: UserRole) => {
+    try {
+      localStorage.setItem(ROLE_STORAGE_KEY, newRole);
+      window.dispatchEvent(new Event(ROLE_EVENT));
+    } catch (err) {
+      console.error('Failed to persist staff role in localStorage:', err);
+    }
+  };
+
+  const loginToTenant = (id: TenantId, newRole?: UserRole) => {
+    if (newRole) {
+      handleSetRole(newRole);
+    }
+    setActiveTenantId(id);
+    window.dispatchEvent(new Event(TENANT_EVENT));
   };
 
   useEffect(() => {
@@ -183,7 +240,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     <TerminalContext.Provider
       value={{
         role,
-        setRole,
+        setRole: handleSetRole,
         currentStaffName: ROLE_STAFF_NAMES[role],
         staffAvatarUrl,
         setStaffAvatarUrl,
@@ -198,6 +255,10 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         tenantId,
         activeTenant,
         switchTenant,
+        loginToTenant,
+        isWorkspaceModalOpen,
+        openWorkspaceModal,
+        closeWorkspaceModal,
         isProduction,
       }}
     >

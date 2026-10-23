@@ -49,6 +49,7 @@ import {
   getActiveDbName,
   getActiveEnvironmentMode,
   getActiveTenantId,
+  SYSTEM_TENANTS,
   type EnvironmentMode,
   type TenantId,
 } from './env';
@@ -159,7 +160,7 @@ export class AmenDeskDB extends Dexie {
   }
 
   async resetToSeedData(): Promise<void> {
-    if (this.tenantId === 'amen-mart-live') {
+    if (this.tenantId === 'amen-mart-live' || !SYSTEM_TENANTS[this.tenantId]?.isSandbox) {
       throw new Error(
         'Safety Violation: Database reset is strictly prohibited in Amen Mart Live mode. Switch to Demo Yard to test reset operations.'
       );

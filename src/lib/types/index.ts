@@ -309,6 +309,7 @@ export interface SyncOutboxItem {
   payload: unknown;
   timestamp: string;
   status: 'PENDING' | 'SYNCED' | 'FAILED';
+  tenantId?: string;
 }
 
 // ==========================================

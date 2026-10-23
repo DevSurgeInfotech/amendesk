@@ -3,29 +3,37 @@
 import { Suspense, type ReactNode } from 'react';
 import { Sidebar } from '@/components/erp/Sidebar';
 import { Topbar } from '@/components/erp/Topbar';
+import { WorkspaceModal } from '@/components/erp/WorkspaceModal';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { useTerminal } from '@/context/TerminalContext';
 import { FlaskConical } from 'lucide-react';
 
 function SandboxModeBanner() {
-  const { activeTenant, isProduction, switchTenant } = useTerminal();
+  const { activeTenant, switchTenant, openWorkspaceModal } = useTerminal();
 
-  // ONLY render if in Demo Yard sandbox and not in production
-  if (isProduction || !activeTenant.isSandbox) return null;
+  // ONLY render if in Demo Yard sandbox
+  if (!activeTenant.isSandbox) return null;
 
   return (
     <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-bold flex items-center justify-between shadow-xs z-30 select-none">
       <div className="flex items-center gap-2">
         <FlaskConical className="h-4 w-4" />
-        <span>🧪 AMEN MART DEMO YARD (SANDBOX) — Dev Surge test account with seeded Ghanaian records</span>
+        <span>🧪 AMENDESK DEMO YARD (SANDBOX) — Seeded Demo Environment for Feature Previews &amp; Client Presentations</span>
       </div>
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={openWorkspaceModal}
+          className="px-2.5 py-0.5 rounded-lg bg-amber-600/60 hover:bg-amber-600 text-slate-950 text-[11px] font-bold transition-colors cursor-pointer"
+        >
+          Workspace Settings
+        </button>
         <button
           type="button"
           onClick={() => switchTenant('amen-mart-live')}
           className="px-2.5 py-0.5 rounded-lg bg-slate-950 text-amber-400 text-[11px] font-bold hover:bg-slate-900 transition-colors cursor-pointer"
         >
-          Switch to Live
+          Switch to Amen Mart Live
         </button>
       </div>
     </div>
@@ -58,6 +66,7 @@ export default function DeskLayout({
             </main>
           </div>
         </div>
+        <WorkspaceModal />
       </div>
     </SidebarProvider>
   );
