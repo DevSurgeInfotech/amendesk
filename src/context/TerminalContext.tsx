@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { db } from '@/lib/db';
-import { syncEngine } from '@/lib/sync/syncEngine';
+import { syncEngine, type SyncResult } from '@/lib/sync/syncEngine';
 
 export type UserRole =
   | 'ADMIN'
@@ -28,7 +28,9 @@ interface TerminalContextType {
   facilityLocation: string;
   isOnline: boolean;
   pendingSyncCount: number;
-  triggerManualSync: () => Promise<void>;
+  isSyncing: boolean;
+  lastSyncedAt: Date | null;
+  triggerManualSync: () => Promise<SyncResult>;
   resetDatabase: () => Promise<void>;
   isDbReady: boolean;
 }
@@ -72,6 +74,8 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   const [facilityLocation] = useState('Amen Mart Yard & Cash Office — Gbawe');
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
 
   const staffAvatarUrl = useSyncExternalStore(
@@ -96,20 +100,29 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Populate DB on client-side boot if empty
     db.populateIfEmpty()
-      .then(() => setIsDbReady(true))
+      .then(() => {
+        setIsDbReady(true);
+        void syncEngine.init().then(() => {
+          setLastSyncedAt(syncEngine.getLastSyncedAt());
+        });
+      })
       .catch((err) => console.error('Failed to populate local Dexie DB:', err));
 
     // Subscribe to sync engine status
-    const unsubscribe = syncEngine.subscribe((online, count) => {
+    const unsubscribe = syncEngine.subscribe((online, count, syncing, lastSync) => {
       setIsOnline(online);
       setPendingSyncCount(count);
+      setIsSyncing(syncing);
+      if (lastSync) {
+        setLastSyncedAt(lastSync);
+      }
     });
 
     return () => unsubscribe();
   }, []);
 
-  const triggerManualSync = async () => {
-    await syncEngine.triggerSync();
+  const triggerManualSync = async (): Promise<SyncResult> => {
+    return await syncEngine.triggerSync({ isManual: true });
   };
 
   const resetDatabase = async () => {
@@ -129,6 +142,8 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         facilityLocation,
         isOnline,
         pendingSyncCount,
+        isSyncing,
+        lastSyncedAt,
         triggerManualSync,
         resetDatabase,
         isDbReady,

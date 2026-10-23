@@ -37,6 +37,9 @@ import {
   MapPin,
   UserCheck,
   RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  X,
   Gavel,
   Car,
   Building2,
@@ -44,6 +47,13 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TREND_WINDOW_DAYS = 14;
+
+function formatLastSync(date: Date): string {
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 45) return 'Just now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
 
 /** UTC date key (YYYY-MM-DD). Ghana runs on GMT, so UTC equals local business time. */
 function toDateKey(date: Date): string {
@@ -55,8 +65,15 @@ function emptyChannelTotals(): Record<PaymentMethod, number> {
 }
 
 export default function DeskDashboardPage() {
-  const { currentStaffName, facilityLocation, isOnline, pendingSyncCount, triggerManualSync } =
-    useTerminal();
+  const {
+    currentStaffName,
+    facilityLocation,
+    isOnline,
+    pendingSyncCount,
+    isSyncing,
+    lastSyncedAt,
+    triggerManualSync,
+  } = useTerminal();
 
   // Live Dexie database collections with stable references
   const rawLots = useLiveQuery(() => db.auctionLots.toArray(), []);
@@ -88,7 +105,12 @@ export default function DeskDashboardPage() {
   const [isVehicleIntakeOpen, setIsVehicleIntakeOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [isBankDepositOpen, setIsBankDepositOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncToast, setSyncToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'info' | 'error';
+    timeStr: string;
+  } | null>(null);
 
   // Key Computed Metrics
   const activeLots = useMemo(
@@ -387,11 +409,34 @@ export default function DeskDashboardPage() {
 
   // Handle manual sync trigger
   const handleSyncClick = async () => {
-    setIsSyncing(true);
     try {
-      await triggerManualSync();
-    } finally {
-      setIsSyncing(false);
+      const res = await triggerManualSync();
+      const timeStr = res.timestamp
+        ? res.timestamp.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        : new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      setSyncToast({
+        show: true,
+        message: res.message,
+        type: !res.success ? 'error' : res.synced > 0 ? 'success' : 'info',
+        timeStr,
+      });
+
+      setTimeout(() => {
+        setSyncToast((prev) => (prev ? { ...prev, show: false } : null));
+      }, 4500);
+    } catch (err) {
+      console.error('Failed manual sync:', err);
+      setSyncToast({
+        show: true,
+        message: 'Manual sync encountered an unexpected error. Please check network connectivity.',
+        type: 'error',
+        timeStr: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      });
+
+      setTimeout(() => {
+        setSyncToast((prev) => (prev ? { ...prev, show: false } : null));
+      }, 4500);
     }
   };
 
@@ -468,20 +513,53 @@ export default function DeskDashboardPage() {
         {/* Sync Status Button */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right text-xs">
-            <span className="text-slate-400">Sync Engine</span>
-            <p className="font-bold font-mono text-slate-800 dark:text-slate-200">
-              {pendingSyncCount > 0 ? `${pendingSyncCount} pending in queue` : 'All records synced'}
-            </p>
+            {isSyncing ? (
+              <>
+                <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-end gap-1 text-[11px] uppercase tracking-wider animate-pulse">
+                  Connecting Cloud...
+                </span>
+                <p className="font-bold font-mono text-slate-800 dark:text-slate-200">
+                  Verifying Ledger
+                </p>
+              </>
+            ) : pendingSyncCount > 0 ? (
+              <>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold text-[11px] uppercase tracking-wider">
+                  Sync Engine
+                </span>
+                <p className="font-bold font-mono text-amber-700 dark:text-amber-300">
+                  {pendingSyncCount} pending in queue
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="text-slate-400 text-[11px]">Sync Engine</span>
+                <p className="font-bold font-mono text-slate-800 dark:text-slate-200 flex items-center justify-end gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <span>All records synced</span>
+                </p>
+              </>
+            )}
+            {lastSyncedAt && !isSyncing && (
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                Verified {formatLastSync(lastSyncedAt)}
+              </p>
+            )}
           </div>
 
           <button
             type="button"
             onClick={handleSyncClick}
             disabled={isSyncing}
-            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors shadow-xs"
-            title="Trigger Manual Cloud Sync"
+            className={`p-2.5 rounded-xl border transition-all shadow-xs cursor-pointer active:scale-95 ${
+              isSyncing
+                ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-400/30'
+                : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400'
+            }`}
+            title={isSyncing ? 'Synchronizing with AmenDesk Cloud...' : 'Trigger Manual Cloud Sync'}
+            aria-label="Trigger Manual Cloud Sync"
           >
-            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin text-indigo-600' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin text-indigo-600 dark:text-indigo-400' : ''}`} />
           </button>
         </div>
       </div>
@@ -628,6 +706,58 @@ export default function DeskDashboardPage() {
         onClose={() => setIsBankDepositOpen(false)}
         onSuccess={() => setIsBankDepositOpen(false)}
       />
+
+      {/* Floating Toast Notification for Cloud Sync Telemetry */}
+      {syncToast && syncToast.show && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 max-w-sm rounded-2xl p-4 shadow-2xl border backdrop-blur-md transition-all duration-300 bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-800"
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`p-2 rounded-xl shrink-0 ${
+                syncToast.type === 'success'
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'
+                  : syncToast.type === 'error'
+                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300'
+                  : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300'
+              }`}
+            >
+              {syncToast.type === 'error' ? (
+                <AlertCircle className="h-5 w-5" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5" />
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                  AmenDesk Cloud Sync
+                </p>
+                {syncToast.timeStr && (
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {syncToast.timeStr}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                {syncToast.message}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSyncToast((prev) => (prev ? { ...prev, show: false } : null))}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
+              aria-label="Dismiss notification"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

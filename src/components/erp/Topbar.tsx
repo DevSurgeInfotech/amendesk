@@ -158,6 +158,7 @@ export function Topbar() {
     setStaffAvatarUrl,
     isOnline,
     pendingSyncCount,
+    isSyncing,
     triggerManualSync,
     resetDatabase,
   } = useTerminal();
@@ -609,29 +610,36 @@ export function Topbar() {
           <button
             type="button"
             onClick={() => void triggerManualSync()}
+            disabled={isSyncing}
             title={
-              isOnline
+              isSyncing
+                ? 'Synchronizing with AmenDesk central cloud...'
+                : isOnline
                 ? 'Online Terminal — Click to sync with central server'
                 : 'Offline Yard Mode — Transactions queued in local IndexedDB'
             }
             className={`hidden xl:flex items-center gap-2 h-10 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-              isOnline
+              isSyncing
+                ? 'bg-indigo-50 text-indigo-900 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-800 animate-pulse'
+                : isOnline
                 ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 hover:bg-emerald-100/80 dark:bg-emerald-950/50 dark:text-emerald-200 dark:border-emerald-800/80'
                 : 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-800'
             }`}
           >
             <span
               className={`h-2 w-2 rounded-full ${
-                isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                isSyncing ? 'bg-indigo-500 animate-ping' : isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
               }`}
             />
-            {isOnline ? (
+            {isSyncing ? (
+              <RefreshCw className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 animate-spin" />
+            ) : isOnline ? (
               <Wifi className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             ) : (
               <WifiOff className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
             )}
             <span>
-              {pendingSyncCount > 0 ? `${pendingSyncCount} Pending` : 'Synced'}
+              {isSyncing ? 'Syncing...' : pendingSyncCount > 0 ? `${pendingSyncCount} Pending` : 'Synced'}
             </span>
           </button>
 
@@ -993,17 +1001,18 @@ export function Topbar() {
                 <div className="p-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-1">
                   <button
                     type="button"
+                    disabled={isSyncing}
                     onClick={() => {
                       void triggerManualSync();
                       setStaffMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-60"
                   >
                     <span className="flex items-center gap-2">
-                      <RefreshCw className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-                      <span>Synchronize Terminal Now</span>
+                      <RefreshCw className={`h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 ${isSyncing ? 'animate-spin' : ''}`} />
+                      <span>{isSyncing ? 'Synchronizing Terminal...' : 'Synchronize Terminal Now'}</span>
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">Sync</span>
+                    <span className="text-[10px] font-mono text-slate-400">{isSyncing ? 'Active' : 'Sync'}</span>
                   </button>
 
                   <button
