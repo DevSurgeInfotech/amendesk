@@ -16,10 +16,6 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
-  RotateCcw,
-  Building2,
-  FlaskConical,
-  ShieldCheck,
   Menu,
   Search,
   Bell,
@@ -163,11 +159,6 @@ export function Topbar() {
     pendingSyncCount,
     isSyncing,
     triggerManualSync,
-    tenantId,
-    activeTenant,
-    switchTenant,
-    isProduction,
-    resetDatabase,
   } = useTerminal();
   const { theme, setTheme } = useTheme();
 
@@ -181,12 +172,10 @@ export function Topbar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [dismissedNotifIds, setDismissedNotifIds] = useState<string[]>([]);
   const [staffMenuOpen, setStaffMenuOpen] = useState(false);
-  const [tenantMenuOpen, setTenantMenuOpen] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const staffRef = useRef<HTMLDivElement>(null);
-  const tenantRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Live Queries for Global Search & Real-Time Operational Notifications
@@ -246,9 +235,6 @@ export function Topbar() {
       }
       if (staffRef.current && !staffRef.current.contains(e.target as Node)) {
         setStaffMenuOpen(false);
-      }
-      if (tenantRef.current && !tenantRef.current.contains(e.target as Node)) {
-        setTenantMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -571,124 +557,6 @@ export function Topbar() {
               </div>
             </div>
           </Link>
-
-          {/* Tenant / Account Selector (Encore SMS Architecture) */}
-          <div ref={tenantRef} className="relative shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                if (!isProduction) setTenantMenuOpen(!tenantMenuOpen);
-              }}
-              className={`flex items-center gap-2 h-11 px-3 rounded-2xl border transition-all ${
-                activeTenant.isSandbox
-                  ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200'
-                  : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
-              } ${isProduction ? 'cursor-default' : 'cursor-pointer hover:shadow-xs'}`}
-              title={isProduction ? activeTenant.name : 'Switch tenant / account'}
-            >
-              <Building2 className={`h-4 w-4 ${activeTenant.isSandbox ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
-              <div className="text-left hidden sm:block">
-                <div className="flex items-center gap-1.5 leading-tight">
-                  <span className="text-xs font-black truncate max-w-[130px]">{activeTenant.name}</span>
-                  <span
-                    className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${
-                      activeTenant.isSandbox
-                        ? 'bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-300'
-                        : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-300'
-                    }`}
-                  >
-                    {activeTenant.code}
-                  </span>
-                </div>
-              </div>
-              {!isProduction && <ChevronDown className="h-3.5 w-3.5 text-slate-400" />}
-            </button>
-
-            {/* Tenant Switcher Dropdown */}
-            {tenantMenuOpen && !isProduction && (
-              <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                <div className="p-3 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Select Account / Tenant
-                  </p>
-                </div>
-                <div className="p-2 space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTenantMenuOpen(false);
-                      switchTenant('amen-mart-sandbox');
-                    }}
-                    className={`w-full text-left p-2.5 rounded-xl transition-all cursor-pointer ${
-                      tenantId === 'amen-mart-sandbox'
-                        ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                        <FlaskConical className="h-3.5 w-3.5 text-amber-600" />
-                        Amen Mart (Demo Yard)
-                      </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                        SANDBOX
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-500">
-                      Fully seeded Ghanaian test yard for features &amp; updates.
-                    </p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTenantMenuOpen(false);
-                      switchTenant('amen-mart-live');
-                    }}
-                    className={`w-full text-left p-2.5 rounded-xl transition-all cursor-pointer ${
-                      tenantId === 'amen-mart-live'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                        Amen Mart Ghana
-                      </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                        LIVE
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-500">
-                      Clean commercial production company &amp; ledger.
-                    </p>
-                  </button>
-                </div>
-
-                {activeTenant.isSandbox && (
-                  <div className="p-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTenantMenuOpen(false);
-                        if (confirm('Reset Demo Yard database back to fresh Ghanaian seed data?')) {
-                          void resetDatabase();
-                        }
-                      }}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-100/60 dark:hover:bg-amber-950/60 transition-colors cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        <span>Reset Demo Yard Data</span>
-                      </span>
-                      <span className="text-[10px] font-mono">Seed</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
           {/* 1. Global Search Bar (Ctrl+K) */}
           <button
