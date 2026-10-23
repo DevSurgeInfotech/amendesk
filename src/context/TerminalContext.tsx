@@ -11,8 +11,8 @@ import {
 import {
   db,
   getActiveEnvironmentMode,
+  isDevGateAvailable as checkDevGateAvailable,
   isDevSurgeAuthorized as checkDevSurgeAuth,
-  setEnvironmentMode as setDbEnvMode,
   authorizeDevSurge as performDevSurgeAuth,
   revokeDevSurgeAuth as performDevSurgeRevoke,
   type EnvironmentMode,
@@ -42,13 +42,13 @@ interface TerminalContextType {
   resetDatabase: () => Promise<void>;
   isDbReady: boolean;
 
-  // Dev Surge Engineering Staging & Gate Controls
+  // Staging & Sandbox Controls (Active strictly in Dev Surge internal environments)
+  isDevGateAvailable: boolean;
   environmentMode: EnvironmentMode;
   isDevSurgeAuthorized: boolean;
   isDevGateOpen: boolean;
   openDevGate: () => void;
   closeDevGate: () => void;
-  switchEnvironment: (mode: EnvironmentMode) => void;
   authorizePasscode: (passcode: string) => boolean;
   revokeDevSurge: () => void;
 }
@@ -122,8 +122,9 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
 
-  // Dev Surge Gate UI State
+  // Dev Surge Staging Gate UI State
   const [isDevGateOpen, setIsDevGateOpen] = useState(false);
+  const isDevGateAvailable = checkDevGateAvailable();
 
   const staffAvatarUrl = useSyncExternalStore(
     subscribeAvatar,
@@ -157,18 +158,21 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Check URL parameters for direct developer gate access
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('devsurge_token');
-      if (token && performDevSurgeAuth(token)) {
-        window.dispatchEvent(new Event(DEVSURGE_EVENT));
-        setTimeout(() => setIsDevGateOpen(true), 0);
-      } else if (urlParams.get('devsurge_gate') === '1') {
-        setTimeout(() => setIsDevGateOpen(true), 0);
+    // Only process developer triggers if this is an internal staging/dev environment.
+    // In client production deployments, these are strictly inert.
+    if (isDevGateAvailable) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('devsurge_token');
+        if (token && performDevSurgeAuth(token)) {
+          window.dispatchEvent(new Event(DEVSURGE_EVENT));
+          setTimeout(() => setIsDevGateOpen(true), 0);
+        } else if (urlParams.get('devsurge_gate') === '1') {
+          setTimeout(() => setIsDevGateOpen(true), 0);
+        }
+      } catch {
+        // Ignored
       }
-    } catch {
-      // Ignored in non-browser context
     }
 
     // Populate DB on client-side boot if empty
@@ -192,7 +196,9 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     });
 
     // Keyboard shortcut: Ctrl + Shift + D (or Cmd + Shift + D) to open Dev Surge Gate
+    // Strictly active ONLY in Dev Surge staging/development environments.
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isDevGateAvailable) return;
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
         e.preventDefault();
         setIsDevGateOpen((prev) => !prev);
@@ -205,16 +211,18 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       unsubscribe();
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isDevGateAvailable]);
 
-  const openDevGate = () => setIsDevGateOpen(true);
-  const closeDevGate = () => setIsDevGateOpen(false);
-
-  const switchEnvironment = (mode: EnvironmentMode) => {
-    setDbEnvMode(mode);
+  const openDevGate = () => {
+    if (isDevGateAvailable) {
+      setIsDevGateOpen(true);
+    }
   };
 
+  const closeDevGate = () => setIsDevGateOpen(false);
+
   const authorizePasscode = (passcode: string): boolean => {
+    if (!isDevGateAvailable) return false;
     const success = performDevSurgeAuth(passcode);
     if (success) {
       window.dispatchEvent(new Event(DEVSURGE_EVENT));
@@ -253,12 +261,12 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         triggerManualSync,
         resetDatabase,
         isDbReady,
+        isDevGateAvailable,
         environmentMode,
         isDevSurgeAuthorized,
         isDevGateOpen,
         openDevGate,
         closeDevGate,
-        switchEnvironment,
         authorizePasscode,
         revokeDevSurge,
       }}

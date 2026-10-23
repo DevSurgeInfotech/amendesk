@@ -162,6 +162,7 @@ export function Topbar() {
     triggerManualSync,
     environmentMode,
     isDevSurgeAuthorized,
+    isDevGateAvailable,
     openDevGate,
   } = useTerminal();
   const { theme, setTheme } = useTheme();
@@ -645,16 +646,16 @@ export function Topbar() {
             </span>
           </button>
 
-          {/* Dev Surge Sandbox Pill (Only visible when Dev Surge is authorized AND in Sandbox) */}
-          {isDevSurgeAuthorized && environmentMode === 'SANDBOX' && (
+          {/* Dev Surge Staging Pill (Only visible in internal staging/dev environments) */}
+          {isDevGateAvailable && isDevSurgeAuthorized && environmentMode === 'SANDBOX' && (
             <button
               type="button"
               onClick={openDevGate}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-xs font-bold hover:bg-amber-200/70 transition-colors cursor-pointer"
-              title="Open Dev Surge Engineering Gate"
+              title="Open Dev Surge Staging Controls"
             >
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span>🧪 Sandbox</span>
+              <span>🧪 Staging Dummy Yard</span>
             </button>
           )}
 
@@ -1030,8 +1031,8 @@ export function Topbar() {
                     <span className="text-[10px] font-mono text-slate-400">{isSyncing ? 'Active' : 'Sync'}</span>
                   </button>
 
-                  {/* Dev Surge Sandbox Controls: ONLY visible to authorized Dev Surge engineers inside Sandbox */}
-                  {isDevSurgeAuthorized && environmentMode === 'SANDBOX' && (
+                  {/* Dev Surge Staging Controls: ONLY visible to authorized Dev Surge engineers inside Staging */}
+                  {isDevGateAvailable && isDevSurgeAuthorized && environmentMode === 'SANDBOX' && (
                     <button
                       type="button"
                       onClick={() => {
@@ -1042,7 +1043,7 @@ export function Topbar() {
                     >
                       <span className="flex items-center gap-2">
                         <RotateCcw className="h-3.5 w-3.5" />
-                        <span>Dev Surge Sandbox Controls</span>
+                        <span>Dev Surge Staging Controls</span>
                       </span>
                       <span className="text-[10px] font-mono">Dev</span>
                     </button>

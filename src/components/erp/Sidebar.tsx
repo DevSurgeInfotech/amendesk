@@ -170,11 +170,12 @@ export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
-  const { openDevGate } = useTerminal();
+  const { openDevGate, isDevGateAvailable } = useTerminal();
 
   const devClicksRef = useRef(0);
   const lastDevClickRef = useRef(0);
   const handleSecretDevTrigger = () => {
+    if (!isDevGateAvailable) return;
     const currentTime = Date.now();
     if (currentTime - lastDevClickRef.current < 1500) {
       devClicksRef.current += 1;

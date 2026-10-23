@@ -9,15 +9,16 @@ import { useTerminal } from '@/context/TerminalContext';
 import { FlaskConical } from 'lucide-react';
 
 function SandboxModeBanner() {
-  const { environmentMode, isDevSurgeAuthorized, openDevGate, switchEnvironment } = useTerminal();
+  const { environmentMode, isDevSurgeAuthorized, isDevGateAvailable, openDevGate } = useTerminal();
 
-  if (!isDevSurgeAuthorized || environmentMode !== 'SANDBOX') return null;
+  // ONLY render if in internal staging/dev environment AND in sandbox
+  if (!isDevGateAvailable || !isDevSurgeAuthorized || environmentMode !== 'SANDBOX') return null;
 
   return (
     <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-bold flex items-center justify-between shadow-xs z-30 select-none">
       <div className="flex items-center gap-2">
         <FlaskConical className="h-4 w-4" />
-        <span>DEV SURGE INTERNAL SANDBOX — Amen Mart Dummy Yard (Data is isolated from live operations)</span>
+        <span>DEV SURGE STAGING — Amen Mart Dummy Yard (Isolated testing environment)</span>
       </div>
       <div className="flex items-center gap-2">
         <button
@@ -25,14 +26,7 @@ function SandboxModeBanner() {
           onClick={openDevGate}
           className="px-2.5 py-0.5 rounded-lg bg-slate-950 text-amber-400 text-[11px] font-bold hover:bg-slate-900 transition-colors cursor-pointer"
         >
-          Dev Gate
-        </button>
-        <button
-          type="button"
-          onClick={() => switchEnvironment('LIVE')}
-          className="px-2.5 py-0.5 rounded-lg bg-white text-slate-900 text-[11px] font-bold hover:bg-slate-100 transition-colors cursor-pointer shadow-xs"
-        >
-          Switch to Live
+          Staging Controls
         </button>
       </div>
     </div>
