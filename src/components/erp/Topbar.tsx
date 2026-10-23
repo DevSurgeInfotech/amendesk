@@ -18,6 +18,8 @@ import {
   RefreshCw,
   Building2,
   FlaskConical,
+  ShieldCheck,
+  LogOut,
   Menu,
   Search,
   Bell,
@@ -162,7 +164,8 @@ export function Topbar() {
     isSyncing,
     triggerManualSync,
     activeTenant,
-    openWorkspaceModal,
+    logout,
+    role,
   } = useTerminal();
   const { theme, setTheme } = useTheme();
 
@@ -645,17 +648,14 @@ export function Topbar() {
             </span>
           </button>
 
-          {/* Encore SMS Multi-Tenant Workspace Selector Pill */}
-          <button
-            type="button"
-            onClick={openWorkspaceModal}
-            className={`hidden sm:flex items-center gap-1.5 h-10 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+          {/* Active Workspace Badge (Encore SMS Architecture) */}
+          <div
+            className={`hidden sm:flex items-center gap-1.5 h-10 px-3 rounded-xl border text-xs font-bold select-none ${
               activeTenant.isSandbox
-                ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200 hover:bg-amber-100/80 shadow-2xs'
-                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 hover:bg-emerald-100/80 shadow-2xs'
+                ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200 shadow-2xs'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 shadow-2xs'
             }`}
-            title={`Active Workspace: ${activeTenant.name} (${activeTenant.code}). Click to switch workspace.`}
-            aria-label="Switch workspace"
+            title={`Active Workspace: ${activeTenant.name} (${activeTenant.code})`}
           >
             {activeTenant.isSandbox ? (
               <FlaskConical className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -674,7 +674,7 @@ export function Topbar() {
             >
               {activeTenant.code}
             </span>
-          </button>
+          </div>
 
           {/* Segmented High-Contrast Theme Switcher */}
           <div
@@ -1032,28 +1032,21 @@ export function Topbar() {
 
                 {/* System & Terminal Controls */}
                 <div className="p-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStaffMenuOpen(false);
-                      openWorkspaceModal();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Building2 className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-                      <span>Switch Workspace / Tenant...</span>
-                    </span>
-                    <span
-                      className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${
-                        activeTenant.isSandbox
-                          ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300'
-                          : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300'
-                      }`}
+                  {role === 'OWNER' && (
+                    <Link
+                      href="/platform"
+                      onClick={() => setStaffMenuOpen(false)}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
                     >
-                      {activeTenant.code}
-                    </span>
-                  </button>
+                      <span className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        <span>Platform &amp; Staff Provisioning</span>
+                      </span>
+                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300">
+                        Admin
+                      </span>
+                    </Link>
+                  )}
 
                   <button
                     type="button"
@@ -1069,6 +1062,21 @@ export function Topbar() {
                       <span>{isSyncing ? 'Synchronizing Terminal...' : 'Synchronize Terminal Now'}</span>
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">{isSyncing ? 'Active' : 'Sync'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStaffMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <LogOut className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                      <span>Log Out ({activeTenant.shortName})</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-rose-500">Exit</span>
                   </button>
                 </div>
               </div>

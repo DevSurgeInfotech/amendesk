@@ -88,6 +88,16 @@ export function SiteFooter() {
                 Online Reservation Deposits
               </Link>
             </li>
+            <li>
+              <Link href="/login" className="hover:text-indigo-600 transition-colors font-semibold">
+                Staff ERP Terminal Login
+              </Link>
+            </li>
+            <li>
+              <Link href="/platform" className="hover:text-indigo-600 transition-colors text-slate-500">
+                Platform Console &amp; Provisioning
+              </Link>
+            </li>
           </ul>
         </div>
 

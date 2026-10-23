@@ -8,6 +8,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   db,
   type TenantId,
@@ -18,14 +19,29 @@ import {
   isProductionDeployment,
 } from '@/lib/db';
 import { syncEngine, type SyncResult } from '@/lib/sync/syncEngine';
+import type { AppRole, AuthSession, TenantRecord } from '@/lib/types/auth';
+import { ROLE_LABELS } from '@/lib/types/auth';
+import { authService } from '@/lib/auth/authService';
 
 export type UserRole =
+  | AppRole
   | 'ADMIN'
-  | 'ACCOUNTANT'
   | 'AUCTION_MANAGER'
   | 'CASHIER'
   | 'DEALERSHIP_AGENT'
   | 'INVENTORY_OFFICER';
+
+export const ROLE_STAFF_NAMES: Record<UserRole, string> = {
+  OWNER: 'Managing Director & Owner',
+  ACCOUNTANT: 'Chief Accountant & Finance Lead',
+  SECRETARY: 'Auction Secretary & Operations',
+  STAFF: 'Operations Staff & Cashier',
+  ADMIN: 'Kwesi Boateng (Managing Director)',
+  AUCTION_MANAGER: 'Kofi Asante (Chief Auctioneer)',
+  CASHIER: 'Mary Afriyie (Senior Cashier)',
+  DEALERSHIP_AGENT: 'Yaw Osei (Showroom Manager)',
+  INVENTORY_OFFICER: 'David Mensah (Yard Supervisor)',
+};
 
 interface TerminalContextType {
   role: UserRole;
@@ -42,25 +58,18 @@ interface TerminalContextType {
   resetDatabase: () => Promise<void>;
   isDbReady: boolean;
 
-  // Encore SMS Style Tenant Architecture
+  // Encore SMS Style Multi-Tenant RBAC Session
+  session: AuthSession | null;
+  isAuthenticated: boolean;
+  currentUser: AuthSession['user'] | null;
+  currentTenant: TenantRecord | null;
+  logout: () => void;
+
   tenantId: TenantId;
   activeTenant: Tenant;
   switchTenant: (id: TenantId) => void;
-  loginToTenant: (id: TenantId, role?: UserRole) => void;
-  isWorkspaceModalOpen: boolean;
-  openWorkspaceModal: () => void;
-  closeWorkspaceModal: () => void;
   isProduction: boolean;
 }
-
-const ROLE_STAFF_NAMES: Record<UserRole, string> = {
-  ADMIN: 'Kwesi Boateng (Managing Director)',
-  ACCOUNTANT: 'Esi Mansa (Chief Accountant)',
-  AUCTION_MANAGER: 'Kofi Asante (Chief Auctioneer)',
-  CASHIER: 'Mary Afriyie (Senior Cashier)',
-  DEALERSHIP_AGENT: 'Yaw Osei (Showroom Manager)',
-  INVENTORY_OFFICER: 'David Mensah (Yard Supervisor)',
-};
 
 const AVATAR_STORAGE_KEY = 'amendesk_staff_avatar';
 const ROLE_STORAGE_KEY = 'amendesk_staff_role';
@@ -99,6 +108,8 @@ function subscribeRole(callback: () => void) {
 
 function getRoleSnapshot(): UserRole {
   try {
+    const session = authService.getSession();
+    if (session?.user?.role) return session.user.role;
     const saved = localStorage.getItem(ROLE_STORAGE_KEY) as UserRole | null;
     if (saved && ROLE_STAFF_NAMES[saved]) {
       return saved;
@@ -106,11 +117,11 @@ function getRoleSnapshot(): UserRole {
   } catch {
     // Ignore
   }
-  return 'ADMIN';
+  return 'OWNER';
 }
 
 function getServerRoleSnapshot(): UserRole {
-  return 'ADMIN';
+  return 'OWNER';
 }
 
 function subscribeTenant(callback: () => void) {
@@ -123,23 +134,47 @@ function subscribeTenant(callback: () => void) {
 }
 
 function getTenantSnapshot(): TenantId {
+  const session = authService.getSession();
+  if (session?.tenant?.id) return session.tenant.id as TenantId;
   return getActiveTenantId();
 }
 
 function getServerTenantSnapshot(): TenantId {
-  return 'amen-mart-sandbox';
+  return 'amen-mart-live';
+}
+
+function subscribeAuthSession(callback: () => void) {
+  return authService.subscribeAuth(callback);
+}
+
+function getSessionSnapshot(): AuthSession | null {
+  return authService.getSession();
+}
+
+function getServerSessionSnapshot(): AuthSession | null {
+  return null;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
 
 export function TerminalProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [facilityLocation] = useState('Amen Mart Yard & Cash Office — Gbawe');
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
-  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+
+  const session = useSyncExternalStore(
+    subscribeAuthSession,
+    getSessionSnapshot,
+    getServerSessionSnapshot
+  );
+
+  const isAuthenticated = Boolean(session);
+  const currentUser = session?.user ?? null;
+  const currentTenant = session?.tenant ?? null;
 
   const role = useSyncExternalStore(
     subscribeRole,
@@ -159,11 +194,21 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     getServerTenantSnapshot
   );
 
-  const activeTenant: Tenant = SYSTEM_TENANTS[tenantId] || SYSTEM_TENANTS['amen-mart-sandbox'];
+  const activeTenant: Tenant = SYSTEM_TENANTS[tenantId] || {
+    id: tenantId,
+    name: currentTenant?.name || 'Amen Mart Ghana',
+    shortName: currentTenant?.shortName || 'Amen Mart',
+    code: currentTenant?.code || 'LIVE',
+    isSandbox: currentTenant?.environment === 'SANDBOX',
+    badgeLabel: currentTenant?.environment === 'SANDBOX' ? 'SANDBOX DEMO' : 'LIVE PRODUCTION',
+    description: currentTenant?.description || 'Commercial operations & clean general ledger.',
+  };
+
   const isProduction = isProductionDeployment();
 
-  const openWorkspaceModal = () => setIsWorkspaceModalOpen(true);
-  const closeWorkspaceModal = () => setIsWorkspaceModalOpen(false);
+  const currentStaffName = currentUser
+    ? `${currentUser.fullName} (${ROLE_LABELS[currentUser.role] || currentUser.role})`
+    : 'Kwesi Boateng (Managing Director)';
 
   const setStaffAvatarUrl = (dataUrl: string | null) => {
     try {
@@ -187,10 +232,12 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loginToTenant = (id: TenantId, newRole?: UserRole) => {
-    if (newRole) {
-      handleSetRole(newRole);
-    }
+  const logout = () => {
+    authService.logout();
+    router.push('/login');
+  };
+
+  const switchTenant = (id: TenantId) => {
     setActiveTenantId(id);
     window.dispatchEvent(new Event(TENANT_EVENT));
   };
@@ -221,11 +268,6 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const switchTenant = (id: TenantId) => {
-    setActiveTenantId(id);
-    window.dispatchEvent(new Event(TENANT_EVENT));
-  };
-
   const triggerManualSync = async (): Promise<SyncResult> => {
     return await syncEngine.triggerSync({ isManual: true });
   };
@@ -241,7 +283,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       value={{
         role,
         setRole: handleSetRole,
-        currentStaffName: ROLE_STAFF_NAMES[role],
+        currentStaffName,
         staffAvatarUrl,
         setStaffAvatarUrl,
         facilityLocation,
@@ -252,13 +294,14 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         triggerManualSync,
         resetDatabase,
         isDbReady,
+        session,
+        isAuthenticated,
+        currentUser,
+        currentTenant,
+        logout,
         tenantId,
         activeTenant,
         switchTenant,
-        loginToTenant,
-        isWorkspaceModalOpen,
-        openWorkspaceModal,
-        closeWorkspaceModal,
         isProduction,
       }}
     >

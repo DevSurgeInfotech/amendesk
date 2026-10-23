@@ -1,15 +1,16 @@
 'use client';
 
-import { Suspense, type ReactNode } from 'react';
+import { Suspense, useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/erp/Sidebar';
 import { Topbar } from '@/components/erp/Topbar';
-import { WorkspaceModal } from '@/components/erp/WorkspaceModal';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { useTerminal } from '@/context/TerminalContext';
-import { FlaskConical } from 'lucide-react';
+import { authService } from '@/lib/auth/authService';
+import { FlaskConical, LogOut } from 'lucide-react';
 
 function SandboxModeBanner() {
-  const { activeTenant, switchTenant, openWorkspaceModal } = useTerminal();
+  const { activeTenant, logout } = useTerminal();
 
   // ONLY render if in Demo Yard sandbox
   if (!activeTenant.isSandbox) return null;
@@ -18,22 +19,16 @@ function SandboxModeBanner() {
     <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-bold flex items-center justify-between shadow-xs z-30 select-none">
       <div className="flex items-center gap-2">
         <FlaskConical className="h-4 w-4" />
-        <span>🧪 AMENDESK DEMO YARD (SANDBOX) — Seeded Demo Environment for Feature Previews &amp; Client Presentations</span>
+        <span>🧪 AMENDESK DEMO YARD (SANDBOX) — Dev Surge client demonstration workspace with Ghanaian seed dataset</span>
       </div>
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={openWorkspaceModal}
-          className="px-2.5 py-0.5 rounded-lg bg-amber-600/60 hover:bg-amber-600 text-slate-950 text-[11px] font-bold transition-colors cursor-pointer"
+          onClick={logout}
+          className="px-2.5 py-0.5 rounded-lg bg-slate-950 text-amber-400 text-[11px] font-bold hover:bg-slate-900 transition-colors cursor-pointer flex items-center gap-1.5"
         >
-          Workspace Settings
-        </button>
-        <button
-          type="button"
-          onClick={() => switchTenant('amen-mart-live')}
-          className="px-2.5 py-0.5 rounded-lg bg-slate-950 text-amber-400 text-[11px] font-bold hover:bg-slate-900 transition-colors cursor-pointer"
-        >
-          Switch to Amen Mart Live
+          <LogOut className="h-3 w-3" />
+          <span>Log Out to Switch Account</span>
         </button>
       </div>
     </div>
@@ -45,6 +40,29 @@ export default function DeskLayout({
 }: {
   children: ReactNode;
 }) {
+  const router = useRouter();
+
+  const session = useSyncExternalStore(
+    (callback) => authService.subscribeAuth(callback),
+    () => authService.getSession(),
+    () => null
+  );
+
+  useEffect(() => {
+    if (!authService.getSession()) {
+      router.push('/login');
+    }
+  }, [router]);
+
+  // Prevent flash of private desk contents if unauthenticated
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-400 text-xs">
+        Checking terminal session authorization...
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen bg-[var(--background)]">
@@ -66,7 +84,6 @@ export default function DeskLayout({
             </main>
           </div>
         </div>
-        <WorkspaceModal />
       </div>
     </SidebarProvider>
   );

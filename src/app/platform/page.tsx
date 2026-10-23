@@ -1,0 +1,1006 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import {
+  authService,
+} from '@/lib/auth/authService';
+import type {
+  AppRole,
+  TenantEnvironment,
+  UserAccount,
+} from '@/lib/types/auth';
+import { ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/lib/types/auth';
+import { GhanaFlag } from '@/components/site/SiteHeader';
+import {
+  Server,
+  Building2,
+  Users,
+  ShieldCheck,
+  Plus,
+  Key,
+  CheckCircle2,
+  AlertTriangle,
+  Trash2,
+  Database,
+  ArrowLeft,
+  X,
+  Search,
+} from 'lucide-react';
+
+const MASTER_KEYS = ['devsurge2026', 'surge@amen2026', 'amen@master2026'];
+
+export default function PlatformPage() {
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [masterPasscode, setMasterPasscode] = useState('');
+  const [passcodeError, setPasscodeError] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'USERS' | 'TENANTS' | 'STORAGE'>('USERS');
+  const [selectedTenantFilter, setSelectedTenantFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Modals state
+  const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false);
+  const [isNewTenantModalOpen, setIsNewTenantModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<UserAccount | null>(null);
+  const [newPasswordValue, setNewPasswordValue] = useState('');
+
+  // New User Form State
+  const [newFullName, setNewFullName] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newTenantId, setNewTenantId] = useState('amen-mart-live');
+  const [newRole, setNewRole] = useState<AppRole>('STAFF');
+  const [newPassword, setNewPassword] = useState('amen@2026');
+
+  // New Tenant Form State
+  const [newTenId, setNewTenId] = useState('');
+  const [newTenCode, setNewTenCode] = useState('');
+  const [newTenName, setNewTenName] = useState('');
+  const [newTenShortName, setNewTenShortName] = useState('');
+  const [newTenEnv, setNewTenEnv] = useState<TenantEnvironment>('LIVE');
+  const [newTenEmail, setNewTenEmail] = useState('');
+  const [newTenPhone, setNewTenPhone] = useState('');
+  const [newTenAddress, setNewTenAddress] = useState('');
+
+  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'SUCCESS' | 'ERROR'; text: string } | null>(null);
+
+  // Check if session is already an OWNER
+  useState(() => {
+    const session = authService.getSession();
+    if (session?.user?.role === 'OWNER') {
+      setIsUnlocked(true);
+    }
+  });
+
+  const tenants = authService.getTenants();
+  const users = authService.getUsers();
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasscodeError(null);
+    if (MASTER_KEYS.includes(masterPasscode.trim().toLowerCase())) {
+      setIsUnlocked(true);
+      setFeedbackMsg({ type: 'SUCCESS', text: 'Platform super-admin console unlocked successfully.' });
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } else {
+      setPasscodeError('Invalid platform administrator passcode.');
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    let list = users;
+    if (selectedTenantFilter !== 'ALL') {
+      list = list.filter((u) => u.tenantId === selectedTenantFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (u) =>
+          u.fullName.toLowerCase().includes(q) ||
+          u.username.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.role.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [users, selectedTenantFilter, searchQuery]);
+
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedbackMsg(null);
+    try {
+      authService.provisionUser({
+        tenantId: newTenantId,
+        username: newUsername.trim(),
+        email: newEmail.trim(),
+        fullName: newFullName.trim(),
+        role: newRole,
+        password: newPassword,
+        isActive: true,
+      });
+
+      setFeedbackMsg({
+        type: 'SUCCESS',
+        text: `User account "${newUsername}" provisioned successfully for ${newTenantId}.`,
+      });
+      setIsNewUserModalOpen(false);
+      setNewFullName('');
+      setNewUsername('');
+      setNewEmail('');
+      setNewPassword('amen@2026');
+      setTimeout(() => setFeedbackMsg(null), 4000);
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to provision user.',
+      });
+    }
+  };
+
+  const handleCreateTenant = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedbackMsg(null);
+    try {
+      authService.provisionTenant({
+        id: newTenId.trim().toLowerCase(),
+        code: newTenCode.trim().toUpperCase(),
+        name: newTenName.trim(),
+        shortName: newTenShortName.trim() || newTenName.trim(),
+        environment: newTenEnv,
+        status: 'ACTIVE',
+        contactEmail: newTenEmail.trim(),
+        phone: newTenPhone.trim(),
+        address: newTenAddress.trim(),
+        description: `${newTenName} operational workspace provisioned on AmenDesk platform.`,
+      });
+
+      setFeedbackMsg({
+        type: 'SUCCESS',
+        text: `Tenant organization "${newTenName}" (${newTenCode}) provisioned successfully.`,
+      });
+      setIsNewTenantModalOpen(false);
+      setNewTenId('');
+      setNewTenCode('');
+      setNewTenName('');
+      setNewTenShortName('');
+      setTimeout(() => setFeedbackMsg(null), 4000);
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to provision tenant.',
+      });
+    }
+  };
+
+  const handleToggleUserStatus = (userId: string, currentStatus: boolean) => {
+    try {
+      authService.updateUser(userId, { isActive: !currentStatus });
+      setFeedbackMsg({
+        type: 'SUCCESS',
+        text: `User account status updated to ${!currentStatus ? 'ACTIVE' : 'SUSPENDED'}.`,
+      });
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Action failed.',
+      });
+    }
+  };
+
+  const handleOpenResetPassword = (user: UserAccount) => {
+    setSelectedUserForReset(user);
+    setNewPasswordValue('');
+    setIsResetPasswordModalOpen(true);
+  };
+
+  const handleSaveResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForReset || !newPasswordValue.trim()) return;
+
+    try {
+      authService.updateUser(selectedUserForReset.id, { password: newPasswordValue.trim() });
+      setFeedbackMsg({
+        type: 'SUCCESS',
+        text: `Password for "${selectedUserForReset.username}" reset successfully.`,
+      });
+      setIsResetPasswordModalOpen(false);
+      setSelectedUserForReset(null);
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to reset password.',
+      });
+    }
+  };
+
+  const handleDeleteUser = (user: UserAccount) => {
+    if (!confirm(`Are you sure you want to permanently delete account "${user.fullName}" (${user.username})?`)) {
+      return;
+    }
+    try {
+      authService.deleteUser(user.id);
+      setFeedbackMsg({
+        type: 'SUCCESS',
+        text: `User account "${user.username}" deleted successfully.`,
+      });
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to delete user.',
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+      {/* Top Header */}
+      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/desk"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Return to ERP Desk"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md">
+              <Server className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base sm:text-lg font-black text-white tracking-tight">
+                  AmenDesk Platform Console
+                </h1>
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                  Encore Multi-Tenant RBAC
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Tenant account provisioning &amp; role-based access control management
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-xl border border-slate-800 hover:bg-slate-800 transition-colors"
+            >
+              Login Portal
+            </Link>
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300">
+              <GhanaFlag className="h-3 w-4.5" />
+              <span>Amen Mart Ghana</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Passcode Unlock Barrier (if not already unlocked) */}
+        {!isUnlocked ? (
+          <div className="max-w-md mx-auto my-12 p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-center">
+            <div className="h-14 w-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto mb-4">
+              <Key className="h-7 w-7" />
+            </div>
+            <h2 className="text-lg font-black text-white mb-1">
+              Platform Admin Authorization Required
+            </h2>
+            <p className="text-xs text-slate-400 mb-6">
+              Enter your Dev Surge platform administrator passcode to provision tenants and manage staff accounts.
+            </p>
+
+            {passcodeError && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs font-bold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{passcodeError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  value={masterPasscode}
+                  onChange={(e) => setMasterPasscode(e.target.value)}
+                  placeholder="Master passcode (e.g. devsurge2026)"
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs transition-colors cursor-pointer"
+              >
+                Unlock Platform Console
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div>
+            {/* Feedback Message */}
+            {feedbackMsg && (
+              <div
+                className={`mb-6 p-4 rounded-2xl border flex items-center justify-between text-xs font-bold ${
+                  feedbackMsg.type === 'SUCCESS'
+                    ? 'bg-emerald-950/50 border-emerald-800 text-emerald-300'
+                    : 'bg-rose-950/50 border-rose-800 text-rose-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>{feedbackMsg.text}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackMsg(null)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Navigation Tabs */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6 flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('USERS')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    activeTab === 'USERS'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Staff &amp; RBAC Accounts ({users.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('TENANTS')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    activeTab === 'TENANTS'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  <Building2 className="h-4 w-4" />
+                  <span>Tenant Organizations ({tenants.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('STORAGE')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    activeTab === 'STORAGE'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  <Database className="h-4 w-4" />
+                  <span>Storage &amp; Physical Isolation</span>
+                </button>
+              </div>
+
+              {activeTab === 'USERS' && (
+                <button
+                  type="button"
+                  onClick={() => setIsNewUserModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Provision New User</span>
+                </button>
+              )}
+
+              {activeTab === 'TENANTS' && (
+                <button
+                  type="button"
+                  onClick={() => setIsNewTenantModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Provision New Tenant</span>
+                </button>
+              )}
+            </div>
+
+            {/* TAB 1: USERS & RBAC ACCOUNTS */}
+            {activeTab === 'USERS' && (
+              <div className="space-y-4">
+                {/* Search & Filter Bar */}
+                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="relative w-full sm:w-72">
+                    <Search className="h-4 w-4 absolute left-3 top-3 text-slate-500" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search users, email, role..."
+                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder:text-slate-500 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="text-xs font-bold text-slate-400 whitespace-nowrap">Filter Workspace:</span>
+                    <select
+                      value={selectedTenantFilter}
+                      onChange={(e) => setSelectedTenantFilter(e.target.value)}
+                      className="w-full sm:w-auto text-xs font-semibold px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="ALL">All Workspaces ({users.length})</option>
+                      {tenants.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({t.code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Users Table */}
+                <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-950/70 border-b border-slate-800 text-slate-400 uppercase font-black tracking-wider text-[10px]">
+                        <tr>
+                          <th className="py-3 px-4">Staff Member</th>
+                          <th className="py-3 px-4">Workspace / Tenant</th>
+                          <th className="py-3 px-4">RBAC Role</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4">Last Login</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/80">
+                        {filteredUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="py-8 text-center text-slate-500">
+                              No staff accounts match the filter. Click &quot;Provision New User&quot; to add one.
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredUsers.map((u) => {
+                            const userTenant = tenants.find((t) => t.id === u.tenantId);
+                            return (
+                              <tr key={u.id} className="hover:bg-slate-850/60 transition-colors">
+                                <td className="py-3 px-4">
+                                  <div className="font-black text-white">{u.fullName}</div>
+                                  <div className="text-[11px] text-slate-400 font-mono">
+                                    @{u.username} &bull; {u.email}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span className="font-semibold text-slate-300 block">
+                                    {userTenant?.name || u.tenantId}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-slate-500 uppercase">
+                                    {userTenant?.code || 'TENANT'}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <span
+                                    className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                      u.role === 'OWNER'
+                                        ? 'bg-purple-950 text-purple-300 border border-purple-800'
+                                        : u.role === 'ACCOUNTANT'
+                                        ? 'bg-blue-950 text-blue-300 border border-blue-800'
+                                        : u.role === 'SECRETARY'
+                                        ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                                        : 'bg-slate-800 text-slate-300 border border-slate-700'
+                                    }`}
+                                  >
+                                    {u.role}
+                                  </span>
+                                  <span className="block text-[10px] text-slate-500 mt-0.5">
+                                    {ROLE_LABELS[u.role]}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleUserStatus(u.id, u.isActive)}
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase cursor-pointer ${
+                                      u.isActive
+                                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                                        : 'bg-rose-950 text-rose-300 border border-rose-800'
+                                    }`}
+                                  >
+                                    {u.isActive ? 'Active' : 'Suspended'}
+                                  </button>
+                                </td>
+                                <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                                  {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('en-GB') : 'Never'}
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenResetPassword(u)}
+                                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-slate-800 transition-colors"
+                                      title="Reset Password"
+                                    >
+                                      <Key className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteUser(u)}
+                                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                                      title="Delete Account"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: TENANT ORGANIZATIONS */}
+            {activeTab === 'TENANTS' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {tenants.map((t) => {
+                  const tenantUserCount = users.filter((u) => u.tenantId === t.id).length;
+                  const isLive = t.environment === 'LIVE';
+
+                  return (
+                    <div
+                      key={t.id}
+                      className={`p-6 rounded-3xl border-2 flex flex-col justify-between ${
+                        isLive
+                          ? 'border-emerald-600/60 bg-emerald-950/20'
+                          : 'border-amber-600/60 bg-amber-950/20'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={`h-11 w-11 rounded-2xl flex items-center justify-center font-bold text-white shadow-xs ${
+                                isLive ? 'bg-emerald-600' : 'bg-amber-500 text-slate-950'
+                              }`}
+                            >
+                              <Building2 className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-black text-white">{t.name}</h3>
+                              <p className="text-xs text-slate-400 font-mono">Code: {t.code} &bull; ID: {t.id}</p>
+                            </div>
+                          </div>
+                          <span
+                            className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                              isLive
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-amber-500 text-slate-950'
+                            }`}
+                          >
+                            {t.environment}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                          {t.description}
+                        </p>
+
+                        <div className="space-y-1.5 text-xs text-slate-400 mb-4 font-mono bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+                          <div>Contact: <span className="text-slate-200">{t.contactEmail}</span></div>
+                          <div>Phone: <span className="text-slate-200">{t.phone}</span></div>
+                          <div>Physical DB: <span className="text-indigo-300 font-bold">{isLive ? 'AmenDeskDB_live' : 'AmenDeskDB_sandbox'}</span></div>
+                          <div>Provisioned Staff: <span className="text-white font-bold">{tenantUserCount} Users</span></div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                        <span>Status: <strong className="text-emerald-400">{t.status}</strong></span>
+                        <span className="font-mono text-[11px]">Since {new Date(t.createdAt).toLocaleDateString('en-GB')}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* TAB 3: PHYSICAL MULTI-TENANT ISOLATION TELEMETRY */}
+            {activeTab === 'STORAGE' && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-white">Physical Multi-Tenant Database Architecture</h3>
+                      <p className="text-xs text-slate-400">Strict zero-bleed isolation between Amen Mart Live and Dev Surge Demo</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                    Amendesk utilizes isolated physical IndexedDB stores. Transactions executed in the Sandbox Demo never contaminate Amen Mart&apos;s live commercial general ledger.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-800/60 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-emerald-400">Amen Mart Ghana (Live)</span>
+                        <span className="font-mono text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-800">AMEN-MART</span>
+                      </div>
+                      <p className="text-slate-400 text-[11px]">
+                        Physical database name: <code className="font-mono font-bold text-white">AmenDeskDB_live</code>
+                      </p>
+                      <ul className="text-slate-400 space-y-1 list-disc list-inside text-[11px]">
+                        <li>Only statutory Chart of Accounts and categories seeded</li>
+                        <li>Zero dummy lots, mock vehicles, or fake customers</li>
+                        <li>Database reset command is strictly prohibited and blocked</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-amber-800/60 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-amber-400">AmenDesk Demo Yard (Sandbox)</span>
+                        <span className="font-mono text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded-full border border-amber-800">DEMO</span>
+                      </div>
+                      <p className="text-slate-400 text-[11px]">
+                        Physical database name: <code className="font-mono font-bold text-white">AmenDeskDB_sandbox</code>
+                      </p>
+                      <ul className="text-slate-400 space-y-1 list-disc list-inside text-[11px]">
+                        <li>Fully pre-seeded Ghanaian lots, vehicles, land plots, and test CRM</li>
+                        <li>Isolated cloud sync simulation (never touches Amen Mart cloud)</li>
+                        <li>Can be safely restored back to fresh seed values anytime</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* MODAL 1: PROVISION NEW USER */}
+      {isNewUserModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+        >
+          <div className="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">Provision New Staff Account</h3>
+                  <p className="text-xs text-slate-400">Enforce RBAC role assignments per workspace</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewUserModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">Target Workspace / Tenant</label>
+                <select
+                  value={newTenantId}
+                  onChange={(e) => setNewTenantId(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                >
+                  {tenants.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.code} — {t.environment})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newFullName}
+                  onChange={(e) => setNewFullName(e.target.value)}
+                  placeholder="e.g. Dr. Francis Kwaku Yeboah"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Username</label>
+                  <input
+                    type="text"
+                    required
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    placeholder="e.g. francis.yeboah"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="e.g. dr.yeboah@amenmart.com"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">RBAC Role Assignment</label>
+                <select
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value as AppRole)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="OWNER">OWNER — Managing Director &amp; Full Approval Authority</option>
+                  <option value="ACCOUNTANT">ACCOUNTANT — Chief Accountant &amp; General Ledger</option>
+                  <option value="SECRETARY">SECRETARY — Auction Intake, CRM &amp; Waybills</option>
+                  <option value="STAFF">STAFF — Yard Cashier &amp; Operations Officer</option>
+                </select>
+                <p className="text-[11px] text-slate-400 mt-1">{ROLE_DESCRIPTIONS[newRole]}</p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">Initial Password / Passcode</label>
+                <input
+                  type="text"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="e.g. amen@2026"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsNewUserModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-800 hover:bg-slate-800 font-bold text-slate-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-black text-white transition-colors shadow-xs"
+                >
+                  Provision Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: PROVISION NEW TENANT */}
+      {isNewTenantModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+        >
+          <div className="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">Provision New Tenant Organization</h3>
+                  <p className="text-xs text-slate-400">Create segregated commercial workspace</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewTenantModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTenant} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Tenant ID (Slug)</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTenId}
+                    onChange={(e) => setNewTenId(e.target.value.toLowerCase())}
+                    placeholder="e.g. ghana-customs"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Tenant Code</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTenCode}
+                    onChange={(e) => setNewTenCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. GRA-AUCTION"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">Organization Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newTenName}
+                  onChange={(e) => setNewTenName(e.target.value)}
+                  placeholder="e.g. Ghana Revenue Authority Disposals"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Short Display Name</label>
+                  <input
+                    type="text"
+                    value={newTenShortName}
+                    onChange={(e) => setNewTenShortName(e.target.value)}
+                    placeholder="e.g. GRA Disposals"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Environment Type</label>
+                  <select
+                    value={newTenEnv}
+                    onChange={(e) => setNewTenEnv(e.target.value as TenantEnvironment)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="LIVE">LIVE — Commercial Operations</option>
+                    <option value="SANDBOX">SANDBOX — Staging &amp; Testing</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Contact Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={newTenEmail}
+                    onChange={(e) => setNewTenEmail(e.target.value)}
+                    placeholder="admin@gra.gov.gh"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Contact Phone</label>
+                  <input
+                    type="text"
+                    value={newTenPhone}
+                    onChange={(e) => setNewTenPhone(e.target.value)}
+                    placeholder="0548517277"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">Office / Yard Address</label>
+                <input
+                  type="text"
+                  value={newTenAddress}
+                  onChange={(e) => setNewTenAddress(e.target.value)}
+                  placeholder="Accra, Ghana"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsNewTenantModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-800 hover:bg-slate-800 font-bold text-slate-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-white transition-colors shadow-xs"
+                >
+                  Provision Tenant
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: RESET USER PASSWORD */}
+      {isResetPasswordModalOpen && selectedUserForReset && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+        >
+          <div className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-black text-white flex items-center gap-2">
+                <Key className="h-4 w-4 text-amber-400" />
+                <span>Reset Staff Password</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsResetPasswordModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400 mb-4">
+              Set a new password for <strong className="text-white">{selectedUserForReset.fullName}</strong> (@{selectedUserForReset.username}).
+            </p>
+
+            <form onSubmit={handleSaveResetPassword} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-300 mb-1">New Password</label>
+                <input
+                  type="text"
+                  required
+                  value={newPasswordValue}
+                  onChange={(e) => setNewPasswordValue(e.target.value)}
+                  placeholder="Enter new password"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsResetPasswordModalOpen(false)}
+                  className="flex-1 py-2 px-3 rounded-xl border border-slate-800 hover:bg-slate-800 font-bold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black"
+                >
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
