@@ -96,6 +96,17 @@ export const DEFAULT_USERS: UserAccount[] = [
     isActive: true,
     createdAt: '2026-01-01T00:00:00Z',
   },
+  {
+    id: 'usr-am-google-admin',
+    tenantId: 'amen-mart-live',
+    username: 'amenmart.admin',
+    email: 'amenmart2291@gmail.com',
+    fullName: 'Amen Mart Executive Administrator',
+    role: 'OWNER',
+    password: 'amen@2026',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
+  },
 
   // Demo Yard Provisioned Accounts (Dev Surge client showcase & feature previewing)
   {
@@ -138,6 +149,17 @@ export const DEFAULT_USERS: UserAccount[] = [
     email: 'demo.staff@devsurge.io',
     fullName: 'Demo Yard Supervisor',
     role: 'STAFF',
+    password: 'demo123',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'usr-demo-google-admin',
+    tenantId: 'amen-mart-sandbox',
+    username: 'devsurge.admin',
+    email: 'devsurgeinfotech@gmail.com',
+    fullName: 'Dev Surge Platform Director',
+    role: 'OWNER',
     password: 'demo123',
     isActive: true,
     createdAt: '2026-01-01T00:00:00Z',
@@ -188,7 +210,7 @@ class AuthService {
         const currentUsers = JSON.parse(existingUsersJson) as UserAccount[];
         let usersUpdated = false;
         for (const defUser of DEFAULT_USERS) {
-          if (!currentUsers.some((u) => u.username.toLowerCase() === defUser.username.toLowerCase() && u.tenantId === defUser.tenantId)) {
+          if (!currentUsers.some((u) => u.username.toLowerCase() === defUser.username.toLowerCase() || u.email.toLowerCase() === defUser.email.toLowerCase())) {
             currentUsers.push(defUser);
             usersUpdated = true;
           }
@@ -447,6 +469,62 @@ class AuthService {
 
   public loginAsDemoDirector(): AuthSession {
     return this.login('amen-mart-sandbox', 'demo.owner', 'demo123', true);
+  }
+
+  public loginWithGoogleEmail(googleEmail: string): AuthSession {
+    this.ensureInitialized();
+    const normalizedEmail = googleEmail.trim().toLowerCase();
+    if (!normalizedEmail) {
+      throw new Error('Please specify a valid Google account email.');
+    }
+
+    const allUsers = this.getUsers();
+    const user = allUsers.find(
+      (u) => u.email.toLowerCase() === normalizedEmail && u.isActive
+    );
+
+    if (!user) {
+      throw new Error(
+        `Access Denied: The Google account "${googleEmail}" is not authorized on this AmenDesk terminal. Only pre-provisioned staff accounts are permitted.`
+      );
+    }
+
+    const tenant = this.getTenants().find((t) => t.id === user.tenantId);
+    if (!tenant) {
+      throw new Error(`Associated organization workspace not found for ${user.fullName}.`);
+    }
+
+    if (tenant.status !== 'ACTIVE') {
+      throw new Error(`Workspace "${tenant.name}" is currently suspended. Please contact platform administrators.`);
+    }
+
+    // Update last login timestamp
+    this.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
+
+    const session: AuthSession = {
+      user: {
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        tenantId: tenant.id,
+      },
+      tenant,
+      token: `tok-google-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 30, // 30-day Google session
+    };
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+      localStorage.setItem(TENANT_STORAGE_KEY, tenant.id);
+      localStorage.setItem('amendesk_staff_role', user.role);
+      window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+      window.dispatchEvent(new Event('amendesk-tenant-change'));
+    }
+
+    return session;
   }
 
   public logout(): void {
