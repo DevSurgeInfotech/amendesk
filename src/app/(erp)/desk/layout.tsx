@@ -6,8 +6,33 @@ import { Sidebar } from '@/components/erp/Sidebar';
 import { Topbar } from '@/components/erp/Topbar';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { useTerminal } from '@/context/TerminalContext';
-import { authService } from '@/lib/auth/authService';
+import { authService, SESSION_STORAGE_KEY } from '@/lib/auth/authService';
+import type { AuthSession } from '@/lib/types/auth';
 import { FlaskConical, LogOut } from 'lucide-react';
+
+let cachedDeskSessionSnapshot: AuthSession | null = null;
+let cachedDeskSessionRaw: string | null = null;
+
+function subscribeDeskAuth(callback: () => void) {
+  return authService.subscribeAuth(callback);
+}
+
+function getDeskSessionSnapshot(): AuthSession | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+  if (raw === cachedDeskSessionRaw && cachedDeskSessionSnapshot) {
+    if (cachedDeskSessionSnapshot.expiresAt > Date.now()) {
+      return cachedDeskSessionSnapshot;
+    }
+  }
+  cachedDeskSessionRaw = raw;
+  cachedDeskSessionSnapshot = authService.getSession();
+  return cachedDeskSessionSnapshot;
+}
+
+function getDeskServerSessionSnapshot(): AuthSession | null {
+  return null;
+}
 
 function SandboxModeBanner() {
   const { activeTenant, logout } = useTerminal();
@@ -43,9 +68,9 @@ export default function DeskLayout({
   const router = useRouter();
 
   const session = useSyncExternalStore(
-    (callback) => authService.subscribeAuth(callback),
-    () => authService.getSession(),
-    () => null
+    subscribeDeskAuth,
+    getDeskSessionSnapshot,
+    getDeskServerSessionSnapshot
   );
 
   useEffect(() => {

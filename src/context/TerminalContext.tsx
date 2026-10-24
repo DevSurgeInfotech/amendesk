@@ -21,7 +21,7 @@ import {
 import { syncEngine, type SyncResult } from '@/lib/sync/syncEngine';
 import type { AppRole, AuthSession, TenantRecord } from '@/lib/types/auth';
 import { ROLE_LABELS } from '@/lib/types/auth';
-import { authService } from '@/lib/auth/authService';
+import { authService, SESSION_STORAGE_KEY } from '@/lib/auth/authService';
 
 export type UserRole =
   | AppRole
@@ -143,12 +143,24 @@ function getServerTenantSnapshot(): TenantId {
   return 'amen-mart-live';
 }
 
+let cachedSessionSnapshot: AuthSession | null = null;
+let cachedSessionRaw: string | null = null;
+
 function subscribeAuthSession(callback: () => void) {
   return authService.subscribeAuth(callback);
 }
 
 function getSessionSnapshot(): AuthSession | null {
-  return authService.getSession();
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+  if (raw === cachedSessionRaw && cachedSessionSnapshot) {
+    if (cachedSessionSnapshot.expiresAt > Date.now()) {
+      return cachedSessionSnapshot;
+    }
+  }
+  cachedSessionRaw = raw;
+  cachedSessionSnapshot = authService.getSession();
+  return cachedSessionSnapshot;
 }
 
 function getServerSessionSnapshot(): AuthSession | null {

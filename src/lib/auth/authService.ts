@@ -212,6 +212,8 @@ export const DEFAULT_USERS: UserAccount[] = [
 
 class AuthService {
   private static instance: AuthService;
+  private cachedSessionRaw: string | null = null;
+  private cachedSession: AuthSession | null = null;
 
   private constructor() {
     this.ensureInitialized();
@@ -503,6 +505,9 @@ class AuthService {
       expiresAt: Date.now() + sessionDuration,
     };
 
+    this.cachedSession = session;
+    this.cachedSessionRaw = JSON.stringify(session);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
       localStorage.setItem(TENANT_STORAGE_KEY, tenant.id);
@@ -574,6 +579,9 @@ class AuthService {
       expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 30, // 30-day Google session
     };
 
+    this.cachedSession = session;
+    this.cachedSessionRaw = JSON.stringify(session);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
       localStorage.setItem(TENANT_STORAGE_KEY, tenant.id);
@@ -586,6 +594,8 @@ class AuthService {
   }
 
   public logout(): void {
+    this.cachedSession = null;
+    this.cachedSessionRaw = null;
     if (typeof window === 'undefined') return;
     localStorage.removeItem(SESSION_STORAGE_KEY);
     window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
@@ -596,15 +606,33 @@ class AuthService {
 
     try {
       const data = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (!data) return null;
+      if (!data) {
+        this.cachedSession = null;
+        this.cachedSessionRaw = null;
+        return null;
+      }
+      if (data === this.cachedSessionRaw && this.cachedSession) {
+        if (this.cachedSession.expiresAt > Date.now()) {
+          return this.cachedSession;
+        }
+        this.logout();
+        return null;
+      }
+
       const session = JSON.parse(data) as AuthSession;
       if (session && session.expiresAt > Date.now()) {
+        this.cachedSessionRaw = data;
+        this.cachedSession = session;
         return session;
       }
       // Expired
+      this.cachedSession = null;
+      this.cachedSessionRaw = null;
       this.logout();
       return null;
     } catch {
+      this.cachedSession = null;
+      this.cachedSessionRaw = null;
       return null;
     }
   }
