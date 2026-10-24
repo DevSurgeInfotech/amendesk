@@ -206,6 +206,18 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-24 (World-Standard Light-Theme Login Pedestal Overhaul)
+- **Goal**: Enhance `/login` ([`src/app/login/page.tsx`](file:///d:/amendesk/src/app/login/page.tsx)) to enforce a dedicated, world-standard light theme without any demo or showroom links.
+- **Accomplishments**:
+  - Enforced strict light-theme rendering (`light` root scope with zero `dark:` overrides) so `/login` always renders in a luminous, high-contrast light palette regardless of previous browser `localStorage` dark-mode state, ensuring the official Amen Mart navy & gold logo (`/amenmart-logo.svg`) is always razor-sharp.
+  - Engineered a double-bezel pedestal card architecture (`rounded-[28px] bg-white/65 p-2 backdrop-blur-xl` outer frame wrapping a crisp `rounded-[22px] bg-white` inner surface card) over a radial-masked architectural grid and porcelain-slate canvas (`#eef2f6`).
+  - Refined form ergonomics with leading `Mail` and `Lock` input icons, executive Amen Mart Navy (`#0B1F3A`) focus rings and primary CTA button, and replaced the legacy `pastor@graceacc.org` placeholder with `name@amenmart.com`.
+  - Removed all demo/test account shortcuts and ensured zero links to Demo or Showroom exist on the login page or within the Google SSO modal.
+  - Ran mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/app/login/page.tsx` (Redesigned into a world-standard light-theme pedestal login experience)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
 ### Session: 2026-10-24 (Homepage & About Us Deduplication and Cognitive Load Reduction)
 - **Goal**: Eliminate duplicate "About Us" copy from the Homepage ([`src/app/(site)/page.tsx`](file:///d:/amendesk/src/app/%28site%29/page.tsx)) and streamline both the Homepage and About Us page ([`src/app/(site)/about/page.tsx`](file:///d:/amendesk/src/app/%28site%29/about/page.tsx)) to reduce cognitive overload.
 - **Accomplishments**:

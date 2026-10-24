@@ -14,6 +14,7 @@ import {
   Phone,
   Mail,
   Lock,
+  ShieldCheck,
 } from 'lucide-react';
 
 function GoogleIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -73,9 +74,7 @@ export default function LoginPage() {
         throw new Error('Please enter your account password.');
       }
 
-      // Universal login: automatically identifies Amen Mart live staff or Dev Surge demo accounts
       authService.login(cleanIdentity, password, rememberMe);
-
       router.push('/desk');
     } catch (err) {
       setIsLoading(false);
@@ -83,20 +82,18 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleAuthSubmit = (e?: React.FormEvent, directEmail?: string) => {
-    if (e) e.preventDefault();
+  const handleGoogleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     setErrorMsg(null);
     setIsLoading(true);
 
     try {
-      const emailToVerify = directEmail || googleEmailInput.trim();
+      const emailToVerify = googleEmailInput.trim();
       if (!emailToVerify) {
-        throw new Error('Please enter a Google account email address.');
+        throw new Error('Please enter your corporate Google account email address.');
       }
 
-      // Strict verification: only pre-authorized emails pass; uninvited accounts are blocked
       authService.loginWithGoogleEmail(emailToVerify);
-
       setIsGoogleModalOpen(false);
       router.push('/desk');
     } catch (err) {
@@ -107,301 +104,291 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-[#edf2f7] via-[#e4ebf3] to-[#d8e2ec] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 antialiased selection:bg-[#4A154B] selection:text-white relative overflow-x-hidden">
-      {/* Subtle Architectural Dot Matrix Canvas Texture */}
+    <div className="light min-h-screen flex flex-col justify-between bg-[#eef2f6] text-slate-900 antialiased selection:bg-[#0B1F3A] selection:text-white relative overflow-hidden">
+      {/* Architectural Mesh & Subtle Radial Grid */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.38] dark:opacity-[0.16]"
+        className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: 'radial-gradient(#94a3b8 1.25px, transparent 1.25px)',
-          backgroundSize: '24px 24px',
+          background:
+            'radial-gradient(120% 90% at 50% 0%, #ffffff 0%, #eef2f6 55%, #e2e8f0 100%)',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.45]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgba(148, 163, 184, 0.16) 1px, transparent 1px), linear-gradient(to bottom, rgba(148, 163, 184, 0.16) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+          maskImage: 'radial-gradient(ellipse 70% 65% at 50% 45%, #000 35%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 65% at 50% 45%, #000 35%, transparent 100%)',
         }}
         aria-hidden="true"
       />
 
-      {/* Ambient Atmospheric Lighting Highlights */}
+      {/* Soft Ambient Studio Lighting */}
       <div
-        className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[760px] h-[480px] bg-gradient-to-b from-indigo-500/10 via-purple-600/5 to-transparent blur-3xl rounded-full"
+        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[820px] h-[420px] rounded-full bg-gradient-to-b from-amber-400/12 via-sky-500/6 to-transparent blur-3xl"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -bottom-24 -left-24 w-96 h-96 bg-amber-500/6 blur-3xl rounded-full"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute top-1/2 -right-24 w-80 h-80 bg-purple-600/6 blur-3xl rounded-full"
+        className="pointer-events-none absolute -bottom-32 left-1/2 -translate-x-1/2 w-[680px] h-[320px] rounded-full bg-slate-400/15 blur-3xl"
         aria-hidden="true"
       />
 
-      {/* Spacer / Ambient Top */}
-      <div className="w-full pt-6 sm:pt-10 z-10" />
+      {/* Top Spacer */}
+      <div className="w-full pt-6 z-10" />
 
-      {/* Main Login Area */}
-      <main className="flex items-center justify-center p-4 sm:p-6 z-10 my-auto w-full">
-        {/* Elevated Surface Card that strongly stands out */}
-        <div className="w-full max-w-[490px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-[0_22px_60px_-15px_rgba(15,23,42,0.18),0_10px_25px_-5px_rgba(15,23,42,0.08),0_0_0_1px_rgba(15,23,42,0.06)] dark:shadow-[0_25px_65px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)] p-7 sm:p-10 relative overflow-hidden transition-all">
-          {/* Top Brand Gradient Ribbon */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-[#4A154B] to-indigo-600 absolute top-0 left-0" />
+      {/* Main Centered Login Pedestal */}
+      <main className="flex items-center justify-center px-4 py-8 sm:px-6 z-10 my-auto w-full">
+        {/* Outer Double-Bezel Pedestal Frame */}
+        <div className="w-full max-w-[460px] rounded-[28px] bg-white/65 p-2 backdrop-blur-xl border border-white/90 shadow-[0_24px_60px_-15px_rgba(15,23,42,0.12),0_10px_25px_-5px_rgba(15,23,42,0.06),0_0_0_1px_rgba(15,23,42,0.06)]">
+          {/* Inner Pure White Surface Card */}
+          <div className="w-full rounded-[22px] bg-white border border-slate-200/80 shadow-[0_2px_12px_-2px_rgba(15,23,42,0.05)] p-7 sm:p-9 relative overflow-hidden">
+            {/* Subtle Brand Top Hairline Accent */}
+            <div className="h-1 w-full bg-gradient-to-r from-[#D5AA40] via-[#0B1F3A] to-[#D5AA40] absolute top-0 left-0" />
 
-          {/* Top Amber Accent Line */}
-          <div className="w-14 h-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-700 mb-6 shadow-xs" />
-
-          {/* Amen Mart Official Logo */}
-          <div className="flex items-center justify-start mb-6">
-            <Image
-              src="/amenmart-logo.svg"
-              alt="Amen Mart Auctioning Services"
-              width={220}
-              height={68}
-              priority
-              className="h-11 sm:h-12 w-auto object-contain dark:brightness-110"
-            />
-          </div>
-
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="font-serif text-3xl sm:text-4xl font-normal text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-              Welcome back
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 font-sans">
-              Sign in to your AmenDesk workspace.
-            </p>
-          </div>
-
-          {/* Error Alert */}
-          {errorMsg && (
-            <div className="mb-6 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/80 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-start gap-2.5 leading-relaxed">
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label
-                htmlFor="login-identity"
-                className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
-              >
-                EMAIL ADDRESS
-              </label>
-              <input
-                id="login-identity"
-                type="text"
-                required
-                autoComplete="username"
-                value={identity}
-                onChange={(e) => setIdentity(e.target.value)}
-                placeholder="pastor@graceacc.org"
-                className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-[#4A154B] dark:focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-all shadow-xs"
+            {/* Brand Header Row */}
+            <div className="flex items-center justify-between gap-4 mb-7 pt-1">
+              <Image
+                src="/amenmart-logo.svg"
+                alt="Amen Mart Auctioning Services"
+                width={200}
+                height={62}
+                priority
+                className="h-10 sm:h-11 w-auto object-contain"
               />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label
-                  htmlFor="login-password"
-                  className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                >
-                  PASSWORD
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsForgotModalOpen(true)}
-                  className="text-xs font-semibold text-[#b45309] hover:text-[#92400e] dark:text-amber-400 dark:hover:text-amber-300 transition-colors cursor-pointer"
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              <div className="relative">
-                <input
-                  id="login-password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full pl-4 pr-11 py-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-[#4A154B] dark:focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-all shadow-xs font-sans"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember Me Checkbox */}
-            <div className="flex items-center gap-2.5 pt-1">
-              <input
-                id="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-[#4A154B] focus:ring-[#4A154B] cursor-pointer"
-              />
-              <label
-                htmlFor="remember-me"
-                className="text-xs text-slate-600 dark:text-slate-300 font-medium select-none cursor-pointer"
-              >
-                Remember me for 30 days
-              </label>
-            </div>
-
-            {/* Primary Submit CTA */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 px-6 rounded-xl bg-[#4A154B] hover:bg-[#3D113E] active:scale-[0.99] text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-purple-950/20 disabled:opacity-50 mt-2"
-            >
-              <span>{isLoading ? 'Signing in...' : 'Sign in to workspace'}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-7">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200 dark:border-slate-800" />
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-              <span className="bg-white dark:bg-slate-900 px-3 font-bold text-slate-400 dark:text-slate-500">
-                OR CONTINUE WITH
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                AmenDesk
               </span>
             </div>
+
+            {/* Heading */}
+            <div className="mb-7">
+              <h1 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-snug">
+                Welcome back
+              </h1>
+              <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">
+                Sign in with your credentials to access your workspace.
+              </p>
+            </div>
+
+            {/* Error Alert */}
+            {errorMsg && (
+              <div className="mb-6 p-3.5 rounded-xl bg-rose-50 border border-rose-200/90 text-rose-700 text-xs font-medium flex items-start gap-2.5 leading-relaxed">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="login-identity"
+                  className="block text-xs font-semibold text-slate-700 mb-1.5"
+                >
+                  Email or Username
+                </label>
+                <div className="relative group">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 group-focus-within:text-[#0B1F3A] transition-colors">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <input
+                    id="login-identity"
+                    type="text"
+                    required
+                    autoComplete="username"
+                    value={identity}
+                    onChange={(e) => setIdentity(e.target.value)}
+                    placeholder="name@amenmart.com"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200/90 hover:border-slate-300 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:border-[#0B1F3A] focus:ring-4 focus:ring-[#0B1F3A]/8 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label
+                    htmlFor="login-password"
+                    className="block text-xs font-semibold text-slate-700"
+                  >
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotModalOpen(true)}
+                    className="text-xs font-semibold text-amber-700 hover:text-amber-800 transition-colors cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                <div className="relative group">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 group-focus-within:text-[#0B1F3A] transition-colors">
+                    <Lock className="h-4 w-4" />
+                  </div>
+                  <input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200/90 hover:border-slate-300 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:border-[#0B1F3A] focus:ring-4 focus:ring-[#0B1F3A]/8 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center justify-between pt-1">
+                <label
+                  htmlFor="remember-me"
+                  className="inline-flex items-center gap-2.5 text-xs text-slate-600 font-medium select-none cursor-pointer"
+                >
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-[#0B1F3A] focus:ring-[#0B1F3A]/20 cursor-pointer accent-[#0B1F3A]"
+                  />
+                  <span>Keep me signed in for 30 days</span>
+                </label>
+              </div>
+
+              {/* Primary Submit CTA */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group w-full py-3 px-5 rounded-xl bg-[#0B1F3A] hover:bg-[#132d52] active:scale-[0.99] text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_6px_16px_-3px_rgba(11,31,58,0.28)] disabled:opacity-50 mt-2"
+              >
+                <span>{isLoading ? 'Signing in...' : 'Sign in to workspace'}</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200/80" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
+                <span className="bg-white px-3 font-semibold text-slate-400">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Google Sign-In Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg(null);
+                setIsGoogleModalOpen(true);
+              }}
+              disabled={isLoading}
+              className="w-full py-3 px-4 rounded-xl border border-slate-200/90 hover:border-slate-300 bg-white hover:bg-slate-50/80 active:bg-slate-100/60 text-slate-700 font-semibold text-sm flex items-center justify-center gap-2.5 transition-all shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-pointer disabled:opacity-50"
+            >
+              <GoogleIcon className="h-4 w-4 shrink-0" />
+              <span>Continue with Google</span>
+            </button>
           </div>
 
-          {/* Google Sign-In Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMsg(null);
-              setIsGoogleModalOpen(true);
-            }}
-            disabled={isLoading}
-            className="w-full py-3.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-semibold text-sm flex items-center justify-center gap-3 transition-all shadow-xs cursor-pointer disabled:opacity-50"
-          >
-            <GoogleIcon className="h-5 w-5 shrink-0" />
-            <span>Continue with Google</span>
-          </button>
+          {/* Pedestal Security Footnote */}
+          <div className="px-4 py-2.5 flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-500">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Protected workspace &bull; Authorized personnel only</span>
+          </div>
         </div>
       </main>
 
       {/* Statutory Minimal Footer */}
-      <footer className="w-full py-4 px-6 text-center text-xs text-slate-400 dark:text-slate-500 z-10">
+      <footer className="w-full py-5 px-6 text-center text-xs text-slate-500 z-10">
         <p className="font-medium">
-          &copy; 2026 Amen Mart Limited &bull; Developed by Dev Surge Infotech Ltd.
+          &copy; {new Date().getFullYear()} Amen Mart Auctioning Services &bull; Powered by Dev Surge Infotech
         </p>
       </footer>
 
-      {/* Google Authentication & Whitelist Verification Dialog */}
+      {/* Google Authentication Dialog */}
       {isGoogleModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
         >
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-7">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <GoogleIcon className="h-6 w-6" />
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Sign in with Google</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">AmenDesk Enterprise Single Sign-On</p>
+          <div className="w-full max-w-md rounded-[24px] bg-white/80 p-1.5 backdrop-blur-xl border border-white shadow-[0_24px_60px_-15px_rgba(15,23,42,0.25)]">
+            <div className="w-full bg-white border border-slate-200/80 rounded-[18px] p-6 sm:p-7">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center">
+                    <GoogleIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Continue with Google</h3>
+                    <p className="text-[11px] text-slate-500">AmenDesk Single Sign-On</p>
+                  </div>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsGoogleModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="mb-4 p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2 leading-relaxed">
-              <Lock className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400 mt-0.5" />
-              <span>
-                <strong>Strict Whitelist Policy:</strong> Only pre-provisioned corporate staff accounts are permitted. Unregistered Gmail accounts are automatically blocked.
-              </span>
-            </div>
-
-            <form onSubmit={handleGoogleAuthSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="google-email-input"
-                  className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5"
-                >
-                  Google Account Email
-                </label>
-                <input
-                  id="google-email-input"
-                  type="email"
-                  required
-                  value={googleEmailInput}
-                  onChange={(e) => setGoogleEmailInput(e.target.value)}
-                  placeholder="e.g. dr.yeboah@amenmart.com"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-[#4A154B] dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
-                />
-              </div>
-
-              {/* Quick Whitelisted Options for Testing */}
-              <div>
-                <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                  Pre-Authorized Corporate Accounts:
-                </span>
-                <div className="space-y-1.5 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => handleGoogleAuthSubmit(undefined, 'amenmart2291@gmail.com')}
-                    className="w-full text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer"
-                  >
-                    <div>
-                      <strong className="text-slate-800 dark:text-slate-200 text-[11px] block">Amen Mart Executive</strong>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">amenmart2291@gmail.com</span>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
-                      Live Workspace
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleGoogleAuthSubmit(undefined, 'devsurgeinfotech@gmail.com')}
-                    className="w-full text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer"
-                  >
-                    <div>
-                      <strong className="text-slate-800 dark:text-slate-200 text-[11px] block">Dev Surge Director</strong>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">devsurgeinfotech@gmail.com</span>
-                    </div>
-                    <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md">
-                      Demo Yard
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => setIsGoogleModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#4A154B] hover:bg-[#3D113E] text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer"
-                >
-                  Authenticate
+                  <X className="h-4 w-4" />
                 </button>
               </div>
-            </form>
+
+              <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                Enter your authorized corporate Google email address to sign in to your AmenDesk workspace.
+              </p>
+
+              <form onSubmit={handleGoogleAuthSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="google-email-input"
+                    className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  >
+                    Work Email Address
+                  </label>
+                  <input
+                    id="google-email-input"
+                    type="email"
+                    required
+                    value={googleEmailInput}
+                    onChange={(e) => setGoogleEmailInput(e.target.value)}
+                    placeholder="name@amenmart.com"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 focus:bg-white border border-slate-200 hover:border-slate-300 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:border-[#0B1F3A] focus:ring-4 focus:ring-[#0B1F3A]/8 transition-all"
+                  />
+                </div>
+
+                <div className="pt-1 flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsGoogleModalOpen(false)}
+                    className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#0B1F3A] hover:bg-[#132d52] text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -411,54 +398,53 @@ export default function LoginPage() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
         >
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-7">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold">
-                  <KeyRound className="h-5 w-5" />
+          <div className="w-full max-w-md rounded-[24px] bg-white/80 p-1.5 backdrop-blur-xl border border-white shadow-[0_24px_60px_-15px_rgba(15,23,42,0.25)]">
+            <div className="w-full bg-white border border-slate-200/80 rounded-[18px] p-6 sm:p-7">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center">
+                    <KeyRound className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Password Recovery</h3>
+                    <p className="text-[11px] text-slate-500">Workspace Account Security</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Reset Staff Password</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Security &amp; Account Recovery</p>
+                <button
+                  type="button"
+                  onClick={() => setIsForgotModalOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3.5 text-xs text-slate-600 leading-relaxed mb-6">
+                <p>
+                  To safeguard financial operations and statutory auction records, staff credentials are managed by your workspace administrator.
+                </p>
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 font-medium">
+                  <div className="flex items-center gap-2.5 text-slate-800">
+                    <Mail className="h-3.5 w-3.5 text-slate-400" />
+                    <span>amenmart2291@gmail.com</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-slate-800">
+                    <Phone className="h-3.5 w-3.5 text-slate-400" />
+                    <span>0548517277 / 0558314744</span>
+                  </div>
                 </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => setIsForgotModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#0B1F3A] hover:bg-[#132d52] text-white font-semibold text-xs transition-colors cursor-pointer"
               >
-                <X className="h-5 w-5" />
+                Close
               </button>
             </div>
-
-            <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-              <p>
-                To protect fiscal operations and auction financial records, staff account credentials are centrally managed by platform administrators.
-              </p>
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5 font-medium">
-                <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
-                  <Mail className="h-3.5 w-3.5 text-slate-500" />
-                  <span>amenmart2291@gmail.com</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
-                  <Phone className="h-3.5 w-3.5 text-slate-500" />
-                  <span>0548517277 / 0558314744</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                If you are an authorized administrator, log in to the Platform Console to reset passwords or provision new staff credentials.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsForgotModalOpen(false)}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#4A154B] hover:bg-[#3D113E] text-white font-semibold text-xs transition-colors cursor-pointer"
-            >
-              Understood
-            </button>
           </div>
         </div>
       )}
