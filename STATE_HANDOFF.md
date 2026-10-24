@@ -212,8 +212,11 @@ flowchart TD
   - Cross-referenced phase execution states against master plan [`amen-mart-erp-website-plan.md`](file:///d:/amendesk/amen-mart-erp-website-plan.md).
   - Verified all quality gates pass: `npm run check` (TypeScript typecheck + ESLint strict) with 0 errors and 0 warnings.
 - **Changed Files**:
-  - `STATE_HANDOFF.md` (Created)
-  - `AGENTS.md` (Updated with mandatory handoff rules)
+  - `STATE_HANDOFF.md` (Created living state ledger)
+  - `AGENTS.md` (Added mandatory state handoff protocol)
+  - `README.md` (Added project overview, agent rules, and documentation links)
+  - `NEW-PROJECT-AGENT-SETUP.md` (Updated agent setup checklist)
+- **Commit Reference**: `228a9b5` (docs(handoff): establish STATE_HANDOFF.md protocol and align AGENTS.md continuity governance)
 
 ### Previous Notable Milestones
 - `de6a2f8`: Added workspace settings, staff invitations, and platform console for fleet management.
