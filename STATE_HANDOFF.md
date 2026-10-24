@@ -206,18 +206,17 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
-### Session: 2026-10-24 (Login Surface Contrast & Visual Enhancement Remediation)
-- **Goal**: Remediate login surface card blending into surrounding slate canvas and enhance authentication portal aesthetics, elevation, and accessibility.
+### Session: 2026-10-24 (Login Surface Contrast & Streamlined Clean UI)
+- **Goal**: Remediate login surface card blending into surrounding slate canvas and strip non-instructed auxiliary elements (Quick Test Access drawer, footer badges row, and extra top chrome) per user directive.
 - **Accomplishments**:
   - Replaced washed-out `#F4F7FB` background with LandingGo architectural slate gradient (`from-[#edf2f7] via-[#e4ebf3] to-[#d8e2ec]` in light mode, `dark:from-slate-950 dark:via-slate-900 dark:to-slate-950`).
   - Added subtle architectural dot-matrix canvas texture and atmospheric lighting highlights to provide physical depth and clear contrast behind the card.
-  - Enhanced the login card with multi-layered physical elevation shadow (`shadow-[0_20px_60px_-15px_rgba(15,23,42,0.18),0_10px_25px_-5px_rgba(15,23,42,0.08),0_0_0_1px_rgba(15,23,42,0.06)]`), razor-sharp border definition, and top brand gradient accent ribbon (`from-amber-500 via-[#4A154B] to-indigo-600`).
-  - Integrated top utility bar with "Public Showroom" return link, PNDCL 230 licensing badge, and responsive dark mode toggle.
-  - Elevated form input ergonomics with lead icons (Mail, Lock), high-contrast borders, and rich brand plum focus rings.
-  - Added quick test & evaluation credentials helper drawer for effortless testing between Amen Mart Live and Demo Sandbox accounts.
+  - Enhanced the login card with multi-layered physical elevation shadow (`shadow-[0_22px_60px_-15px_rgba(15,23,42,0.18),0_10px_25px_-5px_rgba(15,23,42,0.08),0_0_0_1px_rgba(15,23,42,0.06)]`), razor-sharp border definition, and top brand gradient accent ribbon (`from-amber-500 via-[#4A154B] to-indigo-600`).
+  - Removed all non-instructed widgets: Quick Test Access drawer, footer trust badges line, top utility bar, and card badge, restoring pristine minimalist focus.
+  - Retained clean statutory copyright footer and standard login form ergonomics.
   - Ran mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
 - **Changed Files**:
-  - `src/app/login/page.tsx` (Remediated card surface contrast, enhanced shadows, background texture, utility bar, and quick test access)
+  - `src/app/login/page.tsx` (Remediated card surface contrast and elevation, removed Quick Test Access and footer badges, kept clean minimalist interface)
   - `STATE_HANDOFF.md` (Updated session changelog)
 
 ### Session: 2026-10-24 (Earlier Session — Megamenu, Navigation & Content Cleanup)
