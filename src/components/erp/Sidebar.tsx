@@ -22,6 +22,7 @@ import {
   Building,
   ShieldCheck,
   Award,
+  Settings,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -163,6 +164,17 @@ const erpModules: ModuleItem[] = [
     label: 'Data Sync & Backup',
     href: '/desk/migration',
     icon: Database,
+  },
+  {
+    id: 'settings',
+    label: 'Settings & Staff',
+    href: '/desk/settings',
+    icon: Settings,
+    submodules: [
+      { label: 'Staff & Invitations', href: '/desk/settings?tab=users' },
+      { label: 'Workspace Profile', href: '/desk/settings?tab=profile' },
+      { label: 'Auction & POS Rules', href: '/desk/settings?tab=rules' },
+    ],
   },
 ];
 

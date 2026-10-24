@@ -1,13 +1,21 @@
 import type {
+  AppRole,
   AuthSession,
   TenantRecord,
   UserAccount,
 } from '@/lib/types/auth';
+import type {
+  WorkspaceSettings,
+  StaffInvitation,
+} from '@/lib/types/workspaceSettings';
+import { DEFAULT_WORKSPACE_SETTINGS } from '@/lib/types/workspaceSettings';
 import { TENANT_STORAGE_KEY } from '@/lib/types/tenant';
 
 export const SESSION_STORAGE_KEY = 'amendesk_auth_session';
 export const TENANTS_STORAGE_KEY = 'amendesk_platform_tenants';
 export const USERS_STORAGE_KEY = 'amendesk_platform_users';
+export const INVITATIONS_STORAGE_KEY = 'amendesk_staff_invitations';
+export const SETTINGS_STORAGE_PREFIX = 'amendesk_workspace_settings_';
 export const AUTH_CHANGE_EVENT = 'amendesk-auth-change';
 
 export const DEFAULT_TENANTS: TenantRecord[] = [
@@ -635,6 +643,134 @@ class AuthService {
       this.cachedSessionRaw = null;
       return null;
     }
+  }
+
+  public getWorkspaceSettings(tenantId: string): WorkspaceSettings {
+    const fallback = DEFAULT_WORKSPACE_SETTINGS[tenantId] || DEFAULT_WORKSPACE_SETTINGS['amen-mart-live'];
+    if (typeof window === 'undefined') return fallback;
+
+    try {
+      const data = localStorage.getItem(`${SETTINGS_STORAGE_PREFIX}${tenantId}`);
+      if (data) {
+        return { ...fallback, ...JSON.parse(data) };
+      }
+    } catch {
+      // Fallback
+    }
+    return fallback;
+  }
+
+  public updateWorkspaceSettings(tenantId: string, updates: Partial<WorkspaceSettings>): WorkspaceSettings {
+    const current = this.getWorkspaceSettings(tenantId);
+    const updated: WorkspaceSettings = {
+      ...current,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`${SETTINGS_STORAGE_PREFIX}${tenantId}`, JSON.stringify(updated));
+      window.dispatchEvent(new Event('amendesk-workspace-settings-change'));
+      window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    }
+    return updated;
+  }
+
+  public getInvitations(tenantId?: string): StaffInvitation[] {
+    if (typeof window === 'undefined') return [];
+
+    try {
+      const data = localStorage.getItem(INVITATIONS_STORAGE_KEY);
+      if (data) {
+        const list = JSON.parse(data) as StaffInvitation[];
+        if (tenantId) {
+          return list.filter((inv) => inv.tenantId === tenantId);
+        }
+        return list;
+      }
+    } catch {
+      // Ignore
+    }
+    return [];
+  }
+
+  public inviteStaff(data: {
+    tenantId: string;
+    email: string;
+    fullName: string;
+    role: AppRole;
+    phone: string;
+    invitedBy: string;
+    password?: string;
+  }): { invitation: StaffInvitation; user: UserAccount } {
+    const invitations = this.getInvitations();
+    const cleanEmail = data.email.trim().toLowerCase();
+    const generatedUsername = cleanEmail.split('@')[0].replace(/[^a-zA-Z0-9._-]/g, '');
+    const inviteCode = `INV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    const newInvitation: StaffInvitation = {
+      id: `inv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      tenantId: data.tenantId,
+      email: cleanEmail,
+      fullName: data.fullName.trim(),
+      role: data.role,
+      phone: data.phone.trim(),
+      invitedBy: data.invitedBy,
+      invitedAt: new Date().toISOString(),
+      status: 'PENDING',
+      inviteCode,
+    };
+
+    // Auto-provision user so staff can immediately log in
+    const user = this.provisionUser({
+      tenantId: data.tenantId,
+      username: generatedUsername,
+      email: cleanEmail,
+      fullName: data.fullName.trim(),
+      role: data.role,
+      password: data.password || 'amen@2026',
+      isActive: true,
+    });
+
+    invitations.unshift(newInvitation);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(INVITATIONS_STORAGE_KEY, JSON.stringify(invitations));
+      window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    }
+
+    return { invitation: newInvitation, user };
+  }
+
+  public revokeInvitation(invitationId: string): void {
+    const invitations = this.getInvitations();
+    const index = invitations.findIndex((i) => i.id === invitationId);
+    if (index !== -1) {
+      invitations[index] = { ...invitations[index], status: 'REVOKED' };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(INVITATIONS_STORAGE_KEY, JSON.stringify(invitations));
+        window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+      }
+    }
+  }
+
+  public resendInvitation(invitationId: string): StaffInvitation {
+    const invitations = this.getInvitations();
+    const index = invitations.findIndex((i) => i.id === invitationId);
+    if (index === -1) {
+      throw new Error('Invitation record not found.');
+    }
+    const updated: StaffInvitation = {
+      ...invitations[index],
+      status: 'PENDING',
+      invitedAt: new Date().toISOString(),
+      inviteCode: `INV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    };
+    invitations[index] = updated;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(INVITATIONS_STORAGE_KEY, JSON.stringify(invitations));
+      window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    }
+    return updated;
   }
 
   public subscribeAuth(callback: () => void): () => void {

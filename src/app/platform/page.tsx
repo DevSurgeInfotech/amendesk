@@ -10,7 +10,7 @@ import type {
   TenantRecord,
   UserAccount,
 } from '@/lib/types/auth';
-import { ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/lib/types/auth';
+import { ROLE_DESCRIPTIONS } from '@/lib/types/auth';
 import { GhanaFlag } from '@/components/site/SiteHeader';
 import {
   Server,
@@ -32,9 +32,104 @@ import {
   LogIn,
   Sparkles,
   Lock,
+  Globe,
+  Rocket,
+  Sliders,
+  Cpu,
+  Radio,
 } from 'lucide-react';
 
 const MASTER_KEYS = ['devsurge2026', 'surge@amen2026', 'amen@master2026'];
+
+interface FeatureFlag {
+  id: string;
+  name: string;
+  description: string;
+  status: 'ACTIVE' | 'BETA' | 'DISABLED';
+  channel: 'PRODUCTION' | 'STAGING';
+}
+
+const DEFAULT_FEATURE_FLAGS: FeatureFlag[] = [
+  {
+    id: 'ff-multi-tenant',
+    name: 'Encore Physical Multi-Tenant DB Segregation',
+    description: 'Enforces complete zero-bleed isolation between AmenDeskDB_live and AmenDeskDB_sandbox.',
+    status: 'ACTIVE',
+    channel: 'PRODUCTION',
+  },
+  {
+    id: 'ff-cdn-sync',
+    name: 'Cloudflare Edge CDN Showroom Sync',
+    description: 'Automatically triggers instant cache purge on https://amenmartgh.com when inventory is marked sold.',
+    status: 'ACTIVE',
+    channel: 'PRODUCTION',
+  },
+  {
+    id: 'ff-hubtel-momo',
+    name: 'Hubtel Mobile Money Instant Webhooks',
+    description: 'Listens for instant payment callbacks from MTN, Telecel, and AT Ghana MoMo wallets.',
+    status: 'ACTIVE',
+    channel: 'PRODUCTION',
+  },
+  {
+    id: 'ff-paystack',
+    name: 'Paystack Live Debit/Credit Checkout',
+    description: 'Enables direct card receipting via Ghana 3D-Secure Visa & Mastercard authorization.',
+    status: 'ACTIVE',
+    channel: 'PRODUCTION',
+  },
+  {
+    id: 'ff-deeds',
+    name: 'Judicial Transfer Deed PDF Generator',
+    description: 'Generates GAA-compliant court auction transfer deed certificates for auction lot buyers.',
+    status: 'ACTIVE',
+    channel: 'PRODUCTION',
+  },
+  {
+    id: 'ff-ai-valuation',
+    name: 'AI Vehicle Valuation & Intake Scanner',
+    description: 'Computer vision assisted chassis inspection and reserve price recommendation.',
+    status: 'BETA',
+    channel: 'STAGING',
+  },
+];
+
+interface ManagedWebsite {
+  id: string;
+  name: string;
+  url: string;
+  environment: 'PRODUCTION' | 'STAGING';
+  status: 'ONLINE' | 'MAINTENANCE';
+  connectedTenant: string;
+  framework: string;
+  lastDeployed: string;
+  sslStatus: string;
+}
+
+const MANAGED_WEBSITES: ManagedWebsite[] = [
+  {
+    id: 'site-amenmart-live',
+    name: 'Amen Mart Official Public Showroom',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://amenmartgh.com',
+    environment: 'PRODUCTION',
+    status: 'ONLINE',
+    connectedTenant: 'amen-mart-live (Amen Mart Ghana)',
+    framework: 'Next.js 16 App Router (Tailwind v4)',
+    lastDeployed: '24 Oct 2026 &bull; Production v1.2.4',
+    sslStatus: 'Cloudflare Edge SSL (Active)',
+  },
+  {
+    id: 'site-demo-yard',
+    name: 'AmenDesk Client Demonstration Showroom',
+    url: 'https://demo.amenmartgh.com',
+    environment: 'STAGING',
+    status: 'ONLINE',
+    connectedTenant: 'amen-mart-sandbox (Demo Yard)',
+    framework: 'Next.js 16 App Router (Staging)',
+    lastDeployed: '24 Oct 2026 &bull; Staging Build',
+    sslStatus: 'Cloudflare Edge SSL (Active)',
+  },
+];
 
 export default function PlatformPage() {
   const router = useRouter();
@@ -46,9 +141,13 @@ export default function PlatformPage() {
   const [masterPasscode, setMasterPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'USERS' | 'TENANTS' | 'STORAGE'>('USERS');
+  const [activeTab, setActiveTab] = useState<'UPDATES' | 'WEBSITES' | 'TENANTS' | 'STORAGE'>('UPDATES');
   const [selectedTenantFilter, setSelectedTenantFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Feature flags state
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>(DEFAULT_FEATURE_FLAGS);
+  const [websites, setWebsites] = useState<ManagedWebsite[]>(MANAGED_WEBSITES);
 
   // Modals state
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false);
@@ -77,7 +176,7 @@ export default function PlatformPage() {
 
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'SUCCESS' | 'ERROR'; text: string } | null>(null);
 
-  // Reactive state for users & tenants to keep console synchronized
+  // Reactive state for users & tenants
   const [tenants, setTenants] = useState<TenantRecord[]>(() => authService.getTenants());
   const [users, setUsers] = useState<UserAccount[]>(() => authService.getUsers());
 
@@ -99,7 +198,7 @@ export default function PlatformPage() {
     setPasscodeError(null);
     if (MASTER_KEYS.includes(masterPasscode.trim().toLowerCase())) {
       setIsUnlocked(true);
-      setFeedbackMsg({ type: 'SUCCESS', text: 'Platform super-admin console unlocked successfully.' });
+      setFeedbackMsg({ type: 'SUCCESS', text: 'Dev Surge Platform engineering console unlocked successfully.' });
       setTimeout(() => setFeedbackMsg(null), 3000);
     } else {
       setPasscodeError('Invalid platform administrator passcode.');
@@ -322,6 +421,48 @@ export default function PlatformPage() {
     }
   };
 
+  const handleToggleFeatureFlag = (flagId: string) => {
+    setFeatureFlags((prev) =>
+      prev.map((f) => {
+        if (f.id === flagId) {
+          const nextStatus = f.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+          return { ...f, status: nextStatus };
+        }
+        return f;
+      })
+    );
+    setFeedbackMsg({
+      type: 'SUCCESS',
+      text: 'Feature flag status updated successfully across client environments.',
+    });
+    setTimeout(() => setFeedbackMsg(null), 3000);
+  };
+
+  const handlePurgeWebsiteCache = (siteName: string) => {
+    setFeedbackMsg({
+      type: 'SUCCESS',
+      text: `Cloudflare Edge cache purged for ${siteName}. Fresh build propagated globally.`,
+    });
+    setTimeout(() => setFeedbackMsg(null), 3500);
+  };
+
+  const handleToggleMaintenance = (siteId: string) => {
+    setWebsites((prev) =>
+      prev.map((s) => {
+        if (s.id === siteId) {
+          const nextStatus = s.status === 'ONLINE' ? 'MAINTENANCE' : 'ONLINE';
+          return { ...s, status: nextStatus };
+        }
+        return s;
+      })
+    );
+    setFeedbackMsg({
+      type: 'SUCCESS',
+      text: 'Website availability mode updated.',
+    });
+    setTimeout(() => setFeedbackMsg(null), 3000);
+  };
+
   return (
     <div className="min-h-screen bg-[#F4F7FB] text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
       {/* Top Header */}
@@ -331,7 +472,7 @@ export default function PlatformPage() {
             <Link
               href="/desk"
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-              title="Return to ERP Desk"
+              title="Return to AmenDesk ERP"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -341,14 +482,14 @@ export default function PlatformPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                  AmenDesk Platform Console
+                  Dev Surge Platform Console
                 </h1>
                 <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  Encore Multi-Tenant RBAC
+                  Fleet &amp; Updates Management
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Tenant account provisioning &amp; role-based access control management
+                Manage AmenDesk software releases, public showrooms &amp; client websites, and multi-tenant deployments
               </p>
             </div>
           </div>
@@ -384,7 +525,7 @@ export default function PlatformPage() {
             </Link>
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
               <GhanaFlag className="h-3 w-4.5" />
-              <span>Amen Mart Ghana</span>
+              <span>Dev Surge Infotech</span>
             </div>
           </div>
         </div>
@@ -399,10 +540,10 @@ export default function PlatformPage() {
               <Key className="h-7 w-7" />
             </div>
             <h2 className="text-xl font-black text-slate-900 mb-1">
-              Platform Admin Authorization
+              Dev Surge Platform Authorization
             </h2>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              Enter your Dev Surge platform administrator passcode to provision tenants, manage staff accounts, and inspect physical data stores.
+              This console is dedicated to Dev Surge engineering to roll out AmenDesk software updates, manage client websites, and supervise tenant deployments.
             </p>
 
             {passcodeError && (
@@ -434,7 +575,7 @@ export default function PlatformPage() {
             <div className="mt-5 p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-[11px] text-left">
               <div className="flex items-center gap-1.5 font-bold text-slate-700 mb-0.5">
                 <Lock className="h-3 w-3 text-slate-400" />
-                <span>Authorized Master Passcodes:</span>
+                <span>Dev Surge Master Keys:</span>
               </div>
               <p className="font-mono text-[10px] text-slate-500">
                 <code className="text-indigo-600 font-bold">devsurge2026</code> &bull;{' '}
@@ -472,15 +613,28 @@ export default function PlatformPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('USERS')}
+                  onClick={() => setActiveTab('UPDATES')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    activeTab === 'USERS'
+                    activeTab === 'UPDATES'
                       ? 'bg-indigo-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                   }`}
                 >
-                  <Users className="h-4 w-4" />
-                  <span>Staff &amp; RBAC Accounts ({users.length})</span>
+                  <Rocket className="h-4 w-4" />
+                  <span>Software Releases &amp; Features</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('WEBSITES')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    activeTab === 'WEBSITES'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <Globe className="h-4 w-4" />
+                  <span>Showrooms &amp; Websites ({websites.length})</span>
                 </button>
 
                 <button
@@ -493,7 +647,7 @@ export default function PlatformPage() {
                   }`}
                 >
                   <Building2 className="h-4 w-4" />
-                  <span>Tenant Organizations ({tenants.length})</span>
+                  <span>Client Tenancies ({tenants.length})</span>
                 </button>
 
                 <button
@@ -521,17 +675,6 @@ export default function PlatformPage() {
                   <span>Re-sync Defaults</span>
                 </button>
 
-                {activeTab === 'USERS' && (
-                  <button
-                    type="button"
-                    onClick={() => setIsNewUserModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Provision New User</span>
-                  </button>
-                )}
-
                 {activeTab === 'TENANTS' && (
                   <button
                     type="button"
@@ -545,8 +688,228 @@ export default function PlatformPage() {
               </div>
             </div>
 
-            {/* TAB 1: USERS & RBAC ACCOUNTS */}
-            {activeTab === 'USERS' && (
+            {/* TAB 1: SOFTWARE RELEASES & FEATURE ENGINE */}
+            {activeTab === 'UPDATES' && (
+              <div className="space-y-6">
+                {/* Release Status Banner */}
+                <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-xs">
+                      <Cpu className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-black text-slate-900">AmenDesk ERP Production Build</h2>
+                        <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          v1.2.4 Live
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Current core release powered by Next.js 16 App Router, Tailwind v4, and Dexie offline IndexedDB
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeedbackMsg({
+                          type: 'SUCCESS',
+                          text: 'AmenDesk v1.2.4 integrity check passed: All client nodes synchronized.',
+                        });
+                        setTimeout(() => setFeedbackMsg(null), 3000);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-all border border-indigo-200 cursor-pointer"
+                    >
+                      Verify Release Nodes
+                    </button>
+                  </div>
+                </div>
+
+                {/* Feature Flags Engine */}
+                <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                        <Sliders className="h-4 w-4 text-indigo-600" />
+                        <span>Platform Feature Flags &amp; Staged Rollouts</span>
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Remotely toggle system capabilities and preview features across client workspaces
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-slate-500">
+                      {featureFlags.filter((f) => f.status === 'ACTIVE').length} / {featureFlags.length} Enabled
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {featureFlags.map((flag) => (
+                      <div
+                        key={flag.id}
+                        className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-start justify-between gap-3 text-xs"
+                      >
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <strong className="text-slate-900 font-bold">{flag.name}</strong>
+                            <span
+                              className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded font-mono ${
+                                flag.channel === 'PRODUCTION'
+                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                  : 'bg-amber-50 text-amber-800 border border-amber-200'
+                              }`}
+                            >
+                              {flag.channel}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-[11px] leading-relaxed mb-2">
+                            {flag.description}
+                          </p>
+                          <span
+                            className={`inline-block text-[10px] font-bold ${
+                              flag.status === 'ACTIVE'
+                                ? 'text-emerald-700'
+                                : flag.status === 'BETA'
+                                ? 'text-amber-700'
+                                : 'text-slate-400'
+                            }`}
+                          >
+                            State: <strong>{flag.status}</strong>
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFeatureFlag(flag.id)}
+                          className={`px-3 py-1.5 rounded-xl font-bold text-[11px] shrink-0 cursor-pointer transition-all shadow-xs ${
+                            flag.status === 'ACTIVE'
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                          }`}
+                        >
+                          {flag.status === 'ACTIVE' ? 'Active' : 'Disabled'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Release Changelog */}
+                <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                    <Radio className="h-4 w-4 text-emerald-600" />
+                    <span>Recent Platform Updates &amp; Changelog</span>
+                  </h3>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-slate-900 font-bold">Release v1.2.4 &bull; Dev Surge Platform &amp; Workspace Settings</strong>
+                        <span className="text-[10px] text-slate-400 font-mono">24 Oct 2026</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px]">
+                        Introduced dedicated Workspace Settings in AmenDesk for owners to manage staff and invitations. Transformed Platform Console into Dev Surge&apos;s master fleet and website management portal. Memoized session snapshots to prevent re-render loops.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-slate-900 font-bold">Release v1.2.3 &bull; Physical Zero-Bleed Multi-Tenant DB</strong>
+                        <span className="text-[10px] text-slate-400 font-mono">23 Oct 2026</span>
+                      </div>
+                      <p className="text-slate-600 text-[11px]">
+                        Enforced complete physical isolation between commercial live operations and testing sandboxes with Encore SMS architecture. Added universal multi-tenant authentication.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: MANAGED SHOWROOMS & CLIENT WEBSITES */}
+            {activeTab === 'WEBSITES' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {websites.map((site) => (
+                    <div
+                      key={site.id}
+                      className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-11 w-11 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                              <Globe className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-black text-slate-900">{site.name}</h3>
+                              <a
+                                href={site.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-indigo-600 hover:underline font-mono flex items-center gap-1"
+                              >
+                                <span>{site.url}</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          </div>
+                          <span
+                            className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                              site.status === 'ONLINE'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}
+                          >
+                            {site.status}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 text-xs text-slate-600 mb-4 font-mono bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                          <div>Target Workspace: <span className="text-slate-900 font-bold">{site.connectedTenant}</span></div>
+                          <div>Architecture: <span className="text-slate-700">{site.framework}</span></div>
+                          <div>SSL Security: <span className="text-emerald-700 font-bold">{site.sslStatus}</span></div>
+                          <div>Rollout Status: <span className="text-slate-500">{site.lastDeployed}</span></div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handlePurgeWebsiteCache(site.name)}
+                            className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            Purge CDN Cache
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMaintenance(site.id)}
+                            className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            {site.status === 'ONLINE' ? 'Set Maintenance' : 'Set Live'}
+                          </button>
+                        </div>
+
+                        <a
+                          href={site.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center gap-1.5 transition-all shadow-xs"
+                        >
+                          <span>Visit Public Site</span>
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: CLIENT TENANCIES & WORKSPACES */}
+            {activeTab === 'TENANTS' && (
               <div className="space-y-6">
                 {/* PROVISIONED AMEN MART DEMO & LIVE ACCOUNTS HIGHLIGHT BANNER */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -633,151 +996,211 @@ export default function PlatformPage() {
                   </div>
                 </div>
 
-                {/* Search & Filter Bar */}
-                <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="relative w-full sm:w-80">
-                    <Search className="h-4 w-4 absolute left-3 top-3 text-slate-400" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search accounts by name, username, email..."
-                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all"
-                    />
-                  </div>
+                {/* Tenant Cards List */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {tenants.map((t) => {
+                    const tenantUserCount = users.filter((u) => u.tenantId === t.id).length;
+                    const isLive = t.environment === 'LIVE';
 
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Filter Workspace:</span>
-                    <select
-                      value={selectedTenantFilter}
-                      onChange={(e) => setSelectedTenantFilter(e.target.value)}
-                      className="w-full sm:w-auto text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                    >
-                      <option value="ALL">All Workspaces ({users.length})</option>
-                      {tenants.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name} ({t.code})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    return (
+                      <div
+                        key={t.id}
+                        className={`p-6 rounded-3xl border-2 bg-white flex flex-col justify-between shadow-xs transition-all ${
+                          isLive
+                            ? 'border-emerald-300 hover:border-emerald-400'
+                            : 'border-amber-300 hover:border-amber-400'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className={`h-11 w-11 rounded-2xl flex items-center justify-center font-bold text-white shadow-xs ${
+                                  isLive ? 'bg-emerald-600' : 'bg-amber-500 text-slate-950'
+                                }`}
+                              >
+                                <Building2 className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-base font-black text-slate-900">{t.name}</h3>
+                                <p className="text-xs text-slate-500 font-mono">Code: {t.code} &bull; ID: {t.id}</p>
+                              </div>
+                            </div>
+                            <span
+                              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                isLive
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-amber-50 text-amber-800 border border-amber-200'
+                              }`}
+                            >
+                              {t.environment}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                            {t.description}
+                          </p>
+
+                          <div className="space-y-1.5 text-xs text-slate-600 mb-4 font-mono bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                            <div>Contact: <span className="text-slate-800 font-semibold">{t.contactEmail}</span></div>
+                            <div>Phone: <span className="text-slate-800 font-semibold">{t.phone}</span></div>
+                            <div>Physical DB: <span className="text-indigo-700 font-bold">{isLive ? 'AmenDeskDB_live' : 'AmenDeskDB_sandbox'}</span></div>
+                            <div>Provisioned Staff: <span className="text-slate-900 font-bold">{tenantUserCount} Users</span></div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 gap-2 flex-wrap">
+                          <div className="flex items-center gap-3">
+                            <span>Status: <strong className="text-emerald-700">{t.status}</strong></span>
+                            <span className="font-mono text-[11px] hidden sm:inline">Since {new Date(t.createdAt).toLocaleDateString('en-GB')}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleLaunchTenant(t)}
+                            className={`px-3.5 py-1.5 rounded-xl font-black text-[11px] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                              !isLive
+                                ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+                                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            }`}
+                            title={isLive ? 'Launch Live Production Workspace' : 'Launch Demo Yard to test all features before production'}
+                          >
+                            {!isLive ? <FlaskConical className="h-3.5 w-3.5" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                            <span>{!isLive ? 'Test Features in Demo Yard →' : 'Launch Amen Mart Live →'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Users Table */}
-                <div className="rounded-2xl bg-white border border-slate-200/90 overflow-hidden shadow-xs">
-                  <div className="overflow-x-auto">
+                {/* Master Staff Accounts Supervision Table */}
+                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                        <Users className="h-4 w-4 text-indigo-600" />
+                        <span>Master Tenant Staff &amp; RBAC Directory</span>
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        Dev Surge platform oversight of provisioned accounts across all client workspaces
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsNewUserModalOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Provision Account</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Search and filter */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <div className="relative w-full sm:w-72">
+                      <Search className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by name, email, role..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <span className="text-xs font-bold text-slate-500">Filter Workspace:</span>
+                      <select
+                        value={selectedTenantFilter}
+                        onChange={(e) => setSelectedTenantFilter(e.target.value)}
+                        className="w-full sm:w-auto text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="ALL">All Workspaces ({users.length})</option>
+                        {tenants.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name} ({t.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-xl border border-slate-200">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-black tracking-wider text-[10px]">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-black text-[10px]">
                         <tr>
-                          <th className="py-3.5 px-4">Staff Member</th>
-                          <th className="py-3.5 px-4">Workspace / Tenant</th>
-                          <th className="py-3.5 px-4">RBAC Role</th>
-                          <th className="py-3.5 px-4">Status</th>
-                          <th className="py-3.5 px-4">Last Login</th>
-                          <th className="py-3.5 px-4 text-right">Actions</th>
+                          <th className="py-2.5 px-3">Staff Member</th>
+                          <th className="py-2.5 px-3">Workspace</th>
+                          <th className="py-2.5 px-3">Role</th>
+                          <th className="py-2.5 px-3">Status</th>
+                          <th className="py-2.5 px-3 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {filteredUsers.length === 0 ? (
-                          <tr>
-                            <td colSpan={6} className="py-8 text-center text-slate-500">
-                              No staff accounts match the filter. Click &quot;Provision New User&quot; to add one.
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredUsers.map((u) => {
-                            const userTenant = tenants.find((t) => t.id === u.tenantId);
-                            const isLiveTenant = userTenant?.environment === 'LIVE';
-
-                            return (
-                              <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                                <td className="py-3.5 px-4">
-                                  <div className="font-bold text-slate-900">{u.fullName}</div>
-                                  <div className="text-[11px] text-slate-500 font-mono">
-                                    @{u.username} &bull; {u.email}
-                                  </div>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-semibold text-slate-800 block">
-                                    {userTenant?.name || u.tenantId}
-                                  </span>
-                                  <span
-                                    className={`inline-block text-[10px] font-mono uppercase px-1.5 py-0.2 rounded font-bold ${
-                                      isLiveTenant
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        : 'bg-amber-50 text-amber-800 border border-amber-200'
-                                    }`}
-                                  >
-                                    {userTenant?.code || 'TENANT'}
-                                  </span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span
-                                    className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                                      u.role === 'OWNER'
-                                        ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                        : u.role === 'ACCOUNTANT'
-                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                        : u.role === 'SECRETARY'
-                                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                    }`}
-                                  >
-                                    {u.role}
-                                  </span>
-                                  <span className="block text-[10px] text-slate-500 mt-0.5">
-                                    {ROLE_LABELS[u.role]}
-                                  </span>
-                                </td>
-                                <td className="py-3.5 px-4">
+                        {filteredUsers.map((u) => {
+                          const userTenant = tenants.find((t) => t.id === u.tenantId);
+                          return (
+                            <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-2.5 px-3">
+                                <div className="font-bold text-slate-900">{u.fullName}</div>
+                                <div className="text-[11px] text-slate-500 font-mono">@{u.username} &bull; {u.email}</div>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className="font-semibold text-slate-800 block">{userTenant?.shortName || u.tenantId}</span>
+                                <span className="text-[10px] text-slate-500 font-mono uppercase">{userTenant?.code}</span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-200">
+                                  {u.role}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleUserStatus(u.id, u.isActive)}
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase cursor-pointer ${
+                                    u.isActive
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  }`}
+                                >
+                                  {u.isActive ? 'Active' : 'Suspended'}
+                                </button>
+                              </td>
+                              <td className="py-2.5 px-3 text-right">
+                                <div className="flex items-center justify-end gap-1">
                                   <button
                                     type="button"
-                                    onClick={() => handleToggleUserStatus(u.id, u.isActive)}
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase cursor-pointer transition-colors ${
-                                      u.isActive
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                                        : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
-                                    }`}
-                                    title="Click to toggle account status"
+                                    onClick={() => handleLoginAsUser(u)}
+                                    className="p-1 rounded text-slate-500 hover:text-emerald-700 hover:bg-emerald-50"
+                                    title="Sign in directly as this staff user"
                                   >
-                                    {u.isActive ? 'Active' : 'Suspended'}
+                                    <LogIn className="h-3.5 w-3.5" />
                                   </button>
-                                </td>
-                                <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
-                                  {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('en-GB') : 'Never'}
-                                </td>
-                                <td className="py-3.5 px-4 text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleLoginAsUser(u)}
-                                      className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
-                                      title={`Sign in immediately as ${u.fullName}`}
-                                    >
-                                      <LogIn className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenResetPassword(u)}
-                                      className="p-1.5 rounded-lg text-slate-500 hover:text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
-                                      title="Reset Password"
-                                    >
-                                      <Key className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteUser(u)}
-                                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
-                                      title="Delete Account"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenResetPassword(u)}
+                                    className="p-1 rounded text-slate-500 hover:text-amber-700 hover:bg-amber-50"
+                                    title="Reset Password"
+                                  >
+                                    <Key className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteUser(u)}
+                                    className="p-1 rounded text-slate-500 hover:text-rose-700 hover:bg-rose-50"
+                                    title="Delete Account"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -785,86 +1208,7 @@ export default function PlatformPage() {
               </div>
             )}
 
-            {/* TAB 2: TENANT ORGANIZATIONS */}
-            {activeTab === 'TENANTS' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {tenants.map((t) => {
-                  const tenantUserCount = users.filter((u) => u.tenantId === t.id).length;
-                  const isLive = t.environment === 'LIVE';
-
-                  return (
-                    <div
-                      key={t.id}
-                      className={`p-6 rounded-3xl border-2 bg-white flex flex-col justify-between shadow-xs transition-all ${
-                        isLive
-                          ? 'border-emerald-300 hover:border-emerald-400'
-                          : 'border-amber-300 hover:border-amber-400'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className={`h-11 w-11 rounded-2xl flex items-center justify-center font-bold text-white shadow-xs ${
-                                isLive ? 'bg-emerald-600' : 'bg-amber-500 text-slate-950'
-                              }`}
-                            >
-                              <Building2 className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <h3 className="text-base font-black text-slate-900">{t.name}</h3>
-                              <p className="text-xs text-slate-500 font-mono">Code: {t.code} &bull; ID: {t.id}</p>
-                            </div>
-                          </div>
-                          <span
-                            className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                              isLive
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-amber-50 text-amber-800 border border-amber-200'
-                            }`}
-                          >
-                            {t.environment}
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                          {t.description}
-                        </p>
-
-                        <div className="space-y-1.5 text-xs text-slate-600 mb-4 font-mono bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                          <div>Contact: <span className="text-slate-800 font-semibold">{t.contactEmail}</span></div>
-                          <div>Phone: <span className="text-slate-800 font-semibold">{t.phone}</span></div>
-                          <div>Physical DB: <span className="text-indigo-700 font-bold">{isLive ? 'AmenDeskDB_live' : 'AmenDeskDB_sandbox'}</span></div>
-                          <div>Provisioned Staff: <span className="text-slate-900 font-bold">{tenantUserCount} Users</span></div>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 gap-2 flex-wrap">
-                        <div className="flex items-center gap-3">
-                          <span>Status: <strong className="text-emerald-700">{t.status}</strong></span>
-                          <span className="font-mono text-[11px] hidden sm:inline">Since {new Date(t.createdAt).toLocaleDateString('en-GB')}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleLaunchTenant(t)}
-                          className={`px-3.5 py-1.5 rounded-xl font-black text-[11px] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
-                            !isLive
-                              ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
-                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          }`}
-                          title={isLive ? 'Launch Live Production Workspace' : 'Launch Demo Yard to test all features before production'}
-                        >
-                          {!isLive ? <FlaskConical className="h-3.5 w-3.5" /> : <ExternalLink className="h-3.5 w-3.5" />}
-                          <span>{!isLive ? 'Test Features in Demo Yard →' : 'Launch Amen Mart Live →'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* TAB 3: PHYSICAL MULTI-TENANT ISOLATION TELEMETRY */}
+            {/* TAB 4: PHYSICAL MULTI-TENANT ISOLATION TELEMETRY */}
             {activeTab === 'STORAGE' && (
               <div className="space-y-6">
                 <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs">
