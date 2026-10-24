@@ -2,22 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/lib/auth/authService';
-import { GhanaFlag } from '@/components/site/SiteHeader';
 import {
-  ArrowLeft,
   ArrowRight,
   AlertCircle,
   Eye,
   EyeOff,
-  Building,
   KeyRound,
   X,
   Phone,
   Mail,
-  ShieldCheck,
   Lock,
 } from 'lucide-react';
 
@@ -112,32 +107,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F7FB] text-slate-800 antialiased selection:bg-[#4A154B] selection:text-white">
-      {/* Top Header Strip */}
-      <header className="w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md px-6 py-3.5 flex items-center justify-between z-10 shadow-xs">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Public Showroom</span>
-          </Link>
-          <span className="text-slate-300">|</span>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <GhanaFlag className="h-3 w-4.5" />
-            <span className="hidden sm:inline font-medium">Republic of Ghana Licensed Auctioneers</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-          <ShieldCheck className="h-4 w-4 text-emerald-600" />
-          <span className="hidden sm:inline">256-Bit SSL Encrypted Workspace</span>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col justify-between bg-[#F4F7FB] text-slate-800 antialiased selection:bg-[#4A154B] selection:text-white">
+      {/* Spacer / Ambient Top */}
+      <div className="w-full pt-6 sm:pt-10" />
 
       {/* Main Login Area */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 z-10 my-auto">
+      <main className="flex items-center justify-center p-4 sm:p-6 z-10 my-auto">
         <div className="w-full max-w-[480px] bg-white border border-slate-200/90 rounded-3xl shadow-xl shadow-slate-200/50 p-7 sm:p-10 relative">
           {/* Top Amber Accent Line (matches snapshot) */}
           <div className="w-14 h-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-700 mb-6" />
@@ -280,32 +255,18 @@ export default function LoginPage() {
               setIsGoogleModalOpen(true);
             }}
             disabled={isLoading}
-            className="w-full py-3 px-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm flex items-center justify-center gap-3 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm flex items-center justify-center gap-3 transition-all shadow-xs cursor-pointer disabled:opacity-50"
           >
             <GoogleIcon className="h-5 w-5 shrink-0" />
             <span>Continue with Google</span>
           </button>
-
-          {/* Showroom Navigation Link */}
-          <div className="mt-5 text-center">
-            <Link
-              href="/"
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1.5"
-            >
-              <Building className="h-3.5 w-3.5 text-slate-400" />
-              <span>Browse Public Showroom &amp; Live Auctions</span>
-            </Link>
-          </div>
         </div>
       </main>
 
-      {/* Statutory Footer */}
-      <footer className="w-full border-t border-slate-200/80 bg-white py-4 px-6 text-center text-xs text-slate-500 z-10 shadow-xs">
-        <p className="font-medium text-slate-600">
+      {/* Statutory Minimal Footer */}
+      <footer className="w-full py-4 px-6 text-center text-xs text-slate-400 z-10">
+        <p className="font-medium">
           &copy; 2026 Amen Mart Limited &bull; Developed by Dev Surge Infotech Ltd.
-        </p>
-        <p className="text-[11px] text-slate-400 mt-0.5">
-          Republic of Ghana Licensed Auctioneers &bull; Gbawe, Flower Junction, Accra
         </p>
       </footer>
 
