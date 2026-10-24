@@ -206,6 +206,35 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-24 (Homepage & About Us Deduplication and Cognitive Load Reduction)
+- **Goal**: Eliminate duplicate "About Us" copy from the Homepage ([`src/app/(site)/page.tsx`](file:///d:/amendesk/src/app/%28site%29/page.tsx)) and streamline both the Homepage and About Us page ([`src/app/(site)/about/page.tsx`](file:///d:/amendesk/src/app/%28site%29/about/page.tsx)) to reduce cognitive overload.
+- **Accomplishments**:
+  - Removed duplicated "About Us" sections from [`src/app/(site)/page.tsx`](file:///d:/amendesk/src/app/%28site%29/page.tsx), including the 3-card narrative block (*"Looking for Auctions Near Me?"*, *"Ghana's Auction Market Is Booming"*, *"Bid From Anywhere Online"*) and the 5-card *"Why Thousands Trust Amen Mart Auctioning Services"* block.
+  - Replaced the duplicated About Us narrative paragraph in the Homepage Hero with a concise, action-oriented single-sentence subtitle and streamlined the Hero CTAs to focus on `View Upcoming Auctions` and `Explore Car Showroom`.
+  - Tightened the 4 Core Business Lines cards on the Homepage for immediate scanability before live Showroom Stock and Upcoming Auction Notices.
+  - Streamlined [`src/app/(site)/about/page.tsx`](file:///d:/amendesk/src/app/%28site%29/about/page.tsx) by removing internal repetition across multiple prose sections, consolidating into a clean statutory hero, Dr. Francis Kwaku Yeboah's leadership profile, and 4 concise core strength cards.
+  - Ran mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/app/(site)/page.tsx` (Removed duplicated About Us notes, simplified Hero and Core Business Lines)
+  - `src/app/(site)/about/page.tsx` (Streamlined About Us content to eliminate internal redundancy and text walls)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
+### Session: 2026-10-24 (Homepage KPI Overhaul & Standard Enterprise KPI Re-Enhancement)
+- **Goal**: Overhaul and re-enhance the homepage KPI section ([`HeroKpis.tsx`](file:///d:/amendesk/src/components/site/HeroKpis.tsx)) from non-standard pastel feature boxes into standard enterprise KPI cards.
+- **Accomplishments**:
+  - Removed the redundant outer box-in-box wrapper and stripped the non-standard full-card pastel yellow/blue/green/purple backgrounds (`from-amber-50/60`, `from-indigo-50/60`, `from-emerald-50/60`, `from-violet-50/60`).
+  - Established pure white `#ffffff` (`bg-white dark:bg-slate-900`) `.surface-card` KPI cards with crisp slate border definition and physical elevation shadow (`shadow-[0_4px_20px_-4px_rgba(15,23,42,0.07),0_2px_6px_-1px_rgba(15,23,42,0.04)]`).
+  - Re-architected each card into a disciplined 3-zone standard KPI layout:
+    1. **Row 1 (KPI Header)**: Uppercase eyebrow metric category (`Industry Track Record`, `Statutory Mandate`, `Bidding Infrastructure`, `Title & Deed Assurance`) + subtitle on top-left, paired with a soft-tinted semantic icon badge (`h-10 w-10 rounded-xl`) on top-right.
+    2. **Row 2 (Primary KPI Metric Figure & Verification Pill)**: Unified, high-contrast `text-slate-900 dark:text-white` tabular metric figures (`10+ Years`, `GAA Licensed`, `Accra & Online`, `100% Clear`) with smooth `AnimatedCounter` on `10+` and `100%`, eliminating split multi-colored words, paired with compact inline verification pills (`Decade+`, `Accredited`, `Live Active`, `Verified`).
+    3. **Row 3 (KPI Benchmark Bar & Metadata Footer)**: Replaced bloated multi-line prose paragraphs and redundant footer links with a sleek semantic KPI progress/compliance bar (`h-1.5 rounded-full`) and a structured single-line key-value metadata row.
+  - Refined the Hero section backdrop gradient in [`src/app/(site)/page.tsx`](file:///d:/amendesk/src/app/(site)/page.tsx) (`to-[#e9eff5]/80`) to ensure crisp contrast behind the pure white KPI cards.
+  - Ran mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/components/site/HeroKpis.tsx` (Complete overhaul and re-enhancement to standard enterprise KPI card architecture)
+  - `src/app/(site)/page.tsx` (Aligned hero bottom canvas gradient for pure white KPI card contrast)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
 ### Session: 2026-10-24 (Platform Console Decoupling & Recoverable Error Fix)
 - **Goal**: Resolve recoverable error in `/platform` route where Turbopack encountered an invalid module factory for `Car` required by `SiteHeader.tsx`.
 - **Root Cause Analysis**:

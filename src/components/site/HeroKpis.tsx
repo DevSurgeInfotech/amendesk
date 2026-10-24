@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Award, ShieldCheck, Globe2, Gavel, CheckCircle2, Sparkles } from 'lucide-react';
+import { Award, ShieldCheck, Globe2, Gavel, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HeroKpisProps {
@@ -14,12 +14,10 @@ interface HeroKpisProps {
  */
 function AnimatedCounter({
   target,
-  duration = 1300,
-  onComplete,
+  duration = 1200,
 }: {
   target: number;
   duration?: number;
-  onComplete?: () => void;
 }) {
   const [count, setCount] = useState(0);
 
@@ -31,248 +29,244 @@ function AnimatedCounter({
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Exponential ease-out for snappy, natural deceleration
       const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       const current = Math.min(target, Math.round(ease * target));
       setCount(current);
 
       if (progress < 1) {
         animId = requestAnimationFrame(step);
-      } else if (onComplete) {
-        onComplete();
       }
     };
 
     animId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(animId);
-  }, [target, duration, onComplete]);
+  }, [target, duration]);
 
   return <span className="tabular-nums">{count}</span>;
 }
 
 export function HeroKpis({ className }: HeroKpisProps) {
-  const [animKey, setAnimKey] = useState(0);
-  const [isCounterFinished, setIsCounterFinished] = useState(false);
+  const [animKey1, setAnimKey1] = useState(0);
+  const [animKey4, setAnimKey4] = useState(0);
 
-  // Trigger animation replay on hover or initial mount
-  const handleReplay = useCallback(() => {
-    setIsCounterFinished(false);
-    setAnimKey((prev) => prev + 1);
+  const replayFirst = useCallback(() => {
+    setAnimKey1((prev) => prev + 1);
   }, []);
 
-  const handleComplete = useCallback(() => {
-    setIsCounterFinished(true);
+  const replayFourth = useCallback(() => {
+    setAnimKey4((prev) => prev + 1);
   }, []);
 
   return (
-    <div
-      className={cn(
-        'w-full relative rounded-3xl p-5 sm:p-7 lg:p-8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-black/50',
-        className
-      )}
-    >
-      {/* Institutional verification header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 sm:pb-5 mb-5 border-b border-slate-100 dark:border-slate-800/80">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-          </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-            Official Performance &amp; Trust Matrix
-          </span>
-          <span className="hidden sm:inline-block text-slate-300 dark:text-slate-700">&bull;</span>
-          <span className="hidden sm:inline-block text-xs font-medium text-slate-500 dark:text-slate-400">
-            Amen Mart Auctioning Services
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
-          <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-          <span>Regulated under the Laws of the Republic of Ghana</span>
-        </div>
-      </div>
-
-      {/* Uniquely divided KPI Cards Grid */}
+    <div className={cn('w-full', className)}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {/* Metric 1: 10+ Years (Amber / Gold Accent) */}
+        {/* KPI 1: Industry Track Record */}
         <div
-          onMouseEnter={handleReplay}
-          className="group relative rounded-2xl p-5 sm:p-6 bg-gradient-to-b from-amber-50/60 via-white to-amber-50/20 dark:from-amber-950/25 dark:via-slate-900 dark:to-amber-950/10 border border-amber-200/70 dark:border-amber-900/40 hover:border-amber-400 dark:hover:border-amber-500 transition-all duration-300 shadow-xs hover:shadow-lg hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between"
-          title="Hover to replay 10+ Years counter"
+          onMouseEnter={replayFirst}
+          className="surface-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.07),0_2px_6px_-1px_rgba(15,23,42,0.04)] transition-all duration-200 flex flex-col justify-between"
         >
-          <div className="space-y-4">
-            {/* Top row badge & pill */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold ring-1 ring-amber-300/40 shadow-xs group-hover:scale-105 transition-transform">
+          <div>
+            {/* Row 1: Standard KPI Header (Eyebrow Label Left, Soft-Tinted Icon Badge Right) */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5 min-w-0">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Industry Track Record
+                </span>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+                  Proven Industry Reputation
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
                 <Award className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/70 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-800/60">
-                Est. Track Record
-              </span>
             </div>
 
-            {/* Metric Value */}
-            <div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                  <AnimatedCounter
-                    key={animKey}
-                    target={10}
-                    duration={1300}
-                    onComplete={handleComplete}
-                  />
+            {/* Row 2: Primary KPI Metric Figure + Status Pill */}
+            <div className="mt-4 mb-4 flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl sm:text-[34px] font-black tracking-tight text-slate-900 dark:text-white leading-none tabular-nums">
+                  <AnimatedCounter key={animKey1} target={10} duration={1200} />+
                 </span>
-                <span
-                  className={cn(
-                    'text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400 transition-all duration-300 inline-block',
-                    isCounterFinished ? 'scale-110' : 'scale-95'
-                  )}
-                >
-                  +
-                </span>
-                <span className="text-xl sm:text-2xl font-bold text-slate-700 dark:text-slate-300 ml-1">
+                <span className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400 tracking-tight">
                   Years
                 </span>
               </div>
-              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
-                <span>Proven Industry Reputation</span>
-              </h3>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-800/60 shrink-0">
+                <CheckCircle2 className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                Decade+
+              </span>
             </div>
-
-            {/* Subtext */}
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Over a decade of continuous leadership and public asset disposals in Ghana.
-            </p>
           </div>
 
-          <div className="pt-4 mt-4 border-t border-amber-200/40 dark:border-amber-900/30 flex items-center justify-between text-[11px] font-medium text-amber-700 dark:text-amber-400">
-            <span>Decade-Long Trust</span>
-            <Sparkles className="h-3.5 w-3.5 opacity-80" />
+          {/* Row 3: Standard KPI Benchmark Bar & Metadata Footer */}
+          <div className="space-y-2.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="h-full w-full rounded-full bg-amber-500 dark:bg-amber-400" />
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400 truncate">
+                Public &amp; judicial disposals
+              </span>
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                100% Active
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Metric 2: GAA Licensed (Indigo Accent) */}
-        <div className="group relative rounded-2xl p-5 sm:p-6 bg-gradient-to-b from-indigo-50/60 via-white to-indigo-50/20 dark:from-indigo-950/25 dark:via-slate-900 dark:to-indigo-950/10 border border-indigo-200/70 dark:border-indigo-900/40 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-300 shadow-xs hover:shadow-lg hover:-translate-y-0.5 flex flex-col justify-between">
-          <div className="space-y-4">
-            {/* Top row badge & pill */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold ring-1 ring-indigo-300/40 shadow-xs group-hover:scale-105 transition-transform">
+        {/* KPI 2: Statutory Accreditation */}
+        <div className="surface-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.07),0_2px_6px_-1px_rgba(15,23,42,0.04)] transition-all duration-200 flex flex-col justify-between">
+          <div>
+            {/* Row 1: Standard KPI Header (Eyebrow Label Left, Soft-Tinted Icon Badge Right) */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5 min-w-0">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Statutory Mandate
+                </span>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+                  Ghana Auctioneers Association
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
                 <ShieldCheck className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/70 px-2.5 py-1 rounded-full border border-indigo-200/60 dark:border-indigo-800/60">
-                Official License
-              </span>
             </div>
 
-            {/* Metric Value */}
-            <div>
-              <div className="flex items-baseline flex-wrap gap-x-2 gap-y-0.5">
-                <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            {/* Row 2: Primary KPI Metric Figure + Status Pill */}
+            <div className="mt-4 mb-4 flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl sm:text-[34px] font-black tracking-tight text-slate-900 dark:text-white leading-none">
                   GAA
                 </span>
-                <span className="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">
+                <span className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400 tracking-tight">
                   Licensed
                 </span>
               </div>
-              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
-                <span>Ghana Auctioneers Association</span>
-              </h3>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/60 shrink-0">
+                <CheckCircle2 className="h-3 w-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                Accredited
+              </span>
             </div>
-
-            {/* Subtext */}
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Regulated by Auctioneers Registration Board &amp; Ministry of the Interior.
-            </p>
           </div>
 
-          <div className="pt-4 mt-4 border-t border-indigo-200/40 dark:border-indigo-900/30 flex items-center justify-between text-[11px] font-medium text-indigo-700 dark:text-indigo-400">
-            <span>Accredited Member</span>
-            <CheckCircle2 className="h-3.5 w-3.5 opacity-80" />
+          {/* Row 3: Standard KPI Benchmark Bar & Metadata Footer */}
+          <div className="space-y-2.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="h-full w-full rounded-full bg-indigo-600 dark:bg-indigo-400" />
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400 truncate">
+                Auctioneers Board &amp; Min. of Interior
+              </span>
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                Tier-1
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Metric 3: Accra • Online (Emerald Accent) */}
-        <div className="group relative rounded-2xl p-5 sm:p-6 bg-gradient-to-b from-emerald-50/60 via-white to-emerald-50/20 dark:from-emerald-950/25 dark:via-slate-900 dark:to-emerald-950/10 border border-emerald-200/70 dark:border-emerald-900/40 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all duration-300 shadow-xs hover:shadow-lg hover:-translate-y-0.5 flex flex-col justify-between">
-          <div className="space-y-4">
-            {/* Top row badge & pill */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold ring-1 ring-emerald-300/40 shadow-xs group-hover:scale-105 transition-transform">
+        {/* KPI 3: Dual-Channel Bidding Coverage */}
+        <div className="surface-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.07),0_2px_6px_-1px_rgba(15,23,42,0.04)] transition-all duration-200 flex flex-col justify-between">
+          <div>
+            {/* Row 1: Standard KPI Header (Eyebrow Label Left, Soft-Tinted Icon Badge Right) */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5 min-w-0">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Bidding Infrastructure
+                </span>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+                  Live Events &amp; Real-Time Bidding
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
                 <Globe2 className="h-5 w-5" />
               </div>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/70 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
+
+            {/* Row 2: Primary KPI Metric Figure + Status Pill */}
+            <div className="mt-4 mb-4 flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl sm:text-[34px] font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                  Accra
+                </span>
+                <span className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400 tracking-tight">
+                  &amp; Online
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60 shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 Live Active
               </span>
             </div>
-
-            {/* Metric Value */}
-            <div>
-              <div className="flex items-baseline flex-wrap gap-x-2 gap-y-0.5">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                  Accra
-                </span>
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">&bull;</span>
-                <span className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                  Online
-                </span>
-              </div>
-              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
-                <span>Live Events &amp; Real-Time Bidding</span>
-              </h3>
-            </div>
-
-            {/* Subtext */}
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Physical Accra floor auctions synchronized with instant nationwide digital bidding.
-            </p>
           </div>
 
-          <div className="pt-4 mt-4 border-t border-emerald-200/40 dark:border-emerald-900/30 flex items-center justify-between text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-            <span>Dual-Channel Access</span>
-            <CheckCircle2 className="h-3.5 w-3.5 opacity-80" />
+          {/* Row 3: Standard KPI Benchmark Bar & Metadata Footer */}
+          <div className="space-y-2.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="h-full w-full rounded-full bg-emerald-600 dark:bg-emerald-400" />
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400 truncate">
+                Physical floor &amp; digital portal
+              </span>
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                24/7 Sync
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Metric 4: 100% Clear Title (Violet Accent) */}
-        <div className="group relative rounded-2xl p-5 sm:p-6 bg-gradient-to-b from-violet-50/60 via-white to-violet-50/20 dark:from-violet-950/25 dark:via-slate-900 dark:to-violet-950/10 border border-violet-200/70 dark:border-violet-900/40 hover:border-violet-400 dark:hover:border-violet-500 transition-all duration-300 shadow-xs hover:shadow-lg hover:-translate-y-0.5 flex flex-col justify-between">
-          <div className="space-y-4">
-            {/* Top row badge & pill */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="h-10 w-10 rounded-xl bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 flex items-center justify-center font-bold ring-1 ring-violet-300/40 shadow-xs group-hover:scale-105 transition-transform">
+        {/* KPI 4: Clear Title & Court Certification */}
+        <div
+          onMouseEnter={replayFourth}
+          className="surface-card group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.07),0_2px_6px_-1px_rgba(15,23,42,0.04)] transition-all duration-200 flex flex-col justify-between"
+        >
+          <div>
+            {/* Row 1: Standard KPI Header (Eyebrow Label Left, Soft-Tinted Icon Badge Right) */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5 min-w-0">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Title &amp; Deed Assurance
+                </span>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+                  Clear Title &amp; Court Certified
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200/80 dark:border-sky-800/60 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
                 <Gavel className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300 bg-violet-100/70 dark:bg-violet-950/70 px-2.5 py-1 rounded-full border border-violet-200/60 dark:border-violet-800/60">
-                100% Verified
-              </span>
             </div>
 
-            {/* Metric Value */}
-            <div>
-              <div className="flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
-                <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                  100
+            {/* Row 2: Primary KPI Metric Figure + Status Pill */}
+            <div className="mt-4 mb-4 flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl sm:text-[34px] font-black tracking-tight text-slate-900 dark:text-white leading-none tabular-nums">
+                  <AnimatedCounter key={animKey4} target={100} duration={1200} />%
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-violet-600 dark:text-violet-400">
-                  %
-                </span>
-                <span className="text-xl sm:text-2xl font-bold text-slate-700 dark:text-slate-300 ml-1">
+                <span className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400 tracking-tight">
                   Clear
                 </span>
               </div>
-              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
-                <span>Clear Title &amp; Court Certified</span>
-              </h3>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-sky-50 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border border-sky-200/70 dark:border-indigo-800/60 shrink-0">
+                <CheckCircle2 className="h-3 w-3 text-sky-600 dark:text-sky-400 shrink-0" />
+                Verified
+              </span>
             </div>
-
-            {/* Subtext */}
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Constitutionally executed sales with verified ownership papers and court orders.
-            </p>
           </div>
 
-          <div className="pt-4 mt-4 border-t border-violet-200/40 dark:border-violet-900/30 flex items-center justify-between text-[11px] font-medium text-violet-700 dark:text-violet-400">
-            <span>Clean Legal Ownership</span>
-            <CheckCircle2 className="h-3.5 w-3.5 opacity-80" />
+          {/* Row 3: Standard KPI Benchmark Bar & Metadata Footer */}
+          <div className="space-y-2.5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="h-full w-full rounded-full bg-sky-600 dark:bg-sky-400" />
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400 truncate">
+                Court orders &amp; ownership deeds
+              </span>
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                Guaranteed
+              </span>
+            </div>
           </div>
         </div>
       </div>
