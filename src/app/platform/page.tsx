@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  authService,
-} from '@/lib/auth/authService';
+import { authService } from '@/lib/auth/authService';
 import type {
   AppRole,
   TenantEnvironment,
@@ -30,13 +28,21 @@ import {
   Search,
   FlaskConical,
   ExternalLink,
+  RefreshCw,
+  LogIn,
+  Sparkles,
+  Lock,
 } from 'lucide-react';
 
 const MASTER_KEYS = ['devsurge2026', 'surge@amen2026', 'amen@master2026'];
 
 export default function PlatformPage() {
   const router = useRouter();
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const session = authService.getSession();
+    return session?.user?.role === 'OWNER';
+  });
   const [masterPasscode, setMasterPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
 
@@ -71,16 +77,22 @@ export default function PlatformPage() {
 
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'SUCCESS' | 'ERROR'; text: string } | null>(null);
 
-  // Check if session is already an OWNER
-  useState(() => {
-    const session = authService.getSession();
-    if (session?.user?.role === 'OWNER') {
-      setIsUnlocked(true);
-    }
-  });
+  // Reactive state for users & tenants to keep console synchronized
+  const [tenants, setTenants] = useState<TenantRecord[]>(() => authService.getTenants());
+  const [users, setUsers] = useState<UserAccount[]>(() => authService.getUsers());
 
-  const tenants = authService.getTenants();
-  const users = authService.getUsers();
+  // Subscribe to auth changes
+  useEffect(() => {
+    const unsubscribe = authService.subscribeAuth(() => {
+      setTenants(authService.getTenants());
+      setUsers(authService.getUsers());
+      const session = authService.getSession();
+      if (session?.user?.role === 'OWNER') {
+        setIsUnlocked(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
@@ -253,6 +265,46 @@ export default function PlatformPage() {
     }
   };
 
+  const handleLaunchLive = () => {
+    try {
+      authService.loginAsLiveOwner();
+      router.push('/desk');
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to launch Amen Mart Live.',
+      });
+    }
+  };
+
+  const handleLoginAsUser = (user: UserAccount) => {
+    try {
+      authService.login(user.tenantId, user.username, user.password, true);
+      router.push('/desk');
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to sign in as user.',
+      });
+    }
+  };
+
+  const handleResetDefaultAccounts = () => {
+    try {
+      authService.resetToDefaultAccounts();
+      setFeedbackMsg({
+        type: 'SUCCESS',
+        text: 'Amen Mart Live and Demo accounts synchronized and refreshed successfully.',
+      });
+      setTimeout(() => setFeedbackMsg(null), 3500);
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to restore default accounts.',
+      });
+    }
+  };
+
   const handleLaunchTenant = (tenant: TenantRecord) => {
     try {
       const tenantUsers = authService.getUsers(tenant.id);
@@ -271,55 +323,66 @@ export default function PlatformPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
       {/* Top Header */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
+      <header className="border-b border-slate-200/90 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sticky top-0 z-40 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/desk"
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
               title="Return to ERP Desk"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md">
+            <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-xs">
               <Server className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-white tracking-tight">
+                <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                   AmenDesk Platform Console
                 </h1>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
                   Encore Multi-Tenant RBAC
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Tenant account provisioning &amp; role-based access control management
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {isUnlocked && (
-              <button
-                type="button"
-                onClick={handleLaunchDemoYard}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-all cursor-pointer shadow-xs"
-                title="Switch immediately into the Demo Yard tenant to test features before deploying to production"
-              >
-                <FlaskConical className="h-3.5 w-3.5" />
-                <span>Test in Demo Yard</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleLaunchLive}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+                  title="Launch live production environment for Amen Mart Ghana"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Launch Live</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLaunchDemoYard}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                  title="Switch immediately into the Demo Yard tenant to test features before deploying to production"
+                >
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  <span>Test in Demo Yard</span>
+                </button>
+              </>
             )}
             <Link
               href="/login"
-              className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-xl border border-slate-800 hover:bg-slate-800 transition-colors"
+              className="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors"
             >
               Login Portal
             </Link>
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
               <GhanaFlag className="h-3 w-4.5" />
               <span>Amen Mart Ghana</span>
             </div>
@@ -328,23 +391,23 @@ export default function PlatformPage() {
       </header>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Passcode Unlock Barrier (if not already unlocked) */}
         {!isUnlocked ? (
-          <div className="max-w-md mx-auto my-12 p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl text-center">
-            <div className="h-14 w-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto mb-4">
+          <div className="max-w-md mx-auto my-12 p-8 rounded-3xl bg-white border border-slate-200/90 shadow-xl shadow-slate-200/60 text-center">
+            <div className="h-14 w-14 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-xs">
               <Key className="h-7 w-7" />
             </div>
-            <h2 className="text-lg font-black text-white mb-1">
-              Platform Admin Authorization Required
+            <h2 className="text-xl font-black text-slate-900 mb-1">
+              Platform Admin Authorization
             </h2>
-            <p className="text-xs text-slate-400 mb-6">
-              Enter your Dev Surge platform administrator passcode to provision tenants and manage staff accounts.
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+              Enter your Dev Surge platform administrator passcode to provision tenants, manage staff accounts, and inspect physical data stores.
             </p>
 
             {passcodeError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs font-bold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
+              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
                 <span>{passcodeError}</span>
               </div>
             )}
@@ -357,36 +420,47 @@ export default function PlatformPage() {
                   value={masterPasscode}
                   onChange={(e) => setMasterPasscode(e.target.value)}
                   placeholder="Master passcode (e.g. devsurge2026)"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold placeholder:text-slate-400 focus:outline-hidden focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition-all shadow-xs"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs transition-colors cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-black text-xs transition-colors cursor-pointer shadow-md shadow-indigo-600/20"
               >
                 Unlock Platform Console
               </button>
             </form>
+
+            <div className="mt-5 p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-[11px] text-left">
+              <div className="flex items-center gap-1.5 font-bold text-slate-700 mb-0.5">
+                <Lock className="h-3 w-3 text-slate-400" />
+                <span>Authorized Master Passcodes:</span>
+              </div>
+              <p className="font-mono text-[10px] text-slate-500">
+                <code className="text-indigo-600 font-bold">devsurge2026</code> &bull;{' '}
+                <code className="text-indigo-600 font-bold">amen@master2026</code>
+              </p>
+            </div>
           </div>
         ) : (
           <div>
             {/* Feedback Message */}
             {feedbackMsg && (
               <div
-                className={`mb-6 p-4 rounded-2xl border flex items-center justify-between text-xs font-bold ${
+                className={`mb-6 p-4 rounded-2xl border flex items-center justify-between text-xs font-bold shadow-xs ${
                   feedbackMsg.type === 'SUCCESS'
-                    ? 'bg-emerald-950/50 border-emerald-800 text-emerald-300'
-                    : 'bg-rose-950/50 border-rose-800 text-rose-300'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-rose-50 border-rose-200 text-rose-800'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                   <span>{feedbackMsg.text}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setFeedbackMsg(null)}
-                  className="text-slate-400 hover:text-white"
+                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -394,15 +468,15 @@ export default function PlatformPage() {
             )}
 
             {/* Navigation Tabs */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6 flex-wrap gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-slate-200/90 pb-4 mb-6 flex-wrap gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setActiveTab('USERS')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                     activeTab === 'USERS'
                       ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                   }`}
                 >
                   <Users className="h-4 w-4" />
@@ -415,7 +489,7 @@ export default function PlatformPage() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                     activeTab === 'TENANTS'
                       ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                   }`}
                 >
                   <Building2 className="h-4 w-4" />
@@ -428,7 +502,7 @@ export default function PlatformPage() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                     activeTab === 'STORAGE'
                       ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                   }`}
                 >
                   <Database className="h-4 w-4" />
@@ -436,51 +510,148 @@ export default function PlatformPage() {
                 </button>
               </div>
 
-              {activeTab === 'USERS' && (
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => setIsNewUserModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
+                  onClick={handleResetDefaultAccounts}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                  title="Synchronize and ensure Amen Mart Demo and Live accounts are fully restored"
                 >
-                  <Plus className="h-4 w-4" />
-                  <span>Provision New User</span>
+                  <RefreshCw className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Re-sync Defaults</span>
                 </button>
-              )}
 
-              {activeTab === 'TENANTS' && (
-                <button
-                  type="button"
-                  onClick={() => setIsNewTenantModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Provision New Tenant</span>
-                </button>
-              )}
+                {activeTab === 'USERS' && (
+                  <button
+                    type="button"
+                    onClick={() => setIsNewUserModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Provision New User</span>
+                  </button>
+                )}
+
+                {activeTab === 'TENANTS' && (
+                  <button
+                    type="button"
+                    onClick={() => setIsNewTenantModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Provision New Tenant</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* TAB 1: USERS & RBAC ACCOUNTS */}
             {activeTab === 'USERS' && (
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* PROVISIONED AMEN MART DEMO & LIVE ACCOUNTS HIGHLIGHT BANNER */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Amen Mart Live Account Card */}
+                  <div className="p-5 rounded-2xl bg-white border-2 border-emerald-300 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                          <Sparkles className="h-3 w-3 text-emerald-600" />
+                          <span>Amen Mart Live Production</span>
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-500 font-mono">
+                          Tenant: AMEN-MART
+                        </span>
+                      </div>
+                      <h3 className="text-base font-black text-slate-900 mb-1">
+                        Amen Mart Live Account
+                      </h3>
+                      <p className="text-xs text-slate-600 mb-3 leading-relaxed">
+                        Dedicated live commercial production access. Real statutory ledgers, real clients, and audited Ghanaian auction bids.
+                      </p>
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs font-mono text-slate-700">
+                        <div>Username: <strong className="text-emerald-700">amenmart.live</strong> <span className="text-slate-400">or</span> <strong className="text-emerald-700">amenmart</strong></div>
+                        <div>Password: <strong className="text-slate-900">amen@2026</strong></div>
+                        <div>Role: <span className="text-purple-700 font-bold">OWNER (Managing Director)</span></div>
+                        <div>Store: <span className="text-slate-500">AmenDeskDB_live</span></div>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span>Provisioned &amp; Ready</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleLaunchLive}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>Sign in to Live →</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Amen Mart Demo Account Card */}
+                  <div className="p-5 rounded-2xl bg-white border-2 border-amber-300 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                          <FlaskConical className="h-3 w-3 text-amber-600" />
+                          <span>Amen Mart Demo Sandbox</span>
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-500 font-mono">
+                          Tenant: DEMO
+                        </span>
+                      </div>
+                      <h3 className="text-base font-black text-slate-900 mb-1">
+                        Amen Mart Demo Account
+                      </h3>
+                      <p className="text-xs text-slate-600 mb-3 leading-relaxed">
+                        Pre-seeded demonstration yard with test vehicles, land plots, mock clients, and safe simulated transactions.
+                      </p>
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs font-mono text-slate-700">
+                        <div>Username: <strong className="text-amber-800">amenmart.demo</strong> <span className="text-slate-400">or</span> <strong className="text-amber-800">demo</strong></div>
+                        <div>Password: <strong className="text-slate-900">demo123</strong> <span className="text-slate-400">or</span> <strong className="text-slate-900">amen@2026</strong></div>
+                        <div>Role: <span className="text-purple-700 font-bold">OWNER (Demo Director)</span></div>
+                        <div>Store: <span className="text-slate-500">AmenDeskDB_sandbox</span></div>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-amber-800 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span>Provisioned &amp; Ready</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleLaunchDemoYard}
+                        className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                      >
+                        <FlaskConical className="h-3.5 w-3.5" />
+                        <span>Sign in to Demo →</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Search & Filter Bar */}
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="relative w-full sm:w-72">
-                    <Search className="h-4 w-4 absolute left-3 top-3 text-slate-500" />
+                <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="relative w-full sm:w-80">
+                    <Search className="h-4 w-4 absolute left-3 top-3 text-slate-400" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search users, email, role..."
-                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder:text-slate-500 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Search accounts by name, username, email..."
+                      className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <span className="text-xs font-bold text-slate-400 whitespace-nowrap">Filter Workspace:</span>
+                    <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Filter Workspace:</span>
                     <select
                       value={selectedTenantFilter}
                       onChange={(e) => setSelectedTenantFilter(e.target.value)}
-                      className="w-full sm:w-auto text-xs font-semibold px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                      className="w-full sm:w-auto text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                     >
                       <option value="ALL">All Workspaces ({users.length})</option>
                       {tenants.map((t) => (
@@ -493,20 +664,20 @@ export default function PlatformPage() {
                 </div>
 
                 {/* Users Table */}
-                <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xl">
+                <div className="rounded-2xl bg-white border border-slate-200/90 overflow-hidden shadow-xs">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950/70 border-b border-slate-800 text-slate-400 uppercase font-black tracking-wider text-[10px]">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-black tracking-wider text-[10px]">
                         <tr>
-                          <th className="py-3 px-4">Staff Member</th>
-                          <th className="py-3 px-4">Workspace / Tenant</th>
-                          <th className="py-3 px-4">RBAC Role</th>
-                          <th className="py-3 px-4">Status</th>
-                          <th className="py-3 px-4">Last Login</th>
-                          <th className="py-3 px-4 text-right">Actions</th>
+                          <th className="py-3.5 px-4">Staff Member</th>
+                          <th className="py-3.5 px-4">Workspace / Tenant</th>
+                          <th className="py-3.5 px-4">RBAC Role</th>
+                          <th className="py-3.5 px-4">Status</th>
+                          <th className="py-3.5 px-4">Last Login</th>
+                          <th className="py-3.5 px-4 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/80">
+                      <tbody className="divide-y divide-slate-100">
                         {filteredUsers.length === 0 ? (
                           <tr>
                             <td colSpan={6} className="py-8 text-center text-slate-500">
@@ -516,32 +687,40 @@ export default function PlatformPage() {
                         ) : (
                           filteredUsers.map((u) => {
                             const userTenant = tenants.find((t) => t.id === u.tenantId);
+                            const isLiveTenant = userTenant?.environment === 'LIVE';
+
                             return (
-                              <tr key={u.id} className="hover:bg-slate-850/60 transition-colors">
-                                <td className="py-3 px-4">
-                                  <div className="font-black text-white">{u.fullName}</div>
-                                  <div className="text-[11px] text-slate-400 font-mono">
+                              <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="py-3.5 px-4">
+                                  <div className="font-bold text-slate-900">{u.fullName}</div>
+                                  <div className="text-[11px] text-slate-500 font-mono">
                                     @{u.username} &bull; {u.email}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
-                                  <span className="font-semibold text-slate-300 block">
+                                <td className="py-3.5 px-4">
+                                  <span className="font-semibold text-slate-800 block">
                                     {userTenant?.name || u.tenantId}
                                   </span>
-                                  <span className="text-[10px] font-mono text-slate-500 uppercase">
+                                  <span
+                                    className={`inline-block text-[10px] font-mono uppercase px-1.5 py-0.2 rounded font-bold ${
+                                      isLiveTenant
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                        : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                    }`}
+                                  >
                                     {userTenant?.code || 'TENANT'}
                                   </span>
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3.5 px-4">
                                   <span
                                     className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
                                       u.role === 'OWNER'
-                                        ? 'bg-purple-950 text-purple-300 border border-purple-800'
+                                        ? 'bg-purple-50 text-purple-700 border border-purple-200'
                                         : u.role === 'ACCOUNTANT'
-                                        ? 'bg-blue-950 text-blue-300 border border-blue-800'
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
                                         : u.role === 'SECRETARY'
-                                        ? 'bg-amber-950 text-amber-300 border border-amber-800'
-                                        : 'bg-slate-800 text-slate-300 border border-slate-700'
+                                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
                                     }`}
                                   >
                                     {u.role}
@@ -550,28 +729,37 @@ export default function PlatformPage() {
                                     {ROLE_LABELS[u.role]}
                                   </span>
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3.5 px-4">
                                   <button
                                     type="button"
                                     onClick={() => handleToggleUserStatus(u.id, u.isActive)}
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase cursor-pointer ${
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase cursor-pointer transition-colors ${
                                       u.isActive
-                                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                                        : 'bg-rose-950 text-rose-300 border border-rose-800'
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                        : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
                                     }`}
+                                    title="Click to toggle account status"
                                   >
                                     {u.isActive ? 'Active' : 'Suspended'}
                                   </button>
                                 </td>
-                                <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                                <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
                                   {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('en-GB') : 'Never'}
                                 </td>
-                                <td className="py-3 px-4 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
+                                <td className="py-3.5 px-4 text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleLoginAsUser(u)}
+                                      className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                      title={`Sign in immediately as ${u.fullName}`}
+                                    >
+                                      <LogIn className="h-4 w-4" />
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() => handleOpenResetPassword(u)}
-                                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-slate-800 transition-colors"
+                                      className="p-1.5 rounded-lg text-slate-500 hover:text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
                                       title="Reset Password"
                                     >
                                       <Key className="h-4 w-4" />
@@ -579,7 +767,7 @@ export default function PlatformPage() {
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteUser(u)}
-                                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
                                       title="Delete Account"
                                     >
                                       <Trash2 className="h-4 w-4" />
@@ -607,10 +795,10 @@ export default function PlatformPage() {
                   return (
                     <div
                       key={t.id}
-                      className={`p-6 rounded-3xl border-2 flex flex-col justify-between ${
+                      className={`p-6 rounded-3xl border-2 bg-white flex flex-col justify-between shadow-xs transition-all ${
                         isLive
-                          ? 'border-emerald-600/60 bg-emerald-950/20'
-                          : 'border-amber-600/60 bg-amber-950/20'
+                          ? 'border-emerald-300 hover:border-emerald-400'
+                          : 'border-amber-300 hover:border-amber-400'
                       }`}
                     >
                       <div>
@@ -624,45 +812,45 @@ export default function PlatformPage() {
                               <Building2 className="h-5 w-5" />
                             </div>
                             <div>
-                              <h3 className="text-base font-black text-white">{t.name}</h3>
-                              <p className="text-xs text-slate-400 font-mono">Code: {t.code} &bull; ID: {t.id}</p>
+                              <h3 className="text-base font-black text-slate-900">{t.name}</h3>
+                              <p className="text-xs text-slate-500 font-mono">Code: {t.code} &bull; ID: {t.id}</p>
                             </div>
                           </div>
                           <span
                             className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                               isLive
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-amber-500 text-slate-950'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-800 border border-amber-200'
                             }`}
                           >
                             {t.environment}
                           </span>
                         </div>
 
-                        <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                        <p className="text-xs text-slate-600 leading-relaxed mb-4">
                           {t.description}
                         </p>
 
-                        <div className="space-y-1.5 text-xs text-slate-400 mb-4 font-mono bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-                          <div>Contact: <span className="text-slate-200">{t.contactEmail}</span></div>
-                          <div>Phone: <span className="text-slate-200">{t.phone}</span></div>
-                          <div>Physical DB: <span className="text-indigo-300 font-bold">{isLive ? 'AmenDeskDB_live' : 'AmenDeskDB_sandbox'}</span></div>
-                          <div>Provisioned Staff: <span className="text-white font-bold">{tenantUserCount} Users</span></div>
+                        <div className="space-y-1.5 text-xs text-slate-600 mb-4 font-mono bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                          <div>Contact: <span className="text-slate-800 font-semibold">{t.contactEmail}</span></div>
+                          <div>Phone: <span className="text-slate-800 font-semibold">{t.phone}</span></div>
+                          <div>Physical DB: <span className="text-indigo-700 font-bold">{isLive ? 'AmenDeskDB_live' : 'AmenDeskDB_sandbox'}</span></div>
+                          <div>Provisioned Staff: <span className="text-slate-900 font-bold">{tenantUserCount} Users</span></div>
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500 gap-2 flex-wrap">
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 gap-2 flex-wrap">
                         <div className="flex items-center gap-3">
-                          <span>Status: <strong className="text-emerald-400">{t.status}</strong></span>
+                          <span>Status: <strong className="text-emerald-700">{t.status}</strong></span>
                           <span className="font-mono text-[11px] hidden sm:inline">Since {new Date(t.createdAt).toLocaleDateString('en-GB')}</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleLaunchTenant(t)}
-                          className={`px-3 py-1.5 rounded-xl font-black text-[11px] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                          className={`px-3.5 py-1.5 rounded-xl font-black text-[11px] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
                             !isLive
-                              ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
-                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                              ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                           }`}
                           title={isLive ? 'Launch Live Production Workspace' : 'Launch Demo Yard to test all features before production'}
                         >
@@ -679,49 +867,51 @@ export default function PlatformPage() {
             {/* TAB 3: PHYSICAL MULTI-TENANT ISOLATION TELEMETRY */}
             {activeTab === 'STORAGE' && (
               <div className="space-y-6">
-                <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800">
+                <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                    <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
                       <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-black text-white">Physical Multi-Tenant Database Architecture</h3>
-                      <p className="text-xs text-slate-400">Strict zero-bleed isolation between Amen Mart Live and Dev Surge Demo</p>
+                      <h3 className="text-base font-black text-slate-900">Physical Multi-Tenant Database Architecture</h3>
+                      <p className="text-xs text-slate-500">Strict zero-bleed isolation between Amen Mart Live and Dev Surge Demo</p>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed mb-6">
-                    Amendesk utilizes isolated physical IndexedDB stores. Transactions executed in the Sandbox Demo never contaminate Amen Mart&apos;s live commercial general ledger.
+                  <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                    AmenDesk utilizes isolated physical IndexedDB stores. Transactions executed in the Sandbox Demo never contaminate Amen Mart&apos;s live commercial general ledger.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-800/60 space-y-2">
+                    <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-black text-emerald-400">Amen Mart Ghana (Live)</span>
-                        <span className="font-mono text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-800">AMEN-MART</span>
+                        <span className="font-black text-emerald-800 text-sm">Amen Mart Ghana (Live)</span>
+                        <span className="font-mono text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300 font-bold">AMEN-MART</span>
                       </div>
-                      <p className="text-slate-400 text-[11px]">
-                        Physical database name: <code className="font-mono font-bold text-white">AmenDeskDB_live</code>
+                      <p className="text-slate-600 text-[11px]">
+                        Physical database name: <code className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">AmenDeskDB_live</code>
                       </p>
-                      <ul className="text-slate-400 space-y-1 list-disc list-inside text-[11px]">
+                      <ul className="text-slate-600 space-y-1 list-disc list-inside text-[11px] pt-1">
                         <li>Only statutory Chart of Accounts and categories seeded</li>
                         <li>Zero dummy lots, mock vehicles, or fake customers</li>
                         <li>Database reset command is strictly prohibited and blocked</li>
+                        <li>Strict fiscal auditing and legal compliance under GAA rules</li>
                       </ul>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-950 border border-amber-800/60 space-y-2">
+                    <div className="p-5 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-black text-amber-400">AmenDesk Demo Yard (Sandbox)</span>
-                        <span className="font-mono text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded-full border border-amber-800">DEMO</span>
+                        <span className="font-black text-amber-900 text-sm">Amen Mart Demo Yard (Sandbox)</span>
+                        <span className="font-mono text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300 font-bold">DEMO</span>
                       </div>
-                      <p className="text-slate-400 text-[11px]">
-                        Physical database name: <code className="font-mono font-bold text-white">AmenDeskDB_sandbox</code>
+                      <p className="text-slate-600 text-[11px]">
+                        Physical database name: <code className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">AmenDeskDB_sandbox</code>
                       </p>
-                      <ul className="text-slate-400 space-y-1 list-disc list-inside text-[11px]">
+                      <ul className="text-slate-600 space-y-1 list-disc list-inside text-[11px] pt-1">
                         <li>Fully pre-seeded Ghanaian lots, vehicles, land plots, and test CRM</li>
                         <li>Isolated cloud sync simulation (never touches Amen Mart cloud)</li>
                         <li>Can be safely restored back to fresh seed values anytime</li>
+                        <li>Safe training sandpit for newly onboarded yard cashiers and clerks</li>
                       </ul>
                     </div>
                   </div>
@@ -737,23 +927,23 @@ export default function PlatformPage() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-lg rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white">Provision New Staff Account</h3>
-                  <p className="text-xs text-slate-400">Enforce RBAC role assignments per workspace</p>
+                  <h3 className="text-sm font-black text-slate-900">Provision New Staff Account</h3>
+                  <p className="text-xs text-slate-500">Enforce RBAC role assignments per workspace</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewUserModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -761,11 +951,11 @@ export default function PlatformPage() {
 
             <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-300 mb-1">Target Workspace / Tenant</label>
+                <label className="block font-bold text-slate-700 mb-1">Target Workspace / Tenant</label>
                 <select
                   value={newTenantId}
                   onChange={(e) => setNewTenantId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
                   {tenants.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -776,66 +966,66 @@ export default function PlatformPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-300 mb-1">Full Name</label>
+                <label className="block font-bold text-slate-700 mb-1">Full Name</label>
                 <input
                   type="text"
                   required
                   value={newFullName}
                   onChange={(e) => setNewFullName(e.target.value)}
                   placeholder="e.g. Dr. Francis Kwaku Yeboah"
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Username</label>
+                  <label className="block font-bold text-slate-700 mb-1">Username</label>
                   <input
                     type="text"
                     required
                     value={newUsername}
                     onChange={(e) => setNewUsername(e.target.value)}
                     placeholder="e.g. francis.yeboah"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Email</label>
+                  <label className="block font-bold text-slate-700 mb-1">Email</label>
                   <input
                     type="email"
                     required
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="e.g. dr.yeboah@amenmart.com"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-300 mb-1">RBAC Role Assignment</label>
+                <label className="block font-bold text-slate-700 mb-1">RBAC Role Assignment</label>
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as AppRole)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
                   <option value="OWNER">OWNER — Managing Director &amp; Full Approval Authority</option>
                   <option value="ACCOUNTANT">ACCOUNTANT — Chief Accountant &amp; General Ledger</option>
                   <option value="SECRETARY">SECRETARY — Auction Intake, CRM &amp; Waybills</option>
                   <option value="STAFF">STAFF — Yard Cashier &amp; Operations Officer</option>
                 </select>
-                <p className="text-[11px] text-slate-400 mt-1">{ROLE_DESCRIPTIONS[newRole]}</p>
+                <p className="text-[11px] text-slate-500 mt-1">{ROLE_DESCRIPTIONS[newRole]}</p>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-300 mb-1">Initial Password / Passcode</label>
+                <label className="block font-bold text-slate-700 mb-1">Initial Password / Passcode</label>
                 <input
                   type="text"
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="e.g. amen@2026"
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
               </div>
 
@@ -843,13 +1033,13 @@ export default function PlatformPage() {
                 <button
                   type="button"
                   onClick={() => setIsNewUserModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-800 hover:bg-slate-800 font-bold text-slate-300 transition-colors"
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-black text-white transition-colors shadow-xs"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black text-white transition-colors shadow-xs cursor-pointer"
                 >
                   Provision Account
                 </button>
@@ -864,23 +1054,23 @@ export default function PlatformPage() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-lg rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
                   <Building2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white">Provision New Tenant Organization</h3>
-                  <p className="text-xs text-slate-400">Create segregated commercial workspace</p>
+                  <h3 className="text-sm font-black text-slate-900">Provision New Tenant Organization</h3>
+                  <p className="text-xs text-slate-500">Create segregated commercial workspace</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewTenantModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -889,58 +1079,58 @@ export default function PlatformPage() {
             <form onSubmit={handleCreateTenant} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Tenant ID (Slug)</label>
+                  <label className="block font-bold text-slate-700 mb-1">Tenant ID (Slug)</label>
                   <input
                     type="text"
                     required
                     value={newTenId}
                     onChange={(e) => setNewTenId(e.target.value.toLowerCase())}
                     placeholder="e.g. ghana-customs"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Tenant Code</label>
+                  <label className="block font-bold text-slate-700 mb-1">Tenant Code</label>
                   <input
                     type="text"
                     required
                     value={newTenCode}
                     onChange={(e) => setNewTenCode(e.target.value.toUpperCase())}
                     placeholder="e.g. GRA-AUCTION"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-300 mb-1">Organization Full Name</label>
+                <label className="block font-bold text-slate-700 mb-1">Organization Full Name</label>
                 <input
                   type="text"
                   required
                   value={newTenName}
                   onChange={(e) => setNewTenName(e.target.value)}
                   placeholder="e.g. Ghana Revenue Authority Disposals"
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Short Display Name</label>
+                  <label className="block font-bold text-slate-700 mb-1">Short Display Name</label>
                   <input
                     type="text"
                     value={newTenShortName}
                     onChange={(e) => setNewTenShortName(e.target.value)}
                     placeholder="e.g. GRA Disposals"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Environment Type</label>
+                  <label className="block font-bold text-slate-700 mb-1">Environment Type</label>
                   <select
                     value={newTenEnv}
                     onChange={(e) => setNewTenEnv(e.target.value as TenantEnvironment)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                   >
                     <option value="LIVE">LIVE — Commercial Operations</option>
                     <option value="SANDBOX">SANDBOX — Staging &amp; Testing</option>
@@ -950,36 +1140,36 @@ export default function PlatformPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Contact Email</label>
+                  <label className="block font-bold text-slate-700 mb-1">Contact Email</label>
                   <input
                     type="email"
                     required
                     value={newTenEmail}
                     onChange={(e) => setNewTenEmail(e.target.value)}
                     placeholder="admin@gra.gov.gh"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Contact Phone</label>
+                  <label className="block font-bold text-slate-700 mb-1">Contact Phone</label>
                   <input
                     type="text"
                     value={newTenPhone}
                     onChange={(e) => setNewTenPhone(e.target.value)}
                     placeholder="0548517277"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-300 mb-1">Office / Yard Address</label>
+                <label className="block font-bold text-slate-700 mb-1">Office / Yard Address</label>
                 <input
                   type="text"
                   value={newTenAddress}
                   onChange={(e) => setNewTenAddress(e.target.value)}
                   placeholder="Accra, Ghana"
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -987,13 +1177,13 @@ export default function PlatformPage() {
                 <button
                   type="button"
                   onClick={() => setIsNewTenantModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-800 hover:bg-slate-800 font-bold text-slate-300 transition-colors"
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-white transition-colors shadow-xs"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-black text-white transition-colors shadow-xs cursor-pointer"
                 >
                   Provision Tenant
                 </button>
@@ -1008,37 +1198,37 @@ export default function PlatformPage() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-black text-white flex items-center gap-2">
-                <Key className="h-4 w-4 text-amber-400" />
+              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <Key className="h-4 w-4 text-amber-500" />
                 <span>Reset Staff Password</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setIsResetPasswordModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-400 mb-4">
-              Set a new password for <strong className="text-white">{selectedUserForReset.fullName}</strong> (@{selectedUserForReset.username}).
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Set a new password for <strong className="text-slate-900">{selectedUserForReset.fullName}</strong> (@{selectedUserForReset.username}).
             </p>
 
             <form onSubmit={handleSaveResetPassword} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-300 mb-1">New Password</label>
+                <label className="block font-bold text-slate-700 mb-1">New Password</label>
                 <input
                   type="text"
                   required
                   value={newPasswordValue}
                   onChange={(e) => setNewPasswordValue(e.target.value)}
-                  placeholder="Enter new password"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter new password (e.g. amen@2026)"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -1046,13 +1236,13 @@ export default function PlatformPage() {
                 <button
                   type="button"
                   onClick={() => setIsResetPasswordModalOpen(false)}
-                  className="flex-1 py-2 px-3 rounded-xl border border-slate-800 hover:bg-slate-800 font-bold text-slate-300"
+                  className="flex-1 py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black"
+                  className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black cursor-pointer shadow-xs"
                 >
                   Update Password
                 </button>

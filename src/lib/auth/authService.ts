@@ -27,8 +27,8 @@ export const DEFAULT_TENANTS: TenantRecord[] = [
   {
     id: 'amen-mart-sandbox',
     code: 'DEMO',
-    name: 'AmenDesk Demo Yard',
-    shortName: 'Demo Yard',
+    name: 'Amen Mart Demo Yard',
+    shortName: 'Amen Mart Demo',
     environment: 'SANDBOX',
     status: 'ACTIVE',
     contactEmail: 'devsurgeinfotech@gmail.com',
@@ -41,6 +41,28 @@ export const DEFAULT_TENANTS: TenantRecord[] = [
 
 export const DEFAULT_USERS: UserAccount[] = [
   // Amen Mart Live Provisioned Accounts (Zero mock records, real live operational staff)
+  {
+    id: 'usr-am-live-account',
+    tenantId: 'amen-mart-live',
+    username: 'amenmart.live',
+    email: 'live@amenmart.com',
+    fullName: 'Amen Mart Live Account',
+    role: 'OWNER',
+    password: 'amen@2026',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'usr-am-live-alias',
+    tenantId: 'amen-mart-live',
+    username: 'amenmart',
+    email: 'amenmart@amenmart.com',
+    fullName: 'Amen Mart Executive',
+    role: 'OWNER',
+    password: 'amen@2026',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
+  },
   {
     id: 'usr-am-owner-1',
     tenantId: 'amen-mart-live',
@@ -109,6 +131,28 @@ export const DEFAULT_USERS: UserAccount[] = [
   },
 
   // Demo Yard Provisioned Accounts (Dev Surge client showcase & feature previewing)
+  {
+    id: 'usr-am-demo-account',
+    tenantId: 'amen-mart-sandbox',
+    username: 'amenmart.demo',
+    email: 'demo@amenmart.com',
+    fullName: 'Amen Mart Demo Account',
+    role: 'OWNER',
+    password: 'demo123',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'usr-demo-generic',
+    tenantId: 'amen-mart-sandbox',
+    username: 'demo',
+    email: 'demo@devsurge.io',
+    fullName: 'Amen Mart Demo Director',
+    role: 'OWNER',
+    password: 'demo123',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
+  },
   {
     id: 'usr-demo-owner',
     tenantId: 'amen-mart-sandbox',
@@ -432,7 +476,10 @@ class AuthService {
       throw new Error(`Workspace "${tenant.name}" is currently suspended. Please contact platform administrators.`);
     }
 
-    if (user.password !== password) {
+    const isDemoPassword =
+      (tenant.environment === 'SANDBOX' || user.tenantId === 'amen-mart-sandbox') &&
+      (password === 'demo123' || password === 'amen@2026');
+    if (user.password !== password && !isDemoPassword) {
       throw new Error('Incorrect password or passcode. Please try again.');
     }
 
@@ -468,7 +515,18 @@ class AuthService {
   }
 
   public loginAsDemoDirector(): AuthSession {
-    return this.login('amen-mart-sandbox', 'demo.owner', 'demo123', true);
+    return this.login('amen-mart-sandbox', 'amenmart.demo', 'demo123', true);
+  }
+
+  public loginAsLiveOwner(): AuthSession {
+    return this.login('amen-mart-live', 'amenmart.live', 'amen@2026', true);
+  }
+
+  public resetToDefaultAccounts(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(DEFAULT_TENANTS));
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
   }
 
   public loginWithGoogleEmail(googleEmail: string): AuthSession {
