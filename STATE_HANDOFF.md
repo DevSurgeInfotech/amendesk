@@ -206,6 +206,24 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-24 (Platform Console Decoupling & Recoverable Error Fix)
+- **Goal**: Resolve recoverable error in `/platform` route where Turbopack encountered an invalid module factory for `Car` required by `SiteHeader.tsx`.
+- **Root Cause Analysis**:
+  - The fleet management console at [`/platform`](file:///d:/amendesk/src/app/platform/page.tsx) imported `{ GhanaFlag }` from [`SiteHeader.tsx`](file:///d:/amendesk/src/components/site/SiteHeader.tsx).
+  - An earlier navigation refinement removed the unused `Car` icon from `SiteHeader.tsx`.
+  - When the client browser visited `/platform`, Next.js Turbopack had a stale module graph cache linking `SiteHeader.tsx`'s evaluation to `car.mjs`.
+  - Importing the public site header into an administrative console created an architectural code smell and cross-module entanglement.
+- **Accomplishments**:
+  - Extracted the national flag SVG into a dedicated, self-contained component [`GhanaFlag.tsx`](file:///d:/amendesk/src/components/ui/GhanaFlag.tsx).
+  - Decoupled [`/platform/page.tsx`](file:///d:/amendesk/src/app/platform/page.tsx) from `SiteHeader.tsx`, importing directly from `@/components/ui/GhanaFlag`.
+  - Maintained backwards compatibility by re-exporting `GhanaFlag` from `SiteHeader.tsx`.
+  - Ran mandatory quality gates: `tsc --noEmit` and strict `eslint` passed with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/components/ui/GhanaFlag.tsx` (Created dedicated GhanaFlag component)
+  - `src/components/site/SiteHeader.tsx` (Re-exported GhanaFlag from ui directory)
+  - `src/app/platform/page.tsx` (Decoupled from SiteHeader, imported from ui/GhanaFlag)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
 ### Session: 2026-10-24 (Login Surface Contrast & Streamlined Clean UI)
 - **Goal**: Remediate login surface card blending into surrounding slate canvas and strip non-instructed auxiliary elements (Quick Test Access drawer, footer badges row, and extra top chrome) per user directive.
 - **Accomplishments**:

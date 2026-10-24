@@ -11,7 +11,7 @@ import type {
   UserAccount,
 } from '@/lib/types/auth';
 import { ROLE_DESCRIPTIONS } from '@/lib/types/auth';
-import { GhanaFlag } from '@/components/site/SiteHeader';
+import { GhanaFlag } from '@/components/ui/GhanaFlag';
 import {
   Server,
   Building2,
