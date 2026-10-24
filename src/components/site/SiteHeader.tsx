@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Gavel,
-  Car,
   MapPin,
   Building2,
   Phone,
@@ -13,6 +12,9 @@ import {
   Menu,
   X,
   Award,
+  Newspaper,
+  BookOpen,
+  Home,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -44,11 +46,12 @@ export function GhanaFlag({ className = 'h-3.5 w-5' }: { className?: string }) {
 }
 
 const navLinks = [
-  { label: 'Home', href: '/' },
+  { label: 'Home', href: '/', icon: Home },
   { label: 'Auction Notices', href: '/auctions', icon: Gavel },
-  { label: 'Car Showroom', href: '/showroom', icon: Car },
   { label: 'Properties', href: '/properties', icon: Building2 },
   { label: 'Land', href: '/land', icon: MapPin },
+  { label: 'News', href: '/news', icon: Newspaper },
+  { label: 'Blog', href: '/blog', icon: BookOpen },
   { label: 'About Us', href: '/about', icon: Award },
   { label: 'Contact', href: '/contact', icon: Phone },
 ];
@@ -60,25 +63,18 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs">
       {/* Top Announcement Bar - Clean Light & Dark Styling */}
-      <div className="bg-slate-100 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px] py-1.5 px-6 font-medium">
+      <div className="bg-slate-100 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px] py-1.5 px-4 sm:px-6 font-medium">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          {/* Statutory Authority Statement with Ghana Flag */}
+          {/* Statutory Authority Statement (Center GH removed per user directive) */}
           <div className="flex items-center gap-2 flex-wrap">
             <ShieldCheck className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
+            <span className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
               Amen Mart Auctioning Services &bull; Approved by Auctioneers Registration Board &amp; Ministry of the Interior
-            </span>
-            <span
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs"
-              title="Republic of Ghana Registered Auctioneer"
-            >
-              <GhanaFlag className="h-2.5 w-4" />
-              <span>GH</span>
             </span>
           </div>
 
-          {/* Operational Contacts & Trailing Ghana Flag at End of Strip */}
-          <div className="flex items-center gap-3 sm:gap-4 text-[10px] text-slate-600 dark:text-slate-400">
+          {/* Operational Contacts & Trailing Ghana Flag on the far right */}
+          <div className="flex items-center gap-3 sm:gap-4 text-[10px] text-slate-600 dark:text-slate-400 whitespace-nowrap shrink-0">
             <span>Gbawe, Flower Junction &bull; Online Bidding</span>
             <span className="hidden md:inline text-slate-300 dark:text-slate-700">&bull;</span>
             <span>Tel: 0548517277 / 0558314744</span>
@@ -93,14 +89,14 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Main Nav */}
-      <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
+      {/* Main Nav - Perfectly aligned on one line with no wrap */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md font-bold text-lg">
+        <Link href="/" className="flex items-center gap-3 shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md font-bold text-lg shrink-0">
             AM
           </div>
-          <div>
+          <div className="whitespace-nowrap">
             <span className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100">
               AMEN MART
             </span>
@@ -110,8 +106,8 @@ export function SiteHeader() {
           </div>
         </Link>
 
-        {/* Desktop Links */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* Desktop Links - All on one single line, no wrap */}
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 shrink-0">
           {navLinks.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -119,7 +115,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className={clsx(
-                  'px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors',
+                  'px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0',
                   isActive
                     ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 font-bold'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -132,23 +128,17 @@ export function SiteHeader() {
         </nav>
 
         {/* Action Button & Mobile Menu Toggle */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden lg:inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white px-2 py-1 transition-colors"
-          >
-            Staff Login
-          </Link>
+        <div className="flex items-center gap-3 shrink-0">
           <Link
             href="/showroom"
-            className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+            className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors whitespace-nowrap shrink-0"
           >
             Explore Showroom
           </Link>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="Toggle mobile navigation"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -158,7 +148,7 @@ export function SiteHeader() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 space-y-2 shadow-lg">
+        <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 space-y-2 shadow-lg">
           {navLinks.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -174,8 +164,8 @@ export function SiteHeader() {
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 )}
               >
-                {Icon && <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
-                <span>{item.label}</span>
+                {Icon && <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                <span className="whitespace-nowrap">{item.label}</span>
               </Link>
             );
           })}

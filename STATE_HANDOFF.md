@@ -159,6 +159,8 @@ flowchart TD
 | `/auctions` | Public Auctions | Public notices for Private, Government, Judicial auctions | ✅ Active |
 | `/land` | Public Land | Land parcels, site plans, inquiry forms | ✅ Active |
 | `/properties` | Public Property | Residential & commercial property units | ✅ Active |
+| `/news` | Public News | Statutory notices, press releases, GAA updates | ✅ Active |
+| `/blog` | Public Blog | Buyer guides, judicial auction rules, auto advice | ✅ Active |
 | `/about` | Public About | Licensing, statutory authorizations, company background | ✅ Active |
 | `/contact` | Public Contact | Office location, phone, email, direct inquiry lead generation | ✅ Active |
 | `/login` | Auth Portal | Light-themed Google sign-in & tenant account selection | ✅ Active |
@@ -204,7 +206,24 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
-### Session: 2026-10-24 (Current Session)
+### Session: 2026-10-24 (Current Session — Megamenu, Navigation & Content Cleanup)
+- **Goal**: Realign site navigation megamenu, remove redundant links, strip duplicate top flag badge, and add dedicated News & Blog modules.
+- **Accomplishments**:
+  - Removed "Staff Login" from [`SiteHeader.tsx`](file:///d:/amendesk/src/components/site/SiteHeader.tsx) and "Staff ERP Terminal Login" from [`SiteFooter.tsx`](file:///d:/amendesk/src/components/site/SiteFooter.tsx) per isolated DNS routing policy.
+  - Aligned all navigation links and the "Explore Showroom" button on a clean single line with `whitespace-nowrap shrink-0`, preventing text wrapping and misaligned multi-line tabs.
+  - Removed duplicate center `GH` badge from top announcement strip while retaining the statutory `GHANA` national flag badge on the far right.
+  - Removed redundant "Car Showroom" link from desktop and mobile navigation menus (nav points directly via the dedicated "Explore Showroom" CTA).
+  - Added "News" and "Blog" navigation entries and built dedicated production-ready public pages at [`/news`](file:///d:/amendesk/src/app/(site)/news/page.tsx) and [`/blog`](file:///d:/amendesk/src/app/(site)/blog/page.tsx) with category filtering, modal viewers, and Ghana auction industry insights.
+  - Updated [`SiteFooter.tsx`](file:///d:/amendesk/src/components/site/SiteFooter.tsx) Quick Links to reference News and Blog pages.
+  - Ran mandatory quality gates: `npm run check` passing with 0 TypeScript compiler errors and 0 ESLint warnings.
+- **Changed Files**:
+  - `src/components/site/SiteHeader.tsx` (Realigned single-line navigation, removed staff login and car showroom, removed center GH badge, added News and Blog)
+  - `src/components/site/SiteFooter.tsx` (Removed staff login, linked News and Blog guides)
+  - `src/app/(site)/news/page.tsx` (Created official news, statutory gazettes, and press releases portal)
+  - `src/app/(site)/blog/page.tsx` (Created auction and vehicle buying guides blog portal)
+  - `STATE_HANDOFF.md` (Updated route index and session history)
+
+### Session: 2026-10-24 (Earlier Session)
 - **Goal**: Implement project-wide state handoff governance and continuity protocol.
 - **Accomplishments**:
   - Created root [`STATE_HANDOFF.md`](file:///d:/amendesk/STATE_HANDOFF.md) establishing comprehensive project status, module index, architecture conventions, and roadmap tracking.

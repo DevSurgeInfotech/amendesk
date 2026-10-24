@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShieldCheck, MapPin, Phone, Mail, Gavel, Car, Building2 } from 'lucide-react';
+import { ShieldCheck, MapPin, Phone, Mail, Gavel, Car, Building2, Newspaper, BookOpen } from 'lucide-react';
 
 export function SiteFooter() {
   return (
@@ -79,23 +79,25 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="hover:text-indigo-600 transition-colors">
-                Bidder Registration &amp; KYC
-              </Link>
-            </li>
-            <li>
               <Link href="/showroom" className="hover:text-indigo-600 transition-colors">
                 Online Reservation Deposits
               </Link>
             </li>
             <li>
-              <Link href="/login" className="hover:text-indigo-600 transition-colors font-semibold">
-                Staff ERP Terminal Login
+              <Link href="/news" className="hover:text-indigo-600 transition-colors flex items-center gap-1.5">
+                <Newspaper className="h-3.5 w-3.5 text-indigo-600" />
+                <span>News &amp; Press Announcements</span>
               </Link>
             </li>
             <li>
-              <Link href="/platform" className="hover:text-indigo-600 transition-colors text-slate-500">
-                Platform Console &amp; Provisioning
+              <Link href="/blog" className="hover:text-indigo-600 transition-colors flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Auction &amp; Buyer Guides</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="hover:text-indigo-600 transition-colors">
+                Bidder Registration &amp; KYC
               </Link>
             </li>
           </ul>
@@ -130,3 +132,5 @@ export function SiteFooter() {
     </footer>
   );
 }
+
+export default SiteFooter;
