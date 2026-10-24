@@ -2,12 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   authService,
 } from '@/lib/auth/authService';
 import type {
   AppRole,
   TenantEnvironment,
+  TenantRecord,
   UserAccount,
 } from '@/lib/types/auth';
 import { ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/lib/types/auth';
@@ -26,11 +28,14 @@ import {
   ArrowLeft,
   X,
   Search,
+  FlaskConical,
+  ExternalLink,
 } from 'lucide-react';
 
 const MASTER_KEYS = ['devsurge2026', 'surge@amen2026', 'amen@master2026'];
 
 export default function PlatformPage() {
+  const router = useRouter();
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [masterPasscode, setMasterPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
@@ -236,6 +241,35 @@ export default function PlatformPage() {
     }
   };
 
+  const handleLaunchDemoYard = () => {
+    try {
+      authService.loginAsDemoDirector();
+      router.push('/desk');
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to launch Demo Yard testing environment.',
+      });
+    }
+  };
+
+  const handleLaunchTenant = (tenant: TenantRecord) => {
+    try {
+      const tenantUsers = authService.getUsers(tenant.id);
+      const ownerOrFirstUser = tenantUsers.find((u) => u.role === 'OWNER') || tenantUsers[0];
+      if (!ownerOrFirstUser) {
+        throw new Error(`No staff users provisioned for ${tenant.name}. Please provision a user first.`);
+      }
+      authService.login(tenant.id, ownerOrFirstUser.username, ownerOrFirstUser.password);
+      router.push('/desk');
+    } catch (err) {
+      setFeedbackMsg({
+        type: 'ERROR',
+        text: err instanceof Error ? err.message : 'Failed to launch workspace.',
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
       {/* Top Header */}
@@ -268,6 +302,17 @@ export default function PlatformPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {isUnlocked && (
+              <button
+                type="button"
+                onClick={handleLaunchDemoYard}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-all cursor-pointer shadow-xs"
+                title="Switch immediately into the Demo Yard tenant to test features before deploying to production"
+              >
+                <FlaskConical className="h-3.5 w-3.5" />
+                <span>Test in Demo Yard</span>
+              </button>
+            )}
             <Link
               href="/login"
               className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-xl border border-slate-800 hover:bg-slate-800 transition-colors"
@@ -606,9 +651,24 @@ export default function PlatformPage() {
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
-                        <span>Status: <strong className="text-emerald-400">{t.status}</strong></span>
-                        <span className="font-mono text-[11px]">Since {new Date(t.createdAt).toLocaleDateString('en-GB')}</span>
+                      <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500 gap-2 flex-wrap">
+                        <div className="flex items-center gap-3">
+                          <span>Status: <strong className="text-emerald-400">{t.status}</strong></span>
+                          <span className="font-mono text-[11px] hidden sm:inline">Since {new Date(t.createdAt).toLocaleDateString('en-GB')}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleLaunchTenant(t)}
+                          className={`px-3 py-1.5 rounded-xl font-black text-[11px] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                            !isLive
+                              ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                          }`}
+                          title={isLive ? 'Launch Live Production Workspace' : 'Launch Demo Yard to test all features before production'}
+                        >
+                          {!isLive ? <FlaskConical className="h-3.5 w-3.5" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                          <span>{!isLive ? 'Test Features in Demo Yard →' : 'Launch Amen Mart Live →'}</span>
+                        </button>
                       </div>
                     </div>
                   );

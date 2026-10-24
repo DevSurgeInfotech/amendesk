@@ -162,11 +162,40 @@ class AuthService {
     if (typeof window === 'undefined') return;
 
     try {
-      if (!localStorage.getItem(TENANTS_STORAGE_KEY)) {
+      // 1. Ensure tenants are initialized and merge any missing default tenants (e.g. Demo Yard)
+      const existingTenantsJson = localStorage.getItem(TENANTS_STORAGE_KEY);
+      if (!existingTenantsJson) {
         localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(DEFAULT_TENANTS));
+      } else {
+        const currentTenants = JSON.parse(existingTenantsJson) as TenantRecord[];
+        let tenantsUpdated = false;
+        for (const defTenant of DEFAULT_TENANTS) {
+          if (!currentTenants.some((t) => t.id === defTenant.id || t.code === defTenant.code)) {
+            currentTenants.push(defTenant);
+            tenantsUpdated = true;
+          }
+        }
+        if (tenantsUpdated) {
+          localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(currentTenants));
+        }
       }
-      if (!localStorage.getItem(USERS_STORAGE_KEY)) {
+
+      // 2. Ensure users are initialized and merge any missing default users (e.g. demo users)
+      const existingUsersJson = localStorage.getItem(USERS_STORAGE_KEY);
+      if (!existingUsersJson) {
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
+      } else {
+        const currentUsers = JSON.parse(existingUsersJson) as UserAccount[];
+        let usersUpdated = false;
+        for (const defUser of DEFAULT_USERS) {
+          if (!currentUsers.some((u) => u.username.toLowerCase() === defUser.username.toLowerCase() && u.tenantId === defUser.tenantId)) {
+            currentUsers.push(defUser);
+            usersUpdated = true;
+          }
+        }
+        if (usersUpdated) {
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(currentUsers));
+        }
       }
     } catch (err) {
       console.warn('Failed to initialize auth storage:', err);
@@ -299,35 +328,96 @@ class AuthService {
     }
   }
 
-  public login(tenantCodeOrId: string, usernameOrEmail: string, password: string): AuthSession {
-    const tenant = this.getTenantByIdOrCode(tenantCodeOrId);
+  public login(usernameOrEmail: string, password: string, rememberMe?: boolean): AuthSession;
+  public login(tenantCodeOrId: string, usernameOrEmail: string, password: string, rememberMe?: boolean): AuthSession;
+  public login(
+    arg1: string,
+    arg2: string,
+    arg3?: string | boolean,
+    arg4?: boolean
+  ): AuthSession {
+    let tenantCodeOrId: string | undefined;
+    let usernameOrEmail: string;
+    let password: string;
+    let rememberMe = false;
+
+    if (typeof arg3 === 'string') {
+      tenantCodeOrId = arg1;
+      usernameOrEmail = arg2;
+      password = arg3;
+      rememberMe = Boolean(arg4);
+    } else {
+      usernameOrEmail = arg1;
+      password = arg2;
+      rememberMe = Boolean(arg3);
+    }
+
+    const normalizedIdentity = usernameOrEmail.trim().toLowerCase();
+    const allUsers = this.getUsers();
+    const allTenants = this.getTenants();
+
+    let user: UserAccount | undefined;
+    let tenant: TenantRecord | undefined;
+
+    if (tenantCodeOrId) {
+      tenant = this.getTenantByIdOrCode(tenantCodeOrId);
+      if (!tenant) {
+        throw new Error(`Invalid Workspace / Tenant code: "${tenantCodeOrId}".`);
+      }
+      user = allUsers.find(
+        (u) =>
+          u.tenantId === tenant!.id &&
+          (u.username.toLowerCase() === normalizedIdentity || u.email.toLowerCase() === normalizedIdentity) &&
+          u.isActive
+      );
+    } else {
+      // Universal lookup across all active tenants
+      const matchingUsers = allUsers.filter(
+        (u) =>
+          (u.username.toLowerCase() === normalizedIdentity || u.email.toLowerCase() === normalizedIdentity) &&
+          u.isActive
+      );
+
+      if (matchingUsers.length === 0) {
+        throw new Error('Invalid credentials: No active account matches this username or email.');
+      }
+
+      if (matchingUsers.length === 1) {
+        user = matchingUsers[0];
+        tenant = allTenants.find((t) => t.id === user!.tenantId);
+      } else {
+        // Multiple matches across tenants - check password match
+        const passwordMatch = matchingUsers.find((u) => u.password === password);
+        if (passwordMatch) {
+          user = passwordMatch;
+          tenant = allTenants.find((t) => t.id === user!.tenantId);
+        } else {
+          user = matchingUsers[0];
+          tenant = allTenants.find((t) => t.id === user!.tenantId);
+        }
+      }
+    }
+
+    if (!user) {
+      throw new Error('Invalid credentials: No account found matching this identity.');
+    }
+
     if (!tenant) {
-      throw new Error(`Invalid Workspace / Tenant code: "${tenantCodeOrId}".`);
+      throw new Error('Associated tenant workspace not found.');
     }
 
     if (tenant.status !== 'ACTIVE') {
       throw new Error(`Workspace "${tenant.name}" is currently suspended. Please contact platform administrators.`);
     }
 
-    const users = this.getUsers(tenant.id);
-    const normalizedIdentity = usernameOrEmail.trim().toLowerCase();
-
-    const user = users.find(
-      (u) =>
-        (u.username.toLowerCase() === normalizedIdentity || u.email.toLowerCase() === normalizedIdentity) &&
-        u.isActive
-    );
-
-    if (!user) {
-      throw new Error('Invalid username or account not provisioned for this workspace.');
-    }
-
     if (user.password !== password) {
-      throw new Error('Incorrect password or PIN for this staff account.');
+      throw new Error('Incorrect password or passcode. Please try again.');
     }
 
     // Update last login timestamp
     this.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
+
+    const sessionDuration = rememberMe ? 1000 * 60 * 60 * 24 * 30 : 1000 * 60 * 60 * 24 * 7;
 
     const session: AuthSession = {
       user: {
@@ -341,7 +431,7 @@ class AuthService {
       tenant,
       token: `tok-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       createdAt: new Date().toISOString(),
-      expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7-day session
+      expiresAt: Date.now() + sessionDuration,
     };
 
     if (typeof window !== 'undefined') {
@@ -349,9 +439,14 @@ class AuthService {
       localStorage.setItem(TENANT_STORAGE_KEY, tenant.id);
       localStorage.setItem('amendesk_staff_role', user.role);
       window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+      window.dispatchEvent(new Event('amendesk-tenant-change'));
     }
 
     return session;
+  }
+
+  public loginAsDemoDirector(): AuthSession {
+    return this.login('amen-mart-sandbox', 'demo.owner', 'demo123', true);
   }
 
   public logout(): void {
