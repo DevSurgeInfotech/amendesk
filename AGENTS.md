@@ -15,6 +15,33 @@ This is Next.js 16+ with the App Router. APIs differ significantly from
 Pages Router. Read `node_modules/next/dist/docs/` before writing any code.
 <!-- END:framework-rules -->
 
+<!-- BEGIN:state-handoff-rules -->
+# State Handoff & Continuity Protocol — MANDATORY
+
+Every agent working in this codebase MUST follow the State Handoff Protocol to maintain project continuity, prevent regression, and track phase execution:
+
+## Rules
+
+1. **Mandatory Pre-Execution Reading**: Before writing any code, creating files, or modifying configuration, every agent MUST read `STATE_HANDOFF.md`, `AGENTS.md`, and `amen-mart-erp-website-plan.md` in full to understand:
+   - The active project phase and execution status
+   - Architectural decisions and constraints
+   - Current schema and multi-tenant environment setup
+   - Priority backlog items and recent session logs
+2. **Mandatory Post-Execution Update**: At the conclusion of EVERY task or session, before running quality checks, committing, and pushing, the agent MUST update `STATE_HANDOFF.md` with:
+   - Updated system execution state across all phases (Phases 1–5 and auxiliary modules)
+   - Detailed changelog of the current session (files changed, rationale, problems solved)
+   - Architectural decisions, conventions, or configuration updates
+   - Immediate next actions and prioritized roadmap items for the next agent
+3. **Execution Gate Sequence**:
+   1. Read `STATE_HANDOFF.md`, `AGENTS.md`, and `amen-mart-erp-website-plan.md`
+   2. Implement required changes and verify functionality
+   3. Update `STATE_HANDOFF.md` with current session summary and phase execution status
+   4. Run mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict)
+   5. Commit changes with a descriptive conventional commit message (`git commit`)
+   6. Live Git Push to remote (`git push origin <branch>`) using company credentials
+4. **Zero Debt / No Bypass**: Do not skip updating `STATE_HANDOFF.md`. A task is NOT complete until `STATE_HANDOFF.md` accurately reflects the exact state of the project, quality gates pass, and commits are pushed live to GitHub.
+<!-- END:state-handoff-rules -->
+
 <!-- BEGIN:code-quality-rules -->
 # Code Quality Gates — MANDATORY
 
@@ -47,7 +74,8 @@ npm run check
    attribute. Use `<Component>{children}</Component>` instead.
 8. **`no-require-imports`** — Always use ES `import` syntax at the top of
    the file. Never use `require()` inside function bodies.
-9. **Live Git Push** — Once `npm run check` passes and changes are committed, the agent MUST push commits live to GitHub (`git push origin <branch>`). Work is never complete until pushed live to the remote repository.
+9. **State Handoff Updated** — `STATE_HANDOFF.md` must be updated with the latest session log and phase status before concluding.
+10. **Live Git Push** — Once `npm run check` passes, `STATE_HANDOFF.md` is updated, and changes are committed, the agent MUST push commits live to GitHub (`git push origin <branch>`). Work is never complete until pushed live to the remote repository.
 
 ## Pre-commit Hook
 

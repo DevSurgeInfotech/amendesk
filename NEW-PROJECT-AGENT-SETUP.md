@@ -191,7 +191,7 @@ Add these scripts to your `package.json`:
 
 ## 5. `AGENTS.md` — Agent Instruction File
 
-Create `AGENTS.md` at the project root. This file is read by AI agents (Antigravity, Codex, Claude Code, etc.) before they start working. It is the most direct way to enforce standards at the agent level.
+Create `AGENTS.md` and `STATE_HANDOFF.md` at the project root. These files are read by AI agents (Antigravity, Codex, Claude Code, etc.) before they start working. `AGENTS.md` enforces quality gates and rules, while `STATE_HANDOFF.md` tracks active roadmap phases, architecture decisions, and session continuity.
 
 Copy and adapt this template:
 
@@ -335,7 +335,8 @@ New Project Checklist
 □ .husky/pre-commit   → npx lint-staged
 □ package.json        → lint-staged config block
 □ package.json        → check, typecheck, lint, lint:strict scripts
-□ AGENTS.md           → mandatory quality gate rules
+□ AGENTS.md           → mandatory quality gate & handoff rules
+□ STATE_HANDOFF.md    → living state ledger & continuity handoff
 □ npm run check       → exits 0 ✅
 ```
 
