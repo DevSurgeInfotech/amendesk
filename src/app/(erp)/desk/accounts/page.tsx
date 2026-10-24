@@ -271,21 +271,16 @@ function AccountsContent() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="surface-card flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              <CurrentIcon className="h-3.5 w-3.5" />
-              <span>Accounting &bull; {currentMeta.label}</span>
-            </span>
-            <span className="text-xs text-slate-400">Ghana IFRS &bull; Multi-Mode GL &bull; GRA Tax Compliant</span>
+      <div className="surface-card flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300 shrink-0">
+            <CurrentIcon className="h-4 w-4" />
+          </span>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+              {currentMeta.label}
+            </h1>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            {currentMeta.label}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-3xl mt-0.5">
-            {currentMeta.desc}
-          </p>
         </div>
 
         {/* Action Buttons */}
@@ -309,7 +304,7 @@ function AccountsContent() {
             icon={<FileCheck className="h-4 w-4" />}
             onClick={() => setIsJournalModalOpen(true)}
           >
-            New Journal Entry
+            Journal Entry
           </Button>
           <Button
             size="sm"
@@ -337,25 +332,22 @@ function AccountsContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <GlassCard
               theme="emerald"
-              title="Total Liquid Funds"
+              title="Liquid Funds"
               value={formatGHS(totalLiquidity)}
-              subtitle="Cash Tills + MoMo + Bank Accounts"
               iconName="collections"
             />
 
             <GlassCard
               theme="amber"
-              title="Accounts Receivable (AR)"
+              title="Accounts Receivable"
               value={formatGHS(totalReceivables)}
-              subtitle="14-day auction &amp; showroom debtor balances"
               iconName="receivables"
             />
 
             <GlassCard
               theme="purple"
-              title="Payables &amp; Judicial Escrow"
+              title="Payables &amp; Escrow"
               value={formatGHS(totalPayablesAndEscrow)}
-              subtitle="Court registrar, consignor &amp; vendor liabilities"
               iconName="scale"
             />
 
@@ -363,7 +355,6 @@ function AccountsContent() {
               theme="indigo"
               title="Net Operating Margin"
               value={formatGHS(netOperatingProfit)}
-              subtitle={`Revenue ${formatGHS(totalRevenue)} − Opex ${formatGHS(totalOperatingExpenses)}`}
               iconName="profit"
             />
           </div>

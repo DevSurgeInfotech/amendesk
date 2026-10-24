@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect, useTransition } from 'react';
+import { Suspense, useState, useMemo, useEffect, useTransition } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useTerminal, ROLE_STAFF_NAMES } from '@/context/TerminalContext';
 import { authService } from '@/lib/auth/authService';
 import type { AppRole, UserAccount } from '@/lib/types/auth';
@@ -30,11 +31,29 @@ import {
   Lock,
 } from 'lucide-react';
 
-export default function WorkspaceSettingsPage() {
+function resolveSettingsTab(tabParam: string | null): 'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY' {
+  const normalized = tabParam?.toLowerCase();
+  if (normalized === 'profile') return 'PROFILE';
+  if (normalized === 'rules') return 'RULES';
+  if (normalized === 'security') return 'SECURITY';
+  return 'STAFF';
+}
+
+function WorkspaceSettingsContent() {
+  const searchParams = useSearchParams();
   const { activeTenant, currentUser, role } = useTerminal();
   const [, startTransition] = useTransition();
 
-  const [activeTab, setActiveTab] = useState<'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY'>('STAFF');
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY'>(() =>
+    resolveSettingsTab(tabParam)
+  );
+  const [prevTabParam, setPrevTabParam] = useState(tabParam);
+  if (tabParam !== prevTabParam) {
+    setPrevTabParam(tabParam);
+    setActiveTab(resolveSettingsTab(tabParam));
+  }
+
   const [feedback, setFeedback] = useState<{ type: 'SUCCESS' | 'ERROR'; message: string } | null>(null);
 
   // Users & Invitations State
@@ -218,19 +237,12 @@ export default function WorkspaceSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb & Top Context */}
+      {/* Top Context */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            <Link href="/desk" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
-              AmenDesk ERP
-            </Link>
-            <span>&bull;</span>
-            <span className="text-slate-800 dark:text-slate-200">Settings</span>
-          </div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              Workspace Settings &amp; Staff Directory
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Settings
             </h1>
             <span
               className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
@@ -242,8 +254,8 @@ export default function WorkspaceSettingsPage() {
               {activeTenant.name} ({activeTenant.code})
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Manage your organization profile, staff members, invitations, role permissions, and auction POS rules.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Staff directory, organization profile, business rules, and role permissions
           </p>
         </div>
 
@@ -1071,5 +1083,19 @@ export default function WorkspaceSettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WorkspaceSettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-500 font-semibold text-sm">
+          Loading Settings...
+        </div>
+      }
+    >
+      <WorkspaceSettingsContent />
+    </Suspense>
   );
 }

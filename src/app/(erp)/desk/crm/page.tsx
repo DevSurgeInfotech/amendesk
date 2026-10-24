@@ -44,9 +44,14 @@ function CrmContent() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   // Filters
-  const [kycFilter, setKycFilter] = useState<'ALL' | 'VERIFIED' | 'UNVERIFIED'>(
-    initialFilter === 'VERIFIED' || initialFilter === 'UNVERIFIED' ? initialFilter : 'ALL'
-  );
+  const resolvedKycFilter =
+    initialFilter === 'VERIFIED' || initialFilter === 'UNVERIFIED' ? initialFilter : 'ALL';
+  const [kycFilter, setKycFilter] = useState<'ALL' | 'VERIFIED' | 'UNVERIFIED'>(resolvedKycFilter);
+  const [prevKycParam, setPrevKycParam] = useState(initialFilter);
+  if (initialFilter !== prevKycParam) {
+    setPrevKycParam(initialFilter);
+    setKycFilter(resolvedKycFilter);
+  }
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'INDIVIDUAL' | 'CORPORATE'>(
     initialType === 'INDIVIDUAL' || initialType === 'CORPORATE' ? initialType : 'ALL'
   );
@@ -168,23 +173,17 @@ function CrmContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Unified CRM &amp; KYC
-            </span>
-            <span className="text-xs text-slate-400">Ghana Card AML Verification &bull; Multi-Line Registry</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Customer Profile Directory
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Customer Directory
           </h1>
           <p className="text-xs text-slate-500">
-            One single client record across Auction bidding, Car Dealership showroom sales, and Land/Property purchases.
+            Client profiles &amp; Ghana Card KYC verification
           </p>
         </div>
 
-        <Button variant="primary" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
+        <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
           Register Customer
         </Button>
       </div>

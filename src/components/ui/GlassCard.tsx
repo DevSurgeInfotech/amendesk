@@ -399,38 +399,42 @@ export interface GlassCardProps {
 }
 
 /**
+ * Strips trailing ".00" on multi-digit whole currency figures (e.g. "532,950.00" -> "532,950")
+ * so executive KPI cards never clip or truncate significant digits with "...".
+ */
+function stripRedundantZeroDecimals(numStr: string): string {
+  return numStr.replace(/^([\d,]{3,})\.00$/, '$1');
+}
+
+/**
  * Automatically computes responsive, impactful font size classes
  * based on the character length of the metric figure.
- * Uses modern font-sans font-black with tabular-nums so figures look
- * bold, large, and authoritative without overflowing.
+ * Calibrated for a 4-column grid alongside the 264px ERP sidebar so figures
+ * never overflow or truncate with "...".
  */
 function getValueFontSize(value: React.ReactNode): string {
   if (typeof value === 'string' || typeof value === 'number') {
     const str = String(value).trim();
-    // Count numeric digits excluding the GH₵ currency symbol
-    const cleanStr = str.replace(/^GH[₵c\s]*/i, '');
+    const rawNumeric = str.replace(/^GH[₵c\s]*/i, '');
+    const cleanStr = stripRedundantZeroDecimals(rawNumeric);
     const len = cleanStr.length;
 
-    // Multi-million/eight-figure amounts: e.g. "17,665,000.00" (13 chars)
-    if (len >= 13) {
-      return 'text-2xl sm:text-[26px] lg:text-[22px] xl:text-[25px] 2xl:text-[28px]';
-    }
-    // Hundred-thousand amounts: e.g. "928,650.00", "556,600.00", "100,000.00" (10 chars)
+    // Multi-million amounts: e.g. "17,325,000" (10+ chars)
     if (len >= 10) {
-      return 'text-[26px] sm:text-3xl lg:text-[24px] xl:text-[28px] 2xl:text-[32px]';
+      return 'text-xl sm:text-2xl lg:text-[19px] xl:text-[21px] 2xl:text-2xl';
     }
-    // Five-figure amounts: e.g. "74,550.00", "50,000.00" (9 chars)
-    if (len >= 7) {
-      return 'text-[28px] sm:text-3xl lg:text-[26px] xl:text-3xl 2xl:text-4xl';
+    // Five to six-figure amounts: e.g. "532,950", "74,550" (6–9 chars)
+    if (len >= 6) {
+      return 'text-2xl sm:text-[26px] lg:text-[21px] xl:text-[23px] 2xl:text-[26px]';
     }
   }
-  // Short counts/percentages: e.g. "203", "13", "98.2%", "0.00"
-  return 'text-3xl sm:text-4xl lg:text-3xl xl:text-4xl';
+  // Short counts/percentages: e.g. "203", "13 Plans", "0.00"
+  return 'text-2xl sm:text-3xl lg:text-2xl xl:text-[26px] 2xl:text-3xl';
 }
 
 /**
  * Renders currency values with an elegant slightly scaled prefix
- * to maximize visual impact and size of the numeric figure without overflowing.
+ * to maximize visual impact and readability without overflowing.
  */
 function renderMetricValue(value: React.ReactNode, valueFontSize: string, valueTextClass: string) {
   if (typeof value === 'string') {
@@ -438,10 +442,10 @@ function renderMetricValue(value: React.ReactNode, valueFontSize: string, valueT
     const match = trimmed.match(/^(GH[₵c])\s*(.*)$/i);
     if (match) {
       const prefix = match[1];
-      const rest = match[2];
+      const rest = stripRedundantZeroDecimals(match[2]);
       return (
         <p
-          className={`font-black font-sans tracking-tight tabular-nums truncate drop-shadow-2xs leading-none ${valueFontSize} ${valueTextClass}`}
+          className={`font-black font-sans tracking-tight tabular-nums whitespace-nowrap drop-shadow-2xs leading-none ${valueFontSize} ${valueTextClass}`}
           title={trimmed}
         >
           <span className="text-[0.72em] font-extrabold opacity-85 mr-1 inline-block align-baseline tracking-normal">
@@ -455,7 +459,7 @@ function renderMetricValue(value: React.ReactNode, valueFontSize: string, valueT
 
   return (
     <p
-      className={`font-black font-sans tracking-tight tabular-nums truncate drop-shadow-2xs leading-none ${valueFontSize} ${valueTextClass}`}
+      className={`font-black font-sans tracking-tight tabular-nums whitespace-nowrap drop-shadow-2xs leading-none ${valueFontSize} ${valueTextClass}`}
       title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
     >
       {value}
@@ -472,7 +476,6 @@ export function GlassCard({
   variant = 'pure',
   title,
   value,
-  subtitle,
   icon,
   iconName,
   badge,
@@ -492,7 +495,7 @@ export function GlassCard({
   const cardContent = (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl p-5 sm:p-5.5 transition-all duration-200 min-w-0 group ${
+      className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 transition-all duration-200 min-w-0 group ${
         isGlass ? 'border backdrop-blur-md ring-1 ring-inset ring-white/70 dark:ring-white/10' : ''
       } ${
         onClick || href ? 'cursor-pointer hover:-translate-y-0.5' : ''
@@ -516,11 +519,11 @@ export function GlassCard({
       {(title || value || resolvedIcon) && (
         <div className="relative z-10 flex flex-col justify-between h-full min-w-0 w-full">
           {/* Header Row: Title & Circular/Glassmorphic Icon Badge */}
-          <div className="flex items-start justify-between gap-3 min-w-0">
+          <div className="flex items-center justify-between gap-2.5 min-w-0">
             <div className="space-y-1 min-w-0 pr-1 flex-1">
               {title && (
                 <span
-                  className={`block text-[11px] font-bold uppercase tracking-wider leading-snug line-clamp-2 ${cfg.titleText}`}
+                  className={`block text-[11px] font-bold uppercase tracking-wider leading-snug truncate ${cfg.titleText}`}
                   title={typeof title === 'string' ? title : undefined}
                 >
                   {title}
@@ -546,21 +549,10 @@ export function GlassCard({
             )}
           </div>
 
-          {/* Value Figure */}
-          {value !== undefined && (
-            <div className="mt-4 sm:mt-5 min-w-0 w-full">
-              {renderMetricValue(value, valueFontSize, cfg.valueText)}
-            </div>
-          )}
-
-          {/* Subtitle / Helper / Trend */}
-          {(subtitle || trend) && (
-            <div className="mt-3 sm:mt-4 flex items-center justify-between text-xs min-w-0 gap-2">
-              {subtitle && (
-                <p className={`font-medium text-[11.5px] leading-snug line-clamp-2 min-w-0 flex-1 ${cfg.subtitleText}`}>
-                  {subtitle}
-                </p>
-              )}
+          {/* Value Figure & Optional Trend Pill */}
+          {(value !== undefined || trend) && (
+            <div className="mt-3.5 sm:mt-4 flex items-baseline justify-between gap-2 min-w-0 w-full">
+              {value !== undefined && renderMetricValue(value, valueFontSize, cfg.valueText)}
               {trend && (
                 <span
                   className={

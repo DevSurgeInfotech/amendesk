@@ -32,24 +32,18 @@ export function PortfolioMixChart({ lines }: PortfolioMixChartProps) {
   return (
     <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col h-full min-w-0">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex items-center justify-between gap-3 mb-4">
         <div className="min-w-0">
           <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            Inventory Value by Business Line
+            Portfolio by Business Line
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Where the asset value sits across Auctions, Showroom, Land &amp; Property
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {totalUnits} total assets
           </p>
         </div>
-        <div className="text-right shrink-0">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-            Total value
-          </span>
-          <p className="text-lg font-black font-mono text-slate-900 dark:text-slate-100 leading-tight">
-            {formatGHS(totalGhs)}
-          </p>
-          <span className="text-[10px] text-slate-500">{totalUnits} items on record</span>
-        </div>
+        <p className="text-lg font-black font-mono text-slate-900 dark:text-slate-100 leading-tight shrink-0">
+          {formatGHS(totalGhs)}
+        </p>
       </div>
 
       <ul className="space-y-2 flex-1">
@@ -60,7 +54,7 @@ export function PortfolioMixChart({ lines }: PortfolioMixChartProps) {
             <li key={line.id}>
               <Link
                 href={line.href}
-                className="group block rounded-xl px-3 py-2.5 -mx-1 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                className="group block rounded-xl px-3 py-2 -mx-1 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
               >
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -75,7 +69,7 @@ export function PortfolioMixChart({ lines }: PortfolioMixChartProps) {
                         {line.label}
                       </span>
                       <span className="block text-[11px] text-slate-500 truncate">
-                        {line.unitCount} {line.unitNoun} &bull; {line.availableCount} available
+                        {line.availableCount} of {line.unitCount} available
                       </span>
                     </div>
                   </div>
@@ -84,11 +78,11 @@ export function PortfolioMixChart({ lines }: PortfolioMixChartProps) {
                       {formatGHS(line.valueGhs)}
                     </span>
                     <span className="block text-[11px] font-bold text-slate-400">
-                      {Math.round(percent)}% of total
+                      {Math.round(percent)}%
                     </span>
                   </div>
                 </div>
-                <div className="mt-2 h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div className="mt-1.5 h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-300"
                     style={{

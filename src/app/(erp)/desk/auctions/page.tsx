@@ -63,6 +63,11 @@ function AuctionsContent() {
   const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
 
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | AuctionCategory>(initialCat);
+  const [prevCatParam, setPrevCatParam] = useState(catParam);
+  if (catParam !== prevCatParam) {
+    setPrevCatParam(catParam);
+    setCategoryFilter(initialCat);
+  }
   const [assetTypeFilter, setAssetTypeFilter] = useState<'ALL' | AssetType>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | LotStatus>('ALL');
 
@@ -213,24 +218,18 @@ function AuctionsContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Auction Yard Operations
-            </span>
-            <span className="text-xs text-slate-400">Offline-Capable Bidding &amp; Hammer Logging</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Multi-Category Auction Engine
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Auction Lots
           </h1>
           <p className="text-xs text-slate-500">
-            Private, Government (Movable Only), and Judicial Auctions with 7% margin fee &amp; 14-day instalment tracking.
+            Judicial, Government &amp; Private auctions
           </p>
         </div>
 
         <Link href="/desk/auctions/intake">
-          <Button variant="primary" icon={<PlusCircle className="h-4 w-4" />}>
+          <Button variant="primary" size="sm" icon={<PlusCircle className="h-4 w-4" />}>
             Intake New Lot
           </Button>
         </Link>

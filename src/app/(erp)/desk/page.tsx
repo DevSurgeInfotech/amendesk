@@ -15,7 +15,6 @@ import { BankDepositModal } from '@/components/erp/accounting/BankDepositModal';
 import { QuickActionBar } from '@/components/erp/dashboard/QuickActionBar';
 import { VehicleIntakeModal } from '@/components/erp/dashboard/VehicleIntakeModal';
 import { OperationalAlerts } from '@/components/erp/dashboard/OperationalAlerts';
-import { LineOfOperationsPulse } from '@/components/erp/dashboard/LineOfOperationsPulse';
 import { SettlementWatchlist } from '@/components/erp/dashboard/SettlementWatchlist';
 import {
   CollectionsTrendChart,
@@ -32,10 +31,7 @@ import {
   type BusinessLineValue,
 } from '@/components/erp/dashboard/charts/PortfolioMixChart';
 import {
-  Wifi,
-  WifiOff,
   MapPin,
-  UserCheck,
   RefreshCw,
   CheckCircle2,
   AlertCircle,
@@ -66,9 +62,7 @@ function emptyChannelTotals(): Record<PaymentMethod, number> {
 
 export default function DeskDashboardPage() {
   const {
-    currentStaffName,
     facilityLocation,
-    isOnline,
     pendingSyncCount,
     isSyncing,
     lastSyncedAt,
@@ -215,7 +209,6 @@ export default function DeskDashboardPage() {
   }, [paymentPlans, invoices, lots]);
 
   const totalReceivablesGhs = agingBuckets.reduce((acc, b) => acc + b.amountGhs, 0);
-  const openBalanceCount = agingBuckets.reduce((acc, b) => acc + b.count, 0);
 
   // Total verified cash collections to date
   const totalCollectedGhs = useMemo(
@@ -245,9 +238,6 @@ export default function DeskDashboardPage() {
   );
   const totalAssetValuation =
     totalVehiclesValue + totalLandValue + totalPropertyValue + totalAuctionReserveValue;
-
-  const totalInventoryUnits =
-    vehicles.length + landParcels.length + properties.length + activeLots.length;
 
   // Realized 7% Margin on auctions + vehicle markups
   const realizedAuction7PercentMargin = useMemo(
@@ -458,113 +448,44 @@ export default function DeskDashboardPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Field Operations & Central Office Status Banner */}
-      <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* Compact Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded text-[11px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Amen Mart Auctioning Services &bull; GAA Licensed
-            </span>
-
-            {/* Offline-First Network Status Pill */}
-            <div
-              className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold ${
-                isOnline
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-              }`}
-            >
-              {isOnline ? (
-                <>
-                  <Wifi className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Online &bull; Auto-Sync Active</span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="h-3.5 w-3.5 text-amber-600" />
-                  <span>Offline Mode &bull; IndexedDB Local Storage</span>
-                </>
-              )}
-            </div>
-
-            <span className="text-xs text-slate-400">
-              Standard Margin: 7% Across All Asset Categories
-            </span>
-          </div>
-
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            AmenDesk Operations Dashboard
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Operations Dashboard
           </h1>
-
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-semibold">
-              <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
-              <span>Officer: {currentStaffName}</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5 text-slate-400" />
-              <span>{facilityLocation || 'Central Office & Mobile Auction Field'}</span>
-            </span>
-            <span>Ghana Cedis Standard (GH₵)</span>
-          </div>
+          <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <span>{facilityLocation || 'Accra Central Office'}</span>
+          </p>
         </div>
 
-        {/* Sync Status Button */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right text-xs">
-            {isSyncing ? (
-              <>
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-end gap-1 text-[11px] uppercase tracking-wider animate-pulse">
-                  Connecting Cloud...
-                </span>
-                <p className="font-bold font-mono text-slate-800 dark:text-slate-200">
-                  Verifying Ledger
-                </p>
-              </>
-            ) : pendingSyncCount > 0 ? (
-              <>
-                <span className="text-amber-600 dark:text-amber-400 font-semibold text-[11px] uppercase tracking-wider">
-                  Sync Engine
-                </span>
-                <p className="font-bold font-mono text-amber-700 dark:text-amber-300">
-                  {pendingSyncCount} pending in queue
-                </p>
-              </>
-            ) : (
-              <>
-                <span className="text-slate-400 text-[11px]">Sync Engine</span>
-                <p className="font-bold font-mono text-slate-800 dark:text-slate-200 flex items-center justify-end gap-1">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  <span>All records synced</span>
-                </p>
-              </>
-            )}
-            {lastSyncedAt && !isSyncing && (
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
-                Verified {formatLastSync(lastSyncedAt)}
-              </p>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleSyncClick}
-            disabled={isSyncing}
-            className={`p-2.5 rounded-xl border transition-all shadow-xs cursor-pointer active:scale-95 ${
-              isSyncing
-                ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-400/30'
-                : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400'
-            }`}
-            title={isSyncing ? 'Synchronizing with AmenDesk Cloud...' : 'Trigger Manual Cloud Sync'}
-            aria-label="Trigger Manual Cloud Sync"
-          >
-            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin text-indigo-600 dark:text-indigo-400' : ''}`} />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleSyncClick}
+          disabled={isSyncing}
+          className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95 self-start sm:self-auto ${
+            isSyncing
+              ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'
+              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+          }`}
+          title={isSyncing ? 'Synchronizing with AmenDesk Cloud...' : 'Trigger Manual Cloud Sync'}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin text-indigo-600 dark:text-indigo-400' : ''}`} />
+          <span>
+            {isSyncing
+              ? 'Syncing...'
+              : pendingSyncCount > 0
+                ? `${pendingSyncCount} Pending`
+                : lastSyncedAt
+                  ? `Synced ${formatLastSync(lastSyncedAt)}`
+                  : 'Sync Ledger'}
+          </span>
+        </button>
       </div>
 
-      {/* Quick Action Command Hub */}
+      {/* Quick Actions */}
       <QuickActionBar
         onOpenPayment={() => setIsGeneralPaymentOpen(true)}
         onOpenVehicleIntake={() => setIsVehicleIntakeOpen(true)}
@@ -573,46 +494,42 @@ export default function DeskDashboardPage() {
         onOpenBankDepositModal={() => setIsBankDepositOpen(true)}
       />
 
-      {/* Tier-1 Executive KPI Ribbon */}
+      {/* Executive KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard
           theme="amber"
-          title="14-Day Receivables Due"
+          title="Receivables Due"
           value={formatGHS(totalReceivablesGhs)}
-          subtitle={`${openBalanceCount} open balances across hammer settlements, plans & invoices`}
           iconName="receivables"
           href="/desk/payment-plans"
         />
 
         <GlassCard
           theme="emerald"
-          title="Collections to Date"
+          title="Total Collections"
           value={formatGHS(totalCollectedGhs)}
-          subtitle={`${receipts.length} verified receipts issued (Cash, MoMo, Bank, Card)`}
           iconName="collections"
           href="/desk/payments?view=collections"
         />
 
         <GlassCard
           theme="indigo"
-          title="Total Asset Valuation"
+          title="Asset Valuation"
           value={formatGHS(totalAssetValuation)}
-          subtitle={`${totalInventoryUnits} items across Showroom, Land, Property & Auctions`}
           iconName="profit"
           href="/desk/dealership"
         />
 
         <GlassCard
           theme="purple"
-          title="Realized 7% Margin & Gross"
+          title="Realized Margin"
           value={formatGHS(totalRealizedMarginGhs)}
-          subtitle="Earned 7% auction commissions + showroom car gross"
           iconName="scale"
           href="/desk/accounts?tab=FINANCIAL_REPORTS"
         />
       </div>
 
-      {/* Operational Attention & Critical Action Center */}
+      {/* Operational Alerts (renders only when attention is needed) */}
       <OperationalAlerts
         lots={lots}
         receipts={receipts}
@@ -620,25 +537,16 @@ export default function DeskDashboardPage() {
         onSelectLotForWaybill={(lot) => setSelectedLotForWaybill(lot)}
       />
 
-      {/* Visual Analytics: every figure is visible at once - no toggles or tabs */}
-      {/* Row 1: Cash in - collections trend by payment channel */}
+      {/* Row 1: 14-Day Collections Trend */}
       <CollectionsTrendChart data={collectionsTrend} />
 
-      {/* Row 2: Cash owed (aging) and value on hand (inventory by business line) */}
+      {/* Row 2: Receivables Aging & Portfolio by Business Line */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         <ReceivablesAgingChart buckets={agingBuckets} />
         <PortfolioMixChart lines={businessLineValues} />
       </div>
 
-      {/* Multi-Line Operations Matrix Pulse */}
-      <LineOfOperationsPulse
-        lots={lots}
-        vehicles={vehicles}
-        landParcels={landParcels}
-        properties={properties}
-      />
-
-      {/* 14-Day Hammer Settlement & Dispatch Watchlist */}
+      {/* Pending Hammer Settlements Watchlist */}
       <SettlementWatchlist
         lots={lots}
         onSelectLotForPayment={(lot) => setSelectedLotForPayment(lot)}

@@ -41,11 +41,16 @@ function PropertyContent() {
       ? initialStatus
       : 'ALL'
   );
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'RESIDENTIAL' | 'COMMERCIAL' | 'INDUSTRIAL'>(
+  const resolvedType =
     initialType === 'RESIDENTIAL' || initialType === 'COMMERCIAL' || initialType === 'INDUSTRIAL'
       ? initialType
-      : 'ALL'
-  );
+      : 'ALL';
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'RESIDENTIAL' | 'COMMERCIAL' | 'INDUSTRIAL'>(resolvedType);
+  const [prevTypeParam, setPrevTypeParam] = useState(initialType);
+  if (initialType !== prevTypeParam) {
+    setPrevTypeParam(initialType);
+    setTypeFilter(resolvedType);
+  }
   const [searchQuery, setSearchQuery] = useState('');
 
   // Form State
@@ -123,19 +128,13 @@ function PropertyContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Direct Property Sales
-            </span>
-            <span className="text-xs text-slate-400">Residential Townhouses &bull; Commercial Warehouses</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Property Listings &amp; Units
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Property Units
           </h1>
           <p className="text-xs text-slate-500">
-            Direct sales line for real estate units across Accra and Greater Accra.
+            Residential &amp; commercial developments
           </p>
         </div>
 
@@ -145,8 +144,8 @@ function PropertyContent() {
               Public Catalog
             </Button>
           </Link>
-          <Button variant="primary" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
-            Add Property Listing
+          <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
+            Add Unit
           </Button>
         </div>
       </div>

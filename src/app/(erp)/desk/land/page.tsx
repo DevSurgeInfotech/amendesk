@@ -29,7 +29,7 @@ function getIsoTimestamp(): string {
 function LandContent() {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get('status')?.toUpperCase();
-  const initialTitleType = searchParams.get('titleType')?.toUpperCase();
+  const initialTitleType = (searchParams.get('type') || searchParams.get('titleType'))?.toUpperCase();
 
   const parcels = useLiveQuery(() => db.landParcels.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -42,11 +42,16 @@ function LandContent() {
       ? initialStatus
       : 'ALL'
   );
-  const [titleTypeFilter, setTitleTypeFilter] = useState<'ALL' | 'FREEHOLD' | 'LEASEHOLD' | 'INDENTURE'>(
+  const resolvedTitleType =
     initialTitleType === 'FREEHOLD' || initialTitleType === 'LEASEHOLD' || initialTitleType === 'INDENTURE'
       ? initialTitleType
-      : 'ALL'
-  );
+      : 'ALL';
+  const [titleTypeFilter, setTitleTypeFilter] = useState<'ALL' | 'FREEHOLD' | 'LEASEHOLD' | 'INDENTURE'>(resolvedTitleType);
+  const [prevTitleTypeParam, setPrevTitleTypeParam] = useState(initialTitleType);
+  if (initialTitleType !== prevTitleTypeParam) {
+    setPrevTitleTypeParam(initialTitleType);
+    setTitleTypeFilter(resolvedTitleType);
+  }
   const [searchQuery, setSearchQuery] = useState('');
 
   // Form State
@@ -130,19 +135,13 @@ function LandContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Direct Land Sales
-            </span>
-            <span className="text-xs text-slate-400">Titled &bull; Demarcated &bull; Indenture Tracking</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Land Parcels &amp; Sites
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Land Parcels
           </h1>
           <p className="text-xs text-slate-500">
-            Direct sales line (separate from auctioned land). Managed with full Lands Commission document checklist.
+            Titled plots, indentures &amp; site plans
           </p>
         </div>
 
@@ -152,8 +151,8 @@ function LandContent() {
               Public Catalog
             </Button>
           </Link>
-          <Button variant="primary" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
-            Add Land Parcel
+          <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
+            Add Parcel
           </Button>
         </div>
       </div>

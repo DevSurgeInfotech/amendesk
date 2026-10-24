@@ -46,13 +46,13 @@ export function QuickActionBar({
   const actions: QuickActionConfig[] = [
     {
       id: 'record-pos',
-      title: 'Record POS Payment',
-      subtitle: 'Cash, MoMo, Card',
-      ariaLabel: 'Record POS Payment: Cash, MoMo, Card counter collections',
+      title: 'POS Payment',
+      subtitle: 'Cash, MoMo, Bank, Card',
+      ariaLabel: 'POS Payment: Cash, MoMo, Card counter collections',
       icon: CreditCard,
       iconBgClass: 'bg-indigo-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-indigo-200 dark:border-indigo-900/60',
-      bgClass: 'bg-indigo-50/60 dark:bg-indigo-950/30',
+      bgClass: 'bg-white dark:bg-slate-900',
       hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-indigo-950 dark:text-indigo-200 group-hover:text-white',
       subtitleColorClass: 'text-indigo-600/80 dark:text-indigo-400 group-hover:text-indigo-100',
@@ -63,12 +63,12 @@ export function QuickActionBar({
     {
       id: 'vehicle-intake',
       title: 'Intake Vehicle',
-      subtitle: 'Add to Showroom',
+      subtitle: 'Add to Showroom stock',
       ariaLabel: 'Intake Vehicle: Add to Showroom inventory registry',
       icon: Car,
       iconBgClass: 'bg-slate-800 dark:bg-slate-700 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
-      bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
+      bgClass: 'bg-white dark:bg-slate-900',
       hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
       subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
@@ -78,13 +78,13 @@ export function QuickActionBar({
     },
     {
       id: 'auction-intake',
-      title: 'Auction Lot Intake',
-      subtitle: 'Judicial, Govt, Private',
-      ariaLabel: 'Auction Lot Intake: Judicial, Govt, Private asset cataloging',
+      title: 'Auction Intake',
+      subtitle: 'Judicial, Govt & Private lots',
+      ariaLabel: 'Auction Intake: Judicial, Govt, Private asset cataloging',
       icon: Gavel,
       iconBgClass: 'bg-amber-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
-      bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
+      bgClass: 'bg-white dark:bg-slate-900',
       hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
       subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
@@ -95,12 +95,12 @@ export function QuickActionBar({
     {
       id: 'issue-waybill',
       title: 'Issue Waybill',
-      subtitle: 'A5 Gate Pass',
+      subtitle: 'A5 Gate Pass clearance',
       ariaLabel: 'Issue Waybill: A5 Gate Pass and yard exit clearance',
       icon: Truck,
       iconBgClass: 'bg-emerald-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
-      bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
+      bgClass: 'bg-white dark:bg-slate-900',
       hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
       subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
@@ -111,12 +111,12 @@ export function QuickActionBar({
     {
       id: 'record-expense',
       title: 'Record Expense',
-      subtitle: 'Yard Rent, Logistics, AP',
+      subtitle: 'Yard, logistics & AP',
       ariaLabel: 'Record Expense: Yard Rent, Logistics, AP disbursements',
       icon: Receipt,
       iconBgClass: 'bg-rose-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
-      bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
+      bgClass: 'bg-white dark:bg-slate-900',
       hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
       subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
@@ -126,13 +126,13 @@ export function QuickActionBar({
     },
     {
       id: 'bank-deposit',
-      title: 'Bank Deposit Slip',
-      subtitle: 'Sweep Cash to Bank',
-      ariaLabel: 'Bank Deposit Slip: Sweep Cash to Bank clearance queue',
+      title: 'Bank Deposit',
+      subtitle: 'Sweep cash to bank',
+      ariaLabel: 'Bank Deposit: Sweep Cash to Bank clearance queue',
       icon: Building,
       iconBgClass: 'bg-blue-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
-      bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
+      bgClass: 'bg-white dark:bg-slate-900',
       hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
       subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
@@ -143,92 +143,72 @@ export function QuickActionBar({
   ];
 
   return (
-    <div className="surface-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            Speed Operations &bull; Quick Action Command Hub
-          </h2>
-        </div>
-        <span className="text-[11px] text-slate-400 hidden sm:inline">
-          1-Click Field &amp; Office Launchpad
-        </span>
-      </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      {actions.map((action) => {
+        const Icon = action.icon;
+        const sharedClasses = `surface-card group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl border shadow-2xs ${action.borderClass} ${action.bgClass} ${action.hoverClass} transition-all text-left cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500`;
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        {actions.map((action) => {
-          const Icon = action.icon;
-          const sharedClasses = `group relative flex items-center gap-2.5 p-2.5 rounded-xl border ${action.borderClass} ${action.bgClass} ${action.hoverClass} transition-all text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500`;
-
-          const content = (
-            <>
-              {/* Light Tooltip revealing full untruncated words */}
-              <div
-                role="tooltip"
-                aria-hidden="true"
-                className={`pointer-events-none absolute bottom-full mb-2.5 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-focus-visible:opacity-100 group-focus-visible:scale-100 group-focus-visible:translate-y-0 transition-all duration-150 ease-out z-40 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-lg shadow-slate-900/10 dark:shadow-black/40 border border-slate-200/90 dark:border-slate-700 min-w-[180px] max-w-[240px] text-left select-none ${action.tooltipPos}`}
-              >
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 shrink-0" />
-                  <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
-                    {action.title}
-                  </p>
-                </div>
-                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">
-                  {action.subtitle}
-                </p>
-                {/* Light Tooltip Downward Arrow with border matching container */}
-                <div
-                  className={`absolute -bottom-1 w-2.5 h-2.5 bg-white dark:bg-slate-900 border-r border-b border-slate-200/90 dark:border-slate-700 rotate-45 ${action.arrowPos}`}
-                />
-              </div>
-
-              {/* Icon */}
-              <div
-                className={`h-8 w-8 rounded-lg ${action.iconBgClass} flex items-center justify-center shrink-0 transition-colors shadow-xs`}
-              >
-                <Icon className="h-4 w-4" />
-              </div>
-
-              {/* Text Container with Truncation on narrow viewports */}
-              <div className="min-w-0">
-                <p className={`text-xs font-bold ${action.titleColorClass} truncate`}>
+        const content = (
+          <>
+            {/* Light Tooltip revealing full details on hover */}
+            <div
+              role="tooltip"
+              aria-hidden="true"
+              className={`pointer-events-none absolute bottom-full mb-2.5 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-focus-visible:opacity-100 group-focus-visible:scale-100 group-focus-visible:translate-y-0 transition-all duration-150 ease-out z-40 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-lg shadow-slate-900/10 dark:shadow-black/40 border border-slate-200/90 dark:border-slate-700 min-w-[170px] max-w-[220px] text-left select-none ${action.tooltipPos}`}
+            >
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 shrink-0" />
+                <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
                   {action.title}
                 </p>
-                <p className={`text-[10px] ${action.subtitleColorClass} truncate`}>
-                  {action.subtitle}
-                </p>
               </div>
-            </>
-          );
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">
+                {action.subtitle}
+              </p>
+              <div
+                className={`absolute -bottom-1 w-2.5 h-2.5 bg-white dark:bg-slate-900 border-r border-b border-slate-200/90 dark:border-slate-700 rotate-45 ${action.arrowPos}`}
+              />
+            </div>
 
-          if (action.href) {
-            return (
-              <Link
-                key={action.id}
-                href={action.href}
-                aria-label={action.ariaLabel}
-                className={sharedClasses}
-              >
-                {content}
-              </Link>
-            );
-          }
+            {/* Icon */}
+            <div
+              className={`h-8 w-8 rounded-lg ${action.iconBgClass} flex items-center justify-center shrink-0 transition-colors shadow-xs`}
+            >
+              <Icon className="h-4 w-4" />
+            </div>
 
+            {/* Single-line Clean Action Label */}
+            <p className={`text-xs font-bold ${action.titleColorClass} truncate`}>
+              {action.title}
+            </p>
+          </>
+        );
+
+        if (action.href) {
           return (
-            <button
+            <Link
               key={action.id}
-              type="button"
-              onClick={action.onClick}
+              href={action.href}
               aria-label={action.ariaLabel}
               className={sharedClasses}
             >
               {content}
-            </button>
+            </Link>
           );
-        })}
-      </div>
+        }
+
+        return (
+          <button
+            key={action.id}
+            type="button"
+            onClick={action.onClick}
+            aria-label={action.ariaLabel}
+            className={sharedClasses}
+          >
+            {content}
+          </button>
+        );
+      })}
     </div>
   );
 }

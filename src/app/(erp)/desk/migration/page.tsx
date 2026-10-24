@@ -19,7 +19,6 @@ import {
   Users,
   Gavel,
   Car,
-  ShieldAlert,
   BookOpen,
 } from 'lucide-react';
 
@@ -461,14 +460,14 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
             <Database className="h-6 w-6 text-indigo-600" />
-            Data Migration &amp; Offline Portability Hub
+            Data &amp; Backup
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Bulk ingest legacy Excel/CSV datasets, export complete offline system snapshots (including General Ledger), and manage device-to-device migration.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            CSV batch import and full JSON system snapshots
           </p>
         </div>
 
@@ -537,34 +536,6 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">GL Accounts &amp; Journals</p>
             <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{accountsCount + journalEntriesCount}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Migration Strategy Overview Card */}
-      <div className="p-5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-indigo-600" />
-          AmenDesk Data Migration &amp; Portability Protocol
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 text-xs text-slate-600 dark:text-slate-300">
-          <div className="surface-card bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-            <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">1. Legacy Ingestion</p>
-            <p>
-              Import past auction records, client contacts, and vehicle stock from Excel spreadsheets directly into Dexie IndexedDB with format validation.
-            </p>
-          </div>
-          <div className="surface-card bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-            <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">2. Zero-Net Device Cloning</p>
-            <p>
-              Use the JSON snapshot to provision a replacement tablet or cash-office PC in the yard in under 30 seconds with 100% offline data integrity.
-            </p>
-          </div>
-          <div className="surface-card bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-            <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">3. Complete Accounting Portability</p>
-            <p>
-              Chart of Accounts, General Ledger journal entries, tax invoices, and cash shift reconciliations are fully preserved across all device backups.
-            </p>
           </div>
         </div>
       </div>

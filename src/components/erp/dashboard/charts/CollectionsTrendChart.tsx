@@ -56,12 +56,6 @@ export function CollectionsTrendChart({ data }: CollectionsTrendChartProps) {
 
   const days = data?.days ?? [];
   const periodTotal = days.reduce((acc, d) => acc + d.totalGhs, 0);
-  const receiptCount = days.reduce((acc, d) => acc + d.receiptCount, 0);
-  const activeDays = days.filter((d) => d.totalGhs > 0).length;
-  const bestDay = days.reduce<DailyChannelPoint | null>(
-    (best, d) => (d.totalGhs > 0 && (!best || d.totalGhs > best.totalGhs) ? d : best),
-    null
-  );
 
   const previousTotal = data?.previousPeriodTotalGhs ?? 0;
   const deltaPercent =
@@ -83,44 +77,25 @@ export function CollectionsTrendChart({ data }: CollectionsTrendChartProps) {
 
   return (
     <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs min-w-0">
-      {/* Header: what, when, how much, and how it compares */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div className="min-w-0">
           <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            Collections &bull; Last 14 Days
+            14-Day Collections
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Daily verified receipts by payment channel
-            {data?.rangeLabel ? ` \u2022 ${data.rangeLabel}` : ''}
-          </p>
+          {data?.rangeLabel && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {data.rangeLabel}
+            </p>
+          )}
         </div>
 
-        <div className="flex items-end gap-3 md:text-right shrink-0">
-          <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-              Collected in period
-            </span>
-            <p className="text-xl font-black font-mono text-slate-900 dark:text-slate-100 leading-tight">
-              {formatGHS(periodTotal)}
-            </p>
-          </div>
+        <div className="flex items-center gap-3 sm:text-right shrink-0">
+          <p className="text-lg font-black font-mono text-slate-900 dark:text-slate-100 leading-tight">
+            {formatGHS(periodTotal)}
+          </p>
           <DeltaChip deltaPercent={deltaPercent} hasData={days.length > 0} />
         </div>
-      </div>
-
-      {/* Supporting facts – visible at a glance, no hovering required */}
-      <div className="grid grid-cols-3 gap-2 mb-5 text-xs">
-        <Fact label="Receipts issued" value={receiptCount.toString()} />
-        <Fact
-          label="Avg per active day"
-          value={activeDays > 0 ? formatGHSCompact(periodTotal / activeDays) : '\u2014'}
-          hint={`${activeDays} of ${days.length || 14} days with collections`}
-        />
-        <Fact
-          label="Best day"
-          value={bestDay ? formatGHSCompact(bestDay.totalGhs) : '\u2014'}
-          hint={bestDay ? `${bestDay.weekdayLabel} ${bestDay.dayLabel} ${bestDay.monthLabel}` : undefined}
-        />
       </div>
 
       {/* Chart */}
@@ -306,20 +281,6 @@ export function CollectionsTrendChart({ data }: CollectionsTrendChartProps) {
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
-    </div>
-  );
-}
-
-function Fact({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="min-w-0 rounded-xl border border-slate-100 dark:border-slate-800 px-3 py-2">
-      <span className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 truncate">
-        {label}
-      </span>
-      <span className="block text-sm font-bold font-mono text-slate-900 dark:text-slate-100 truncate">
-        {value}
-      </span>
-      {hint && <span className="block text-[10px] text-slate-500 truncate">{hint}</span>}
     </div>
   );
 }

@@ -19,9 +19,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Building,
-  ShieldCheck,
-  Award,
   Settings,
   X,
   type LucideIcon,
@@ -48,132 +45,133 @@ interface ModuleItem {
 const erpModules: ModuleItem[] = [
   {
     id: 'overview',
-    label: 'Overview & Dashboard',
+    label: 'Dashboard',
     href: '/desk',
     icon: LayoutDashboard,
   },
   {
     id: 'payments',
-    label: 'Record Payment (POS)',
+    label: 'POS & Payments',
     href: '/desk/payments',
     icon: CreditCard,
     submodules: [
-      { label: 'Payment Terminal (POS)', href: '/desk/payments' },
-      { label: 'Till Shift & Drawer Balancing', href: '/desk/payments?view=shift' },
-      { label: 'Recent Collections Ledger', href: '/desk/payments?view=collections' },
+      { label: 'POS Terminal', href: '/desk/payments' },
+      { label: 'Cash Shift & Till', href: '/desk/payments?view=shift' },
+      { label: 'Collections', href: '/desk/payments?view=collections' },
     ],
   },
   {
     id: 'accounts',
-    label: 'Accounting & Finance',
+    label: 'Accounts',
     href: '/desk/accounts',
     icon: Scale,
     submodules: [
-      { label: 'Financial Overview', href: '/desk/accounts?tab=OVERVIEW' },
-      { label: 'Chart of Accounts (COA)', href: '/desk/accounts?tab=CHART_OF_ACCOUNTS' },
-      { label: 'General Ledger & Journals', href: '/desk/accounts?tab=GENERAL_LEDGER' },
-      { label: 'Financial Statements (P&L, BS)', href: '/desk/accounts?tab=FINANCIAL_REPORTS' },
-      { label: 'Operating Expenses (AP)', href: '/desk/accounts?tab=EXPENSES' },
-      { label: 'Invoices & Billing', href: '/desk/accounts?tab=INVOICES' },
-      { label: 'Cashier Receipts Ledger', href: '/desk/accounts?tab=RECEIPTS' },
-      { label: 'Bank Deposits & Clearance', href: '/desk/accounts?tab=BANK_DEPOSITS' },
-      { label: 'Products & Services (Item Master)', href: '/desk/accounts?tab=PRODUCTS_SERVICES' },
+      { label: 'Overview', href: '/desk/accounts?tab=OVERVIEW' },
+      { label: 'Chart of Accounts', href: '/desk/accounts?tab=CHART_OF_ACCOUNTS' },
+      { label: 'General Ledger', href: '/desk/accounts?tab=GENERAL_LEDGER' },
+      { label: 'Financial Reports', href: '/desk/accounts?tab=FINANCIAL_REPORTS' },
+      { label: 'Expenses', href: '/desk/accounts?tab=EXPENSES' },
+      { label: 'Invoices', href: '/desk/accounts?tab=INVOICES' },
+      { label: 'Receipts', href: '/desk/accounts?tab=RECEIPTS' },
+      { label: 'Bank Deposits', href: '/desk/accounts?tab=BANK_DEPOSITS' },
+      { label: 'Items & Services', href: '/desk/accounts?tab=PRODUCTS_SERVICES' },
     ],
   },
   {
     id: 'auctions',
-    label: 'Auctions (3 Categories)',
+    label: 'Auctions',
     href: '/desk/auctions',
     icon: Gavel,
     submodules: [
-      { label: 'All Auction Lots', href: '/desk/auctions' },
-      { label: 'Judicial Court Auctions', href: '/desk/auctions?cat=JUDICIAL' },
-      { label: 'Government Fleet Disposals', href: '/desk/auctions?cat=GOVERNMENT' },
-      { label: 'Private Consignments', href: '/desk/auctions?cat=PRIVATE' },
-      { label: 'Lot Intake Wizard', href: '/desk/auctions/intake' },
+      { label: 'All Lots', href: '/desk/auctions' },
+      { label: 'Judicial', href: '/desk/auctions?cat=JUDICIAL' },
+      { label: 'Government', href: '/desk/auctions?cat=GOVERNMENT' },
+      { label: 'Private', href: '/desk/auctions?cat=PRIVATE' },
+      { label: 'Lot Intake', href: '/desk/auctions/intake' },
     ],
   },
   {
     id: 'payment-plans',
-    label: '14-Day Payment Plans',
+    label: 'Payment Plans',
     href: '/desk/payment-plans',
     icon: CalendarClock,
     submodules: [
-      { label: 'All Payment Plans', href: '/desk/payment-plans' },
-      { label: 'Awaiting Final Balance', href: '/desk/payment-plans?filter=AWAITING_BALANCE' },
-      { label: 'Overdue Instalments', href: '/desk/payment-plans?filter=OVERDUE' },
+      { label: 'All Plans', href: '/desk/payment-plans' },
+      { label: 'Awaiting Balance', href: '/desk/payment-plans?filter=AWAITING_BALANCE' },
+      { label: 'Overdue', href: '/desk/payment-plans?filter=OVERDUE' },
     ],
   },
   {
     id: 'dealership',
-    label: 'Car Dealership',
+    label: 'Dealership',
     href: '/desk/dealership',
     icon: Car,
     submodules: [
-      { label: 'All Showroom Inventory', href: '/desk/dealership' },
-      { label: 'Available Vehicles', href: '/desk/dealership?status=AVAILABLE' },
-      { label: 'Reserved Cars', href: '/desk/dealership?status=RESERVED' },
-      { label: 'Sold & Delivered', href: '/desk/dealership?status=SOLD' },
+      { label: 'All Vehicles', href: '/desk/dealership' },
+      { label: 'Available', href: '/desk/dealership?status=AVAILABLE' },
+      { label: 'Reserved', href: '/desk/dealership?status=RESERVED' },
+      { label: 'Sold', href: '/desk/dealership?status=SOLD' },
     ],
   },
   {
     id: 'land',
-    label: 'Land Parcels',
+    label: 'Land',
     href: '/desk/land',
     icon: MapPin,
     submodules: [
-      { label: 'All Land Parcels', href: '/desk/land' },
-      { label: 'Customary Indenture', href: '/desk/land?type=INDENTURE' },
-      { label: 'Leasehold Titles', href: '/desk/land?type=LEASEHOLD' },
-      { label: 'Titled Freehold', href: '/desk/land?type=FREEHOLD' },
+      { label: 'All Parcels', href: '/desk/land' },
+      { label: 'Indenture', href: '/desk/land?type=INDENTURE' },
+      { label: 'Leasehold', href: '/desk/land?type=LEASEHOLD' },
+      { label: 'Freehold', href: '/desk/land?type=FREEHOLD' },
     ],
   },
   {
     id: 'property',
-    label: 'Property Units',
+    label: 'Properties',
     href: '/desk/property',
     icon: Building2,
     submodules: [
-      { label: 'All Property Developments', href: '/desk/property' },
-      { label: 'Residential Units', href: '/desk/property?type=RESIDENTIAL' },
-      { label: 'Commercial Units', href: '/desk/property?type=COMMERCIAL' },
+      { label: 'All Units', href: '/desk/property' },
+      { label: 'Residential', href: '/desk/property?type=RESIDENTIAL' },
+      { label: 'Commercial', href: '/desk/property?type=COMMERCIAL' },
     ],
   },
   {
     id: 'inventory',
-    label: 'Inventory & Yard',
+    label: 'Inventory',
     href: '/desk/inventory',
     icon: Warehouse,
     submodules: [
-      { label: 'Stock Registry & SKUs', href: '/desk/inventory' },
-      { label: 'Stock Movements & Transfers', href: '/desk/inventory?tab=movements' },
+      { label: 'Stock Registry', href: '/desk/inventory' },
+      { label: 'Stock Transfers', href: '/desk/inventory?tab=movements' },
     ],
   },
   {
     id: 'crm',
-    label: 'CRM & KYC Compliance',
+    label: 'Customers',
     href: '/desk/crm',
     icon: Users,
     submodules: [
-      { label: 'Client Directory', href: '/desk/crm' },
-      { label: 'KYC Verified Clients', href: '/desk/crm?filter=VERIFIED' },
+      { label: 'All Customers', href: '/desk/crm' },
+      { label: 'KYC Verified', href: '/desk/crm?filter=VERIFIED' },
     ],
   },
   {
     id: 'migration',
-    label: 'Data Sync & Backup',
+    label: 'Data & Backup',
     href: '/desk/migration',
     icon: Database,
   },
   {
     id: 'settings',
-    label: 'Settings & Staff',
+    label: 'Settings',
     href: '/desk/settings',
     icon: Settings,
     submodules: [
-      { label: 'Staff & Invitations', href: '/desk/settings?tab=users' },
-      { label: 'Workspace Profile', href: '/desk/settings?tab=profile' },
-      { label: 'Auction & POS Rules', href: '/desk/settings?tab=rules' },
+      { label: 'Staff & Roles', href: '/desk/settings?tab=users' },
+      { label: 'Organization', href: '/desk/settings?tab=profile' },
+      { label: 'Business Rules', href: '/desk/settings?tab=rules' },
+      { label: 'Security & RBAC', href: '/desk/settings?tab=security' },
     ],
   },
 ];
@@ -567,13 +565,13 @@ export function Sidebar() {
                         }
                       >
                         {module.submodules?.map((sub) => {
-                          const subClean = sub.href.split('?')[0];
-                          const isSubActive = sub.href.includes('?')
-                            ? currentFullUrl === sub.href || currentFullUrl === sub.href.replace(/^\/desk/, '')
-                            : currentFullUrl === sub.href ||
-                              currentFullUrl === sub.href.replace(/^\/desk/, '') ||
-                              pathname === subClean ||
-                              pathname === subClean.replace(/^\/desk/, '');
+                          const isDefaultOverview =
+                            (sub.href === '/desk/accounts?tab=OVERVIEW' && currentFullUrl === '/desk/accounts') ||
+                            (sub.href === '/desk/settings?tab=users' && currentFullUrl === '/desk/settings');
+                          const isSubActive =
+                            currentFullUrl === sub.href ||
+                            currentFullUrl === sub.href.replace(/^\/desk/, '') ||
+                            isDefaultOverview;
                           const isNavigating = navigatingHref === sub.href;
 
                           return (
@@ -655,29 +653,6 @@ export function Sidebar() {
               </div>
             );
           })}
-
-          {/* Affiliations & Compliance Block */}
-          {!collapsed && (
-            <div className="pt-4 pb-1">
-              <div className="px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Licensing &amp; Affiliation
-              </div>
-              <div className="px-2 space-y-1 mt-1">
-                <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-slate-850/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span className="truncate">Ghana Auctioneers Assoc. (GAA)</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-slate-850/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <Award className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <span className="truncate">Lead: Dr. Francis Kwaku Yeboah</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-slate-850/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                  <Building className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span className="truncate">Accra Yard &amp; Field Auctions</span>
-                </div>
-              </div>
-            </div>
-          )}
         </nav>
 
         {/* Sidebar Footer: View Public Website */}
@@ -706,14 +681,6 @@ export function Sidebar() {
               <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 font-semibold">&rarr;</span>
             )}
           </Link>
-
-          {!collapsed && (
-            <div className="mt-2 text-center">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono select-none">
-                AmenDesk v1.2 &bull; Dev Surge
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Floating Desktop Collapse Toggle Button (Identical to Encore SMS) */}

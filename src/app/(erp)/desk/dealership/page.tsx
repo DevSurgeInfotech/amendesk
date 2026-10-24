@@ -38,11 +38,16 @@ function DealershipContent() {
   const [galleryCar, setGalleryCar] = useState<DealershipVehicle | null>(null);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'AVAILABLE' | 'RESERVED' | 'SOLD'>(
+  const resolvedStatus =
     initialStatus === 'AVAILABLE' || initialStatus === 'RESERVED' || initialStatus === 'SOLD'
       ? initialStatus
-      : 'ALL'
-  );
+      : 'ALL';
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'AVAILABLE' | 'RESERVED' | 'SOLD'>(resolvedStatus);
+  const [prevStatusParam, setPrevStatusParam] = useState(initialStatus);
+  if (initialStatus !== prevStatusParam) {
+    setPrevStatusParam(initialStatus);
+    setStatusFilter(resolvedStatus);
+  }
   const [fuelFilter, setFuelFilter] = useState<'ALL' | 'PETROL' | 'DIESEL' | 'HYBRID' | 'ELECTRIC'>(
     initialFuel === 'PETROL' || initialFuel === 'DIESEL' || initialFuel === 'HYBRID' || initialFuel === 'ELECTRIC'
       ? initialFuel
@@ -157,19 +162,13 @@ function DealershipContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Direct Car Dealership
-            </span>
-            <span className="text-xs text-slate-400">Showroom &bull; Landed Margin Engine</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Imported Vehicle Inventory
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Dealership Inventory
           </h1>
           <p className="text-xs text-slate-500">
-            Separate from auction fleet. Synced live to the public website showroom with inquiry tracking.
+            Showroom vehicles &amp; landed margin tracker
           </p>
         </div>
 
@@ -179,8 +178,8 @@ function DealershipContent() {
               Live Showroom
             </Button>
           </Link>
-          <Button variant="primary" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
-            Add Showroom Vehicle
+          <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
+            Add Vehicle
           </Button>
         </div>
       </div>

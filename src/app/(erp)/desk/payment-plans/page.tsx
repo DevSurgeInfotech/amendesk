@@ -29,6 +29,11 @@ function PaymentPlansContent() {
     ? (urlFilter as 'ALL' | 'AWAITING_BALANCE' | 'OVERDUE' | 'EXTENDED' | 'PAID_IN_FULL')
     : 'ALL';
   const [filter, setFilter] = useState<'ALL' | 'AWAITING_BALANCE' | 'OVERDUE' | 'EXTENDED' | 'PAID_IN_FULL'>(initialFilter);
+  const [prevUrlFilter, setPrevUrlFilter] = useState(urlFilter);
+  if (urlFilter !== prevUrlFilter) {
+    setPrevUrlFilter(urlFilter);
+    setFilter(initialFilter);
+  }
   const [searchQuery, setSearchQuery] = useState('');
 
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlan | null>(null);
@@ -55,19 +60,13 @@ function PaymentPlansContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              14-Day Settlement Engine
-            </span>
-            <span className="text-xs text-slate-400">Aging Receivables &bull; Extension Manager</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Deposit &amp; Instalment Payment Plans
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Payment Plans
           </h1>
           <p className="text-xs text-slate-500">
-            Hammer sales initiate a 14-day window for full settlement. Partial payments permitted in multiple instalments.
+            14-day deposit &amp; balance settlement tracker
           </p>
         </div>
       </div>
@@ -76,25 +75,22 @@ function PaymentPlansContent() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <GlassCard
           theme="amber"
-          title="Total Outstanding Balance"
+          title="Outstanding Balance"
           value={formatGHS(totalOutstanding)}
-          subtitle={`${plans.length} total payment plans`}
           iconName="receivables"
         />
 
         <GlassCard
           theme="indigo"
-          title="Active Within 14-Day Window"
+          title="Active Plans"
           value={`${activeCount} Plans`}
-          subtitle="Scheduled for balance settlement"
           iconName="collections"
         />
 
         <GlassCard
           theme="rose"
-          title="Overdue / Needs Extension"
+          title="Overdue Plans"
           value={`${overdueCount} Plans`}
-          subtitle="Eligible for manager extension"
           iconName="alert"
         />
       </div>

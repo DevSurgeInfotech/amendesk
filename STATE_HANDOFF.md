@@ -206,6 +206,48 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-24 (ERP Dashboard & Sidebar Module-by-Module Remediation)
+- **Goal**: Remediate text overload, repetitive descriptions, truncated KPI currency figures, and unnecessary Licensing & Affiliation clutter across the ERP Dashboard ([`src/app/(erp)/desk/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/page.tsx)) and audit the ERP Sidebar ([`src/components/erp/Sidebar.tsx`](file:///d:/amendesk/src/components/erp/Sidebar.tsx)) and all linked ERP modules module-by-module.
+- **Accomplishments**:
+  - **KPI Card & Number Truncation Fix (`GlassCard.tsx`)**:
+    - Removed the overloaded lower-section prose description block (`subtitle`) from [`src/components/ui/GlassCard.tsx`](file:///d:/amendesk/src/components/ui/GlassCard.tsx) so KPI cards across all ERP modules display clean, focused metrics without wordy bottom descriptions.
+    - Added `stripRedundantZeroDecimals` to strip trailing `.00` on whole currency amounts `>= 100` (e.g., `GH₵ 532,950.00` -> `GH₵ 532,950`, `GH₵ 17,325,000.00` -> `GH₵ 17,325,000`) and recalibrated `getValueFontSize` so figures never overflow or truncate with `...` inside 4-column grids alongside the 264px sidebar.
+  - **Sidebar Audit & Submodule Navigation Fix (`Sidebar.tsx`)**:
+    - Removed the `Licensing & Affiliation` section (`Ghana Auctioneers Assoc. (GAA)`, `Lead: Dr. Francis Kwaku Yeboah`, `Accra Yard & Field Auctions`) and redundant footer version line from [`src/components/erp/Sidebar.tsx`](file:///d:/amendesk/src/components/erp/Sidebar.tsx).
+    - Streamlined all module and submodule labels (`Dashboard`, `POS & Payments`, `Accounts`, `Auctions`, `Payment Plans`, `Dealership`, `Land`, `Properties`, `Inventory`, `Customers`, `Data & Backup`, `Settings`) and added `Security & RBAC` (`/desk/settings?tab=security`) under `Settings`.
+    - Fixed `isSubActive` so base-path submodules (`All Lots`, `All Plans`, `All Vehicles`, `All Parcels`, `All Units`, `Stock Registry`, `All Customers`) do not highlight simultaneously alongside active query-parameter submodules.
+  - **Dashboard Decluttering (`src/app/(erp)/desk/page.tsx` & Dashboard Widgets)**:
+    - Replaced the bloated top status banner (which repeated GAA licensing, 7% margin rules, officer name, and currency standard) with a concise `Operations Dashboard` header and sync button.
+    - Removed the duplicate `<LineOfOperationsPulse />` widget (which repeated `PortfolioMixChart` and KPI card metrics with static textbook definitions).
+    - Simplified [`QuickActionBar.tsx`](file:///d:/amendesk/src/components/erp/dashboard/QuickActionBar.tsx) to single-line action buttons (`POS Payment`, `Intake Vehicle`, `Auction Intake`, `Issue Waybill`, `Record Expense`, `Bank Deposit`) without verbose multi-line subtitles.
+    - Updated [`OperationalAlerts.tsx`](file:///d:/amendesk/src/components/erp/dashboard/OperationalAlerts.tsx) to return `null` when no alerts exist instead of rendering a redundant green banner, and trimmed alert copy.
+    - Streamlined [`CollectionsTrendChart.tsx`](file:///d:/amendesk/src/components/erp/dashboard/charts/CollectionsTrendChart.tsx), [`ReceivablesAgingChart.tsx`](file:///d:/amendesk/src/components/erp/dashboard/charts/ReceivablesAgingChart.tsx), [`PortfolioMixChart.tsx`](file:///d:/amendesk/src/components/erp/dashboard/charts/PortfolioMixChart.tsx), and [`SettlementWatchlist.tsx`](file:///d:/amendesk/src/components/erp/dashboard/SettlementWatchlist.tsx).
+  - **Module-by-Module Header Streamlining & URL Query-Param Sync**:
+    - Synchronized submodule filter/tab state with URL search parameters (`useSearchParams`) and streamlined headers across [`payments/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/payments/page.tsx), [`accounts/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/accounts/page.tsx), [`auctions/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/auctions/page.tsx), [`payment-plans/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/payment-plans/page.tsx), [`dealership/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/dealership/page.tsx), [`land/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/land/page.tsx) (fixing `?type=` vs `?titleType=`), [`property/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/property/page.tsx), [`inventory/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/inventory/page.tsx), [`crm/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/crm/page.tsx), [`migration/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/migration/page.tsx), and [`settings/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/settings/page.tsx).
+  - Ran mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/components/erp/Sidebar.tsx`
+  - `src/components/ui/GlassCard.tsx`
+  - `src/components/erp/dashboard/QuickActionBar.tsx`
+  - `src/components/erp/dashboard/OperationalAlerts.tsx`
+  - `src/components/erp/dashboard/SettlementWatchlist.tsx`
+  - `src/components/erp/dashboard/charts/CollectionsTrendChart.tsx`
+  - `src/components/erp/dashboard/charts/ReceivablesAgingChart.tsx`
+  - `src/components/erp/dashboard/charts/PortfolioMixChart.tsx`
+  - `src/app/(erp)/desk/page.tsx`
+  - `src/app/(erp)/desk/payments/page.tsx`
+  - `src/app/(erp)/desk/accounts/page.tsx`
+  - `src/app/(erp)/desk/auctions/page.tsx`
+  - `src/app/(erp)/desk/payment-plans/page.tsx`
+  - `src/app/(erp)/desk/dealership/page.tsx`
+  - `src/app/(erp)/desk/land/page.tsx`
+  - `src/app/(erp)/desk/property/page.tsx`
+  - `src/app/(erp)/desk/inventory/page.tsx`
+  - `src/app/(erp)/desk/crm/page.tsx`
+  - `src/app/(erp)/desk/migration/page.tsx`
+  - `src/app/(erp)/desk/settings/page.tsx`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-24 (World-Standard Light-Theme Login Pedestal Overhaul)
 - **Goal**: Enhance `/login` ([`src/app/login/page.tsx`](file:///d:/amendesk/src/app/login/page.tsx)) to enforce a dedicated, world-standard light theme without any demo or showroom links.
 - **Accomplishments**:

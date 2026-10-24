@@ -657,27 +657,26 @@ function RecordPaymentContent() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="surface-card flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              <CurrentIcon className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+              {currentMeta.title}
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+              <CurrentIcon className="h-3 w-3" />
               <span>{currentMeta.badge}</span>
             </span>
-            <span className="text-xs text-slate-400">Cashier: {cashierName} &bull; {issuedLocation}</span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            {currentMeta.title}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {currentMeta.subtitle}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Cashier: {cashierName} &bull; {issuedLocation}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link href="/desk/accounts">
             <Button size="sm" variant="outline" icon={<Scale className="h-4 w-4" />}>
-              View General Ledger
+              General Ledger
             </Button>
           </Link>
         </div>
@@ -687,33 +686,29 @@ function RecordPaymentContent() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard
           theme="emerald"
-          title="Today's Total Collections"
+          title="Today's Collections"
           value={formatGHS(todayTotal)}
-          subtitle={`${todayReceipts.length} receipts issued today`}
           iconName="collections"
         />
 
         <GlassCard
           theme="amber"
-          title="Drawer Cash Till"
+          title="Cash Till"
           value={formatGHS(todayCash)}
-          subtitle="Physical notes &amp; coins in till"
           iconName="cash"
         />
 
         <GlassCard
           theme="purple"
-          title="Mobile Money (MoMo)"
+          title="Mobile Money"
           value={formatGHS(todayMomo)}
-          subtitle="MTN &bull; Telecel &bull; Hubtel"
           iconName="momo"
         />
 
         <GlassCard
           theme="blue"
-          title="Bank Wires &amp; Drafts"
+          title="Bank Transfers"
           value={formatGHS(todayBank)}
-          subtitle="GCB &bull; Stanbic &bull; Ecobank Escrow"
           iconName="bank"
         />
       </div>

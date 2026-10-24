@@ -37,9 +37,13 @@ function InventoryContent() {
   const movements = useLiveQuery(() => db.stockMovements.toArray(), []) || [];
 
   // Active view tab
-  const [activeTab, setActiveTab] = useState<'ITEMS' | 'MOVEMENTS'>(
-    initialTab === 'movements' ? 'MOVEMENTS' : 'ITEMS'
-  );
+  const resolvedTab = initialTab === 'movements' ? 'MOVEMENTS' : 'ITEMS';
+  const [activeTab, setActiveTab] = useState<'ITEMS' | 'MOVEMENTS'>(resolvedTab);
+  const [prevTabParam, setPrevTabParam] = useState(initialTab);
+  if (initialTab !== prevTabParam) {
+    setPrevTabParam(initialTab);
+    setActiveTab(resolvedTab);
+  }
 
   // Filters
   const [locationFilter, setLocationFilter] = useState<'ALL' | 'AUCTION_YARD' | 'DEALERSHIP_SHOWROOM' | 'WORKSHOP'>(
@@ -161,30 +165,18 @@ function InventoryContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="surface-card flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="surface-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-              Central Stock Ledger
-            </span>
-            <span className="text-xs text-slate-400">Multi-Location Tracking &bull; Landed Cost Valuation</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            Inventory &amp; Facility Stock Ledger
+          <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Inventory &amp; Stock Ledger
           </h1>
           <p className="text-xs text-slate-500">
-            Unifies auction yard inventory, dealership showroom units, and workshop spares with inter-location gate transfers.
+            Total valuation: <strong className="font-mono text-indigo-600 dark:text-indigo-400">{formatGHS(totalValuation)}</strong>
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-            <span className="text-[11px] text-slate-400 uppercase font-semibold">Total Stock Valuation:</span>
-            <p className="text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono">
-              {formatGHS(totalValuation)}
-            </p>
-          </div>
-          <Button variant="primary" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
+        <div className="flex items-center gap-3">
+          <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
             Add Stock Item
           </Button>
         </div>
