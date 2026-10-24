@@ -53,7 +53,7 @@ export function QuickActionBar({
       iconBgClass: 'bg-indigo-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-indigo-200 dark:border-indigo-900/60',
       bgClass: 'bg-indigo-50/60 dark:bg-indigo-950/30',
-      hoverClass: 'hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600',
+      hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-indigo-950 dark:text-indigo-200 group-hover:text-white',
       subtitleColorClass: 'text-indigo-600/80 dark:text-indigo-400 group-hover:text-indigo-100',
       tooltipPos: 'left-0 sm:left-0 lg:left-0',
@@ -66,12 +66,12 @@ export function QuickActionBar({
       subtitle: 'Add to Showroom',
       ariaLabel: 'Intake Vehicle: Add to Showroom inventory registry',
       icon: Car,
-      iconBgClass: 'bg-slate-800 dark:bg-slate-700 text-white group-hover:bg-white group-hover:text-slate-900',
+      iconBgClass: 'bg-slate-800 dark:bg-slate-700 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
       bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
-      hoverClass: 'hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700',
+      hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
-      subtitleColorClass: 'text-slate-500 group-hover:text-slate-200',
+      subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
       tooltipPos: 'right-0 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto lg:left-1/2 lg:-translate-x-1/2',
       arrowPos: 'right-6 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto lg:left-1/2 lg:-translate-x-1/2',
       onClick: onOpenVehicleIntake,
@@ -82,12 +82,12 @@ export function QuickActionBar({
       subtitle: 'Judicial, Govt, Private',
       ariaLabel: 'Auction Lot Intake: Judicial, Govt, Private asset cataloging',
       icon: Gavel,
-      iconBgClass: 'bg-amber-600 text-white group-hover:bg-white group-hover:text-amber-600',
+      iconBgClass: 'bg-amber-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
       bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
-      hoverClass: 'hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700',
+      hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
-      subtitleColorClass: 'text-slate-500 group-hover:text-slate-200',
+      subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
       tooltipPos: 'left-0 sm:right-0 sm:left-auto lg:left-1/2 lg:-translate-x-1/2 lg:right-auto',
       arrowPos: 'left-6 sm:right-6 sm:left-auto lg:left-1/2 lg:-translate-x-1/2 lg:right-auto',
       href: '/desk/auctions/intake',
@@ -98,12 +98,12 @@ export function QuickActionBar({
       subtitle: 'A5 Gate Pass',
       ariaLabel: 'Issue Waybill: A5 Gate Pass and yard exit clearance',
       icon: Truck,
-      iconBgClass: 'bg-emerald-600 text-white group-hover:bg-white group-hover:text-emerald-600',
+      iconBgClass: 'bg-emerald-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
       bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
-      hoverClass: 'hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700',
+      hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
-      subtitleColorClass: 'text-slate-500 group-hover:text-slate-200',
+      subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
       tooltipPos: 'right-0 sm:left-0 sm:right-auto lg:left-1/2 lg:-translate-x-1/2',
       arrowPos: 'right-6 sm:left-6 sm:right-auto lg:left-1/2 lg:-translate-x-1/2',
       onClick: onOpenWaybillModal,
@@ -114,12 +114,12 @@ export function QuickActionBar({
       subtitle: 'Yard Rent, Logistics, AP',
       ariaLabel: 'Record Expense: Yard Rent, Logistics, AP disbursements',
       icon: Receipt,
-      iconBgClass: 'bg-rose-600 text-white group-hover:bg-white group-hover:text-rose-600',
+      iconBgClass: 'bg-rose-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
       bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
-      hoverClass: 'hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700',
+      hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
-      subtitleColorClass: 'text-slate-500 group-hover:text-slate-200',
+      subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
       tooltipPos: 'left-0 sm:left-1/2 sm:-translate-x-1/2 sm:left-auto lg:left-1/2 lg:-translate-x-1/2',
       arrowPos: 'left-6 sm:left-1/2 sm:-translate-x-1/2 sm:left-auto lg:left-1/2 lg:-translate-x-1/2',
       onClick: onOpenExpenseModal,
@@ -130,12 +130,12 @@ export function QuickActionBar({
       subtitle: 'Sweep Cash to Bank',
       ariaLabel: 'Bank Deposit Slip: Sweep Cash to Bank clearance queue',
       icon: Building,
-      iconBgClass: 'bg-blue-600 text-white group-hover:bg-white group-hover:text-blue-600',
+      iconBgClass: 'bg-blue-600 text-white group-hover:bg-white group-hover:text-indigo-600',
       borderClass: 'border-slate-200 dark:border-slate-800',
       bgClass: 'bg-slate-50/60 dark:bg-slate-800/40',
-      hoverClass: 'hover:bg-slate-900 hover:text-white dark:hover:bg-slate-700',
+      hoverClass: 'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
       titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
-      subtitleColorClass: 'text-slate-500 group-hover:text-slate-200',
+      subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
       tooltipPos: 'right-0 sm:right-0 lg:right-0',
       arrowPos: 'right-6',
       onClick: onOpenBankDepositModal,
@@ -163,24 +163,24 @@ export function QuickActionBar({
 
           const content = (
             <>
-              {/* Tooltip revealing full untruncated words */}
+              {/* Light Tooltip revealing full untruncated words */}
               <div
                 role="tooltip"
                 aria-hidden="true"
-                className={`pointer-events-none absolute bottom-full mb-2.5 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-focus-visible:opacity-100 group-focus-visible:scale-100 group-focus-visible:translate-y-0 transition-all duration-150 ease-out z-40 px-3 py-2 rounded-xl bg-slate-900/95 dark:bg-slate-950/95 text-white shadow-xl border border-slate-700/60 dark:border-slate-800 backdrop-blur-xs min-w-[180px] max-w-[240px] text-left select-none ${action.tooltipPos}`}
+                className={`pointer-events-none absolute bottom-full mb-2.5 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-focus-visible:opacity-100 group-focus-visible:scale-100 group-focus-visible:translate-y-0 transition-all duration-150 ease-out z-40 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-lg shadow-slate-900/10 dark:shadow-black/40 border border-slate-200/90 dark:border-slate-700 min-w-[180px] max-w-[240px] text-left select-none ${action.tooltipPos}`}
               >
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 shrink-0" />
-                  <p className="text-xs font-bold text-white tracking-tight leading-tight">
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 shrink-0" />
+                  <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
                     {action.title}
                   </p>
                 </div>
-                <p className="text-[11px] font-medium text-slate-300 dark:text-slate-400 leading-tight">
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">
                   {action.subtitle}
                 </p>
-                {/* Tooltip Downward Arrow */}
+                {/* Light Tooltip Downward Arrow with border matching container */}
                 <div
-                  className={`absolute top-full -mt-px border-4 border-transparent border-t-slate-900/95 dark:border-t-slate-950/95 ${action.arrowPos}`}
+                  className={`absolute -bottom-1 w-2.5 h-2.5 bg-white dark:bg-slate-900 border-r border-b border-slate-200/90 dark:border-slate-700 rotate-45 ${action.arrowPos}`}
                 />
               </div>
 

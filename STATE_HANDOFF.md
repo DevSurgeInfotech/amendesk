@@ -278,16 +278,16 @@ flowchart TD
   - `src/app/login/page.tsx` (Remediated card surface contrast and elevation, removed Quick Test Access and footer badges, kept clean minimalist interface)
   - `STATE_HANDOFF.md` (Updated session changelog)
 
-### Session: 2026-10-24 (Quick Action Command Hub Floating Tooltips)
-- **Goal**: Add accessible, responsive floating tooltips to all 6 command buttons in the Speed Operations Quick Action Command Hub to bring out hidden/truncated words.
+### Session: 2026-10-24 (Quick Action Command Hub Floating Light Tooltips & Indigo Hover Unification)
+- **Goal**: Transition tooltips from dark to light theme and unify on-mouse hover states across all quick action buttons to signature indigo.
 - **Accomplishments**:
-  - Enhanced [`src/components/erp/dashboard/QuickActionBar.tsx`](file:///d:/amendesk/src/components/erp/dashboard/QuickActionBar.tsx) with a data-driven configuration model (`QuickActionConfig`).
-  - Added high-contrast, backdrop-blurred floating tooltips (`role="tooltip"`) displaying the complete untruncated command titles and operational subtitles on hover and keyboard focus (`group-focus-visible`).
-  - Implemented responsive edge-aware positioning (`tooltipPos` and `arrowPos`) preventing viewport clipping on mobile 2-column, tablet 3-column, and desktop 6-column layouts.
-  - Added explicit screen-reader accessibility via descriptive `aria-label` attributes on both buttons and navigation links.
-  - Passed all strict quality gates: `npm run check` (TypeScript typecheck + ESLint strict) with 0 errors and 0 warnings.
+  - Converted floating tooltips in [`src/components/erp/dashboard/QuickActionBar.tsx`](file:///d:/amendesk/src/components/erp/dashboard/QuickActionBar.tsx) to a clean light theme (`bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700 text-slate-900 dark:text-white shadow-lg shadow-slate-900/10`) with matching light downward pointer arrow.
+  - Replaced harsh dark hover (`hover:bg-slate-900`) across all non-POS buttons (Vehicle Intake, Auction Intake, Issue Waybill, Record Expense, Bank Deposit) with signature indigo styling (`hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600`).
+  - Unified icon and subtitle hover transitions: icon box switches to `bg-white text-indigo-600` and subtitle switches to `text-indigo-100`, matching the preferred Record POS Payment interaction.
+  - Maintained full accessibility (`role="tooltip"`, `aria-label`, `focus-visible`) and responsive edge alignment.
+  - Passed all mandatory quality gates: `npm run typecheck` and strict ESLint with 0 errors and 0 warnings.
 - **Changed Files**:
-  - `src/components/erp/dashboard/QuickActionBar.tsx` (Added accessible floating tooltips and data-driven command actions)
+  - `src/components/erp/dashboard/QuickActionBar.tsx` (Light tooltips + indigo hover states)
   - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
 - **Commit Reference**: Pending live git commit & push.
 
