@@ -206,7 +206,21 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
-### Session: 2026-10-24 (Current Session — Megamenu, Navigation & Content Cleanup)
+### Session: 2026-10-24 (Login Surface Contrast & Visual Enhancement Remediation)
+- **Goal**: Remediate login surface card blending into surrounding slate canvas and enhance authentication portal aesthetics, elevation, and accessibility.
+- **Accomplishments**:
+  - Replaced washed-out `#F4F7FB` background with LandingGo architectural slate gradient (`from-[#edf2f7] via-[#e4ebf3] to-[#d8e2ec]` in light mode, `dark:from-slate-950 dark:via-slate-900 dark:to-slate-950`).
+  - Added subtle architectural dot-matrix canvas texture and atmospheric lighting highlights to provide physical depth and clear contrast behind the card.
+  - Enhanced the login card with multi-layered physical elevation shadow (`shadow-[0_20px_60px_-15px_rgba(15,23,42,0.18),0_10px_25px_-5px_rgba(15,23,42,0.08),0_0_0_1px_rgba(15,23,42,0.06)]`), razor-sharp border definition, and top brand gradient accent ribbon (`from-amber-500 via-[#4A154B] to-indigo-600`).
+  - Integrated top utility bar with "Public Showroom" return link, PNDCL 230 licensing badge, and responsive dark mode toggle.
+  - Elevated form input ergonomics with lead icons (Mail, Lock), high-contrast borders, and rich brand plum focus rings.
+  - Added quick test & evaluation credentials helper drawer for effortless testing between Amen Mart Live and Demo Sandbox accounts.
+  - Ran mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/app/login/page.tsx` (Remediated card surface contrast, enhanced shadows, background texture, utility bar, and quick test access)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
+### Session: 2026-10-24 (Earlier Session — Megamenu, Navigation & Content Cleanup)
 - **Goal**: Realign site navigation megamenu, remove redundant links, strip duplicate top flag badge, and add dedicated News & Blog modules.
 - **Accomplishments**:
   - Removed "Staff Login" from [`SiteHeader.tsx`](file:///d:/amendesk/src/components/site/SiteHeader.tsx) and "Staff ERP Terminal Login" from [`SiteFooter.tsx`](file:///d:/amendesk/src/components/site/SiteFooter.tsx) per isolated DNS routing policy.
