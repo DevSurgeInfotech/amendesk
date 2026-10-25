@@ -222,6 +222,22 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Removal of Dev Surge Platform Vendor Console Links from Client ERP Navigation)
+- **Goal**: Address critical boundary violation by completely removing the vendor "Dev Surge Platform" link from Settings header and Topbar user profile menu in client ERP navigation, ensuring strict white-label separation in live production.
+- **Root Cause Identified**:
+  - `src/app/(erp)/desk/settings/page.tsx` contained an unconditionally rendered `<Link href="/platform"><span>Dev Surge Platform</span></Link>` next to the "Staff & Payroll Directory" action button when `activeAppRole === 'OWNER'`.
+  - In live production (`amen-mart-live`), Amen Mart owner/executive accounts viewing Settings saw this vendor platform link prominently displayed in the top header.
+  - Similarly, `src/components/erp/Topbar.tsx` rendered a "Dev Surge Platform Console" item in the staff user profile popover when `role === 'OWNER'`.
+- **Accomplishments**:
+  - **Purged from Settings Header (`src/app/(erp)/desk/settings/page.tsx`)**: Removed the `Dev Surge Platform` link and stripped the unused `ExternalLink` import.
+  - **Purged from Topbar User Menu (`src/components/erp/Topbar.tsx`)**: Removed the `Dev Surge Platform Console` navigation link and stripped the unused `ShieldCheck` import.
+  - **Strict White-Label Boundary Maintained**: The internal fleet engineering console (`/platform`) remains accessible solely as a standalone engineering route directly via URL with master key protection (`devsurge2026`), with zero links or exposure within the client-facing ERP interface.
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint with `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
+- **Changed Files**:
+  - `src/app/(erp)/desk/settings/page.tsx` (Removed Dev Surge Platform button & unused ExternalLink import)
+  - `src/components/erp/Topbar.tsx` (Removed Dev Surge Platform Console item & unused ShieldCheck import)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
 ### Session: 2026-10-25 (Live Production Clean Slate Handover Remediation & Zero Demo Bleed Enforcement)
 - **Goal**: Resolve live production (`amen-mart-live`) containing hardcoded demo balances and seed records. Ensure live production provides a pristine clean slate on handover: all 50 accounts in the statutory Chart of Accounts start at `GH₵ 0.00` (Liquid Funds = GH₵ 0.00, Receivables = GH₵ 0.00, Payables = GH₵ 0.00, Net Margin = GH₵ 0.00, and front-desk tills at GH₵ 0.00), with zero operational demo records (lots, vehicles, land parcels, properties, payment plans, receipts, waybills, deeds, inventory items, stock movements, expenses, invoices, bank deposits, payroll runs, slips, attendance, seed employees, and mock customers), while preserving the full demonstration dataset for the sandbox demo yard (`amen-mart-sandbox`).
 - **Root Cause Identified**:

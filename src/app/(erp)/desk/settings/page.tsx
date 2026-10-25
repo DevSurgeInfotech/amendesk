@@ -37,7 +37,6 @@ import {
   X,
   Search,
   UserCheck,
-  ExternalLink,
   Lock,
   Briefcase,
 } from 'lucide-react';
@@ -455,16 +454,6 @@ function WorkspaceSettingsContent() {
             <Briefcase className="h-3.5 w-3.5" />
             <span>Staff &amp; Payroll Directory</span>
           </Link>
-          {activeAppRole === 'OWNER' && (
-            <Link
-              href="/platform"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700"
-              title="Open Dev Surge platform engineering console for software updates & managed websites"
-            >
-              <ExternalLink className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>Dev Surge Platform</span>
-            </Link>
-          )}
         </div>
       </div>
 
