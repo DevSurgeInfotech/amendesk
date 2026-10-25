@@ -244,67 +244,79 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredCars.map((car) => (
-              <div
-                key={car.id}
-                className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative h-52 bg-slate-200 dark:bg-slate-800">
-                    <Image
-                      src={car.photos[0] || 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80'}
-                      alt={`${car.make} ${car.model}`}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
-                        {car.stockNumber}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-3 right-3">
-                      <Badge variant="success" size="sm">
-                        Available
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="p-5 space-y-2">
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
-                      {car.year} {car.make} {car.model}
-                    </h3>
-                    <p className="text-xs text-slate-500 line-clamp-2">{car.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 pt-2">
-                      <span className="flex items-center gap-1">
-                        <Fuel className="h-3.5 w-3.5 text-indigo-500" />
-                        {car.fuelType}
-                      </span>
-                      <span>{car.mileageKm.toLocaleString()} km</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
+          {featuredCars.length === 0 ? (
+            <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-2 shadow-xs">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Showroom Inventory Arriving
+              </h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                Direct imported vehicles are currently undergoing landed customs clearance and showroom detailing. Call{' '}
+                <strong className="text-slate-700 dark:text-slate-300">0548517277 / 0558314744</strong> for vehicle reservations.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {featuredCars.map((car) => (
+                <div
+                  key={car.id}
+                  className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
+                >
                   <div>
-                    <span className="text-[11px] text-slate-400">Asking Price:</span>
-                    <p className="text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono">
-                      {formatGHS(car.askingPriceGhs)}
-                    </p>
+                    <div className="relative h-52 bg-slate-200 dark:bg-slate-800">
+                      <Image
+                        src={car.photos[0] || 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80'}
+                        alt={`${car.make} ${car.model}`}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
+                          {car.stockNumber}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-3 right-3">
+                        <Badge variant="success" size="sm">
+                          Available
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-2">
+                      <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
+                        {car.year} {car.make} {car.model}
+                      </h3>
+                      <p className="text-xs text-slate-500 line-clamp-2">{car.description}</p>
+                      <div className="flex items-center gap-4 text-xs text-slate-500 pt-2">
+                        <span className="flex items-center gap-1">
+                          <Fuel className="h-3.5 w-3.5 text-indigo-500" />
+                          {car.fuelType}
+                        </span>
+                        <span>{car.mileageKm.toLocaleString()} km</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={() => setInquiryModalItem({ title: `${car.year} ${car.make} ${car.model}`, type: 'DEALERSHIP_CAR' })}
-                  >
-                    Inquire / Reserve
-                  </Button>
+                  <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] text-slate-400">Asking Price:</span>
+                      <p className="text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                        {formatGHS(car.askingPriceGhs)}
+                      </p>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setInquiryModalItem({ title: `${car.year} ${car.make} ${car.model}`, type: 'DEALERSHIP_CAR' })}
+                    >
+                      Inquire / Reserve
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -329,74 +341,86 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredLots.map((lot) => (
-            <div
-              key={lot.id}
-              className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative h-52 bg-slate-200 dark:bg-slate-800">
-                  <Image
-                    src={lot.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
-                    alt={lot.title}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
-                      {lot.lotNumber}
-                    </span>
-                    <Badge
-                      variant={
-                        lot.category === 'JUDICIAL'
-                          ? 'danger'
-                          : lot.category === 'GOVERNMENT'
-                          ? 'warning'
-                          : 'info'
-                      }
-                      size="sm"
-                    >
-                      {lot.category}
-                    </Badge>
+        {featuredLots.length === 0 ? (
+          <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-2 shadow-xs">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Auction Schedule in Preparation
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Upcoming Judicial, Government, and Private auction gazette notices will appear here upon statutory certification. Call{' '}
+              <strong className="text-slate-700 dark:text-slate-300">0548517277 / 0558314744</strong> for auction dates and lot viewings.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredLots.map((lot) => (
+              <div
+                key={lot.id}
+                className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative h-52 bg-slate-200 dark:bg-slate-800">
+                    <Image
+                      src={lot.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
+                      alt={lot.title}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
+                        {lot.lotNumber}
+                      </span>
+                      <Badge
+                        variant={
+                          lot.category === 'JUDICIAL'
+                            ? 'danger'
+                            : lot.category === 'GOVERNMENT'
+                            ? 'warning'
+                            : 'info'
+                        }
+                        size="sm"
+                      >
+                        {lot.category}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="p-5 space-y-2">
+                    <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 line-clamp-2">
+                      {lot.title}
+                    </h3>
+
+                    {lot.category === 'JUDICIAL' && (
+                      <div className="p-2 rounded bg-rose-50 dark:bg-rose-950/40 text-[11px] text-rose-800 dark:text-rose-300 font-mono">
+                        Suit: {lot.courtCaseNumber || 'HC/ACR/COMM/2026/049'}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-slate-500 line-clamp-2">{lot.conditionNotes}</p>
                   </div>
                 </div>
 
-                <div className="p-5 space-y-2">
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 line-clamp-2">
-                    {lot.title}
-                  </h3>
+                <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-400">Starting Bid:</span>
+                    <p className="text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                      {formatGHS(lot.startingBidGhs)}
+                    </p>
+                  </div>
 
-                  {lot.category === 'JUDICIAL' && (
-                    <div className="p-2 rounded bg-rose-50 dark:bg-rose-950/40 text-[11px] text-rose-800 dark:text-rose-300 font-mono">
-                      Suit: {lot.courtCaseNumber || 'HC/ACR/COMM/2026/049'}
-                    </div>
-                  )}
-
-                  <p className="text-xs text-slate-500 line-clamp-2">{lot.conditionNotes}</p>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => setInquiryModalItem({ title: `${lot.lotNumber}: ${lot.title}`, type: 'AUCTION_LOT' })}
+                  >
+                    Register to Bid
+                  </Button>
                 </div>
               </div>
-
-              <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] text-slate-400">Starting Bid:</span>
-                  <p className="text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">
-                    {formatGHS(lot.startingBidGhs)}
-                  </p>
-                </div>
-
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => setInquiryModalItem({ title: `${lot.lotNumber}: ${lot.title}`, type: 'AUCTION_LOT' })}
-                >
-                  Register to Bid
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Online Paystack Deposit Banner */}

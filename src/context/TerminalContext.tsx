@@ -56,6 +56,7 @@ interface TerminalContextType {
   lastSyncedAt: Date | null;
   triggerManualSync: () => Promise<SyncResult>;
   resetDatabase: () => Promise<void>;
+  cleanSlateDatabase: () => Promise<void>;
   isDbReady: boolean;
 
   // Encore SMS Style Multi-Tenant RBAC Session
@@ -336,6 +337,12 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     setPendingSyncCount(count);
   };
 
+  const cleanSlateDatabase = async () => {
+    await db.resetToCleanSlate();
+    const count = await syncEngine.getPendingCount();
+    setPendingSyncCount(count);
+  };
+
   return (
     <TerminalContext.Provider
       value={{
@@ -351,6 +358,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         lastSyncedAt,
         triggerManualSync,
         resetDatabase,
+        cleanSlateDatabase,
         isDbReady,
         session,
         isAuthenticated,

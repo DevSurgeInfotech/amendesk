@@ -53,8 +53,8 @@ flowchart LR
 
 ### Multi-Tenant Architecture & Database Separation
 AmenDesk implements an **Encore SMS-style multi-tenant architecture**:
-- **Live Production Tenant (`amen-mart-live`)**: Database `AmenDeskDB_live`. Isolated live records for production yard and cash office.
-- **Sandbox Demo Tenant (`amen-mart-sandbox`)**: Database `AmenDeskDB_sandbox`. Cloaked sandbox environment for staging, testing, and staff training with rich seed data.
+- **Live Production Tenant (`amen-mart-live`)**: Database `AmenDeskDB_live`. Isolated live records for production yard and cash office. Maintained as a pristine **clean slate**: all 50 statutory COA accounts start at `GH₵ 0.00` balance, with 0 demo auction lots, dealership vehicles, land parcels, properties, expenses, invoices, payroll runs, seed employees, or mock customers. Automatically protected by `ensureLiveCleanSlate()` on boot, with one-click Client Handover Clean Slate tools in Settings and Migration.
+- **Sandbox Demo Tenant (`amen-mart-sandbox`)**: Database `AmenDeskDB_sandbox`. Cloaked sandbox environment for staging, testing, and staff training with rich seed demonstration data (`initialSandboxAccounts` with demo balances, sample lots, vehicles, land parcels, and mock transactions).
 - **Platform Console (`/platform`)**: Fleet management console for Dev Surge Infotech administrators to provision workspaces, review deployment builds, manage releases, and toggle client tenant accounts.
 
 ---
@@ -145,6 +145,8 @@ flowchart TD
 #### Phase 5: Hardening, Verification & Go-Live Operations — **IN PROGRESS**
 - [x] Husky pre-commit hooks and lint-staged pipeline active (`.husky/pre-commit`).
 - [x] Multi-tenant isolation verified with zero bleed between Sandbox and Live databases.
+- [x] Live Production Clean Slate Handover Remediation completed: all 50 COA accounts initialized with GH₵ 0.00 balances, zero seed operational data bleed, automatic boot sanitization (`ensureLiveCleanSlate`), and one-click Handover Clean Slate tools in Settings and Migration.
+- [x] Public website catalog empty states implemented across showroom, auctions, land, and properties for clean presentation prior to live staff entry.
 - [x] Data portability hub (`/desk/migration`) supporting JSON/CSV backup exports and bulk data ingestion.
 - [ ] Multi-device concurrent sync stress testing across simulated low-bandwidth Ghana cellular connections (Hubtel/MTN).
 - [ ] End-to-end Paystack card deposit subaccount integration testing in live environment.
@@ -219,6 +221,41 @@ flowchart TD
 ---
 
 ## 6. Execution History & Session Changelog
+
+### Session: 2026-10-25 (Live Production Clean Slate Handover Remediation & Zero Demo Bleed Enforcement)
+- **Goal**: Resolve live production (`amen-mart-live`) containing hardcoded demo balances and seed records. Ensure live production provides a pristine clean slate on handover: all 50 accounts in the statutory Chart of Accounts start at `GH₵ 0.00` (Liquid Funds = GH₵ 0.00, Receivables = GH₵ 0.00, Payables = GH₵ 0.00, Net Margin = GH₵ 0.00, and front-desk tills at GH₵ 0.00), with zero operational demo records (lots, vehicles, land parcels, properties, payment plans, receipts, waybills, deeds, inventory items, stock movements, expenses, invoices, bank deposits, payroll runs, slips, attendance, seed employees, and mock customers), while preserving the full demonstration dataset for the sandbox demo yard (`amen-mart-sandbox`).
+- **Root Cause Identified**:
+  1. `initialAccounts` in `src/lib/db/seed.ts` had hardcoded demo balances (e.g. `24500`, `485000`, `532950`, `1135000`). When `populateIfEmpty()` initialized `AmenDeskDB_live`, it populated the live statutory COA with these demo balances.
+  2. In `AmenDeskDB` constructor (`src/lib/db/index.ts`), `this.tenantId` was assigned via `getActiveTenantId()`. If the live DB was instantiated while `getActiveTenantId()` evaluated to `'amen-mart-sandbox'` (e.g. via URL query `?tenant=demo` or lingering storage state), the live database misidentified itself as sandbox and seeded demo records.
+  3. Pre-existing client IndexedDB databases on staff browsers lacked an automatic runtime sanitization check on startup to reset balances when no legitimate accounting activity existed.
+- **Accomplishments**:
+  - **Clean Slate Chart of Accounts (`src/lib/db/seed.ts`)**:
+    - Extracted all demo balances into `sandboxAccountBalances: Record<string, number>`.
+    - Initialized all 50 accounts in `initialAccounts` with `balanceGhs: 0` for live production.
+    - Exported `initialSandboxAccounts: Account[]` combining `initialAccounts` with `sandboxAccountBalances` strictly for sandbox environments.
+  - **Deterministic Tenant Binding & Auto Clean Slate (`src/lib/db/index.ts`)**:
+    - Bound `this.tenantId` and `this.dbMode` deterministically to the database name: `LIVE_DB_NAME` (`AmenDeskDB_live`) is locked to `'amen-mart-live'` / `'LIVE'`, and `SANDBOX_DB_NAME` (`AmenDeskDB_sandbox`) is locked to `'amen-mart-sandbox'` / `'SANDBOX'`, eliminating cross-tenant pollution regardless of caller context.
+    - Implemented `ensureLiveCleanSlate()` in `AmenDeskDB` which executes during `populateIfEmpty()` and on live DB boot: if `journalEntries` count is zero, it resets all 50 accounts to `balanceGhs: 0` and purges any operational seed records while retaining genuine inbound website leads.
+    - Implemented `resetToCleanSlate()` for manual full-wipe handover reset.
+  - **Client Handover Clean Slate Control Center (`src/context/TerminalContext.tsx`, `/desk/settings`, `/desk/migration`)**:
+    - Exposed `cleanSlateDatabase: () => Promise<void>` in `TerminalContext`.
+    - Added dedicated "Client Handover Clean Slate" card in Settings (`/desk/settings?tab=security`) with confirmation dialog and warning guards.
+    - Added "Clean Slate Handover" quick action in `/desk/migration` for live tenant mode.
+  - **Public Showroom & Catalog Empty State Overhaul**:
+    - Updated [`/showroom`](file:///d:/amendesk/src/app/(site)/showroom/page.tsx), [`/auctions`](file:///d:/amendesk/src/app/(site)/auctions/page.tsx), [`/land`](file:///d:/amendesk/src/app/(site)/land/page.tsx), [`/properties`](file:///d:/amendesk/src/app/(site)/properties/page.tsx), and [`/`](file:///d:/amendesk/src/app/(site)/page.tsx) to render welcoming empty states when inventory count is 0, detailing official Amen Mart intake notices, contact lines (`0548517277 / 0558314744`), and office location, rather than displaying broken blank grids.
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + ESLint strict) with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/lib/db/seed.ts` (Extracted sandbox balances, set 0 balances for initial COA)
+  - `src/lib/db/index.ts` (Deterministic tenant binding, ensureLiveCleanSlate, resetToCleanSlate)
+  - `src/context/TerminalContext.tsx` (Exposed cleanSlateDatabase method)
+  - `src/app/(erp)/desk/settings/page.tsx` (Added Client Handover Clean Slate tool with confirmation modal)
+  - `src/app/(erp)/desk/migration/page.tsx` (Added Clean Slate action button in live mode)
+  - `src/app/(site)/showroom/page.tsx` (Empty state for dealership vehicles)
+  - `src/app/(site)/auctions/page.tsx` (Empty state for upcoming auction notices)
+  - `src/app/(site)/land/page.tsx` (Empty state for land parcels)
+  - `src/app/(site)/properties/page.tsx` (Empty state for property units)
+  - `src/app/(site)/page.tsx` (Empty states for home showcase tabs)
+  - `STATE_HANDOFF.md` (Updated system status, conventions, and session ledger)
 
 ### Session: 2026-10-25 (ERP Operational Notifications & Inbound Contact Page Inquiry Pipeline Remediation)
 - **Goal**:

@@ -120,8 +120,22 @@ export default function PublicLandPage() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredParcels.map((parcel) => (
+      {filteredParcels.length === 0 ? (
+        <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3 shadow-xs">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center">
+            <MapPin className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            No Land Parcels Listed
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Direct titled land parcels are currently being surveyed and cataloged. Contact our Land Desk at{' '}
+            <strong className="text-slate-700 dark:text-slate-300">0548517277 / 0558314744</strong> for upcoming demarcated plots and site plans.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredParcels.map((parcel) => (
           <div
             key={parcel.id}
             className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
@@ -254,6 +268,7 @@ export default function PublicLandPage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Inquire Modal */}
       {selectedParcel && (

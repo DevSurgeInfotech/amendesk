@@ -200,8 +200,22 @@ function PublicAuctionsCatalog() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {filteredLots.map((lot) => (
+      {filteredLots.length === 0 ? (
+        <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3 shadow-xs">
+          <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center">
+            <Gavel className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            No Auction Notices Scheduled
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            There are currently no active public auction notices for this category. New gazetted Judicial, Government, and Private auctions will appear here upon publication. Call{' '}
+            <strong className="text-slate-700 dark:text-slate-300">0548517277 / 0558314744</strong> for upcoming event schedules.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {filteredLots.map((lot) => (
           <div
             key={lot.id}
             className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
@@ -311,6 +325,7 @@ function PublicAuctionsCatalog() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Bidder Registration Modal */}
       {inquiryLot && (

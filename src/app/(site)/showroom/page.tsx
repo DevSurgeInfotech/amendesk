@@ -247,98 +247,113 @@ export default function ShowroomPage() {
       </div>
 
       {/* Vehicles Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {filteredVehicles.map((car) => (
-          <div
-            key={car.id}
-            className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
-          >
-            <div>
-              <div
-                onClick={() => setGalleryVehicle(car)}
-                className="relative h-56 bg-slate-200 dark:bg-slate-800 cursor-pointer group"
-                title="Click to view all vehicle photos"
-              >
-                <Image
-                  src={car.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
-                  alt={`${car.make} ${car.model}`}
-                  fill
-                  unoptimized
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute top-3 left-3">
-                  <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
-                    {car.stockNumber}
-                  </span>
-                </div>
-                <div className="absolute bottom-3 left-3">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
-                    <Images className="h-3 w-3 text-indigo-400" />
-                    <span>{car.photos?.length || 1} Photos</span>
-                  </span>
-                </div>
-                <div className="absolute bottom-3 right-3">
-                  <Badge
-                    variant={car.status === 'AVAILABLE' ? 'success' : car.status === 'RESERVED' ? 'warning' : 'default'}
-                    size="sm"
-                  >
-                    {car.status}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="p-5 space-y-3">
-                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
-                  {car.year} {car.make} {car.model}
-                </h3>
-
-                <p className="text-xs text-slate-500 line-clamp-2">{car.description}</p>
-
-                <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="flex items-center gap-1">
-                    <Fuel className="h-3.5 w-3.5 text-indigo-500" />
-                    {car.fuelType}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Gauge className="h-3.5 w-3.5 text-indigo-500" />
-                    {car.mileageKm.toLocaleString()} km
-                  </span>
-                  <span className="col-span-2 font-mono text-[11px] text-slate-400">
-                    VIN: {car.vin}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
-              <div>
-                <span className="text-[11px] text-slate-400">Price (Cash / Card):</span>
-                <p className="text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
-                  {formatGHS(car.askingPriceGhs)}
-                </p>
-              </div>
-
-              {car.status === 'AVAILABLE' ? (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => {
-                    setSelectedVehicleForDeposit(car);
-                    setIsDepositSuccessful(false);
-                  }}
-                  icon={<CreditCard className="h-3.5 w-3.5" />}
-                >
-                  Reserve Online
-                </Button>
-              ) : (
-                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40">
-                  Reserved / Sold
-                </span>
-              )}
-            </div>
+      {filteredVehicles.length === 0 ? (
+        <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3 shadow-xs">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center">
+            <Gauge className="h-6 w-6" />
           </div>
-        ))}
-      </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            Showroom Stock Arriving
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Direct vehicle inventory is currently being updated. Contact our sales office at{' '}
+            <strong className="text-slate-700 dark:text-slate-300">0548517277 / 0558314744</strong> or visit our showroom at Flower Junction, Gbawe, Accra.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {filteredVehicles.map((car) => (
+            <div
+              key={car.id}
+              className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
+            >
+              <div>
+                <div
+                  onClick={() => setGalleryVehicle(car)}
+                  className="relative h-56 bg-slate-200 dark:bg-slate-800 cursor-pointer group"
+                  title="Click to view all vehicle photos"
+                >
+                  <Image
+                    src={car.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
+                    alt={`${car.make} ${car.model}`}
+                    fill
+                    unoptimized
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2 py-0.5 rounded bg-slate-900/80 text-white font-mono text-xs font-bold backdrop-blur-xs">
+                      {car.stockNumber}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 left-3">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
+                      <Images className="h-3 w-3 text-indigo-400" />
+                      <span>{car.photos?.length || 1} Photos</span>
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 right-3">
+                    <Badge
+                      variant={car.status === 'AVAILABLE' ? 'success' : car.status === 'RESERVED' ? 'warning' : 'default'}
+                      size="sm"
+                    >
+                      {car.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
+                    {car.year} {car.make} {car.model}
+                  </h3>
+
+                  <p className="text-xs text-slate-500 line-clamp-2">{car.description}</p>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span className="flex items-center gap-1">
+                      <Fuel className="h-3.5 w-3.5 text-indigo-500" />
+                      {car.fuelType}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Gauge className="h-3.5 w-3.5 text-indigo-500" />
+                      {car.mileageKm.toLocaleString()} km
+                    </span>
+                    <span className="col-span-2 font-mono text-[11px] text-slate-400">
+                      VIN: {car.vin}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 mt-2 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-400">Price (Cash / Card):</span>
+                  <p className="text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                    {formatGHS(car.askingPriceGhs)}
+                  </p>
+                </div>
+
+                {car.status === 'AVAILABLE' ? (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => {
+                      setSelectedVehicleForDeposit(car);
+                      setIsDepositSuccessful(false);
+                    }}
+                    icon={<CreditCard className="h-3.5 w-3.5" />}
+                  >
+                    Reserve Online
+                  </Button>
+                ) : (
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40">
+                    Reserved / Sold
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Paystack Online Deposit Modal */}
       {selectedVehicleForDeposit && (

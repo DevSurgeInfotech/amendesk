@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import type { Customer, AuctionLot, DealershipVehicle, LandParcel } from '@/lib/types';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { useTerminal } from '@/context/TerminalContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import {
@@ -45,6 +46,7 @@ function getIsoTimestamp(): string {
 }
 
 function DataMigrationContent() {
+  const { activeTenant, cleanSlateDatabase } = useTerminal();
   const [selectedCategory, setSelectedCategory] = useState<ImportCategory>('CUSTOMERS');
   const [csvText, setCsvText] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -457,6 +459,28 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
     reader.readAsText(file);
   };
 
+  const handleCleanSlateLive = async () => {
+    if (
+      !confirm(
+        'Are you sure you want to sanitize AmenDeskDB_live? All seed/demo records will be purged and Chart of Accounts set to GH₵ 0.00 for clean client handover.'
+      )
+    ) {
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      await cleanSlateDatabase();
+      setSuccessMessage('Live production store successfully sanitized to clean slate. Zero demo bleed.');
+      setValidationErrors([]);
+    } catch (err: unknown) {
+      setValidationErrors([
+        `Clean slate operation failed: ${err instanceof Error ? err.message : String(err)}`,
+      ]);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -472,6 +496,17 @@ LND-OYI-003,Hillside View Parcel,Oyibi Hills,0.25,95000,INDENTURE`,
         </div>
 
         <div className="flex items-center gap-3">
+          {!activeTenant.isSandbox && (
+            <Button
+              variant="outline"
+              icon={<RotateCcw className="h-4 w-4 text-rose-600" />}
+              onClick={handleCleanSlateLive}
+              disabled={isProcessing}
+            >
+              Clean Slate Handover
+            </Button>
+          )}
+
           <Button
             variant="outline"
             icon={<Download className="h-4 w-4" />}

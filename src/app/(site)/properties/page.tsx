@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { recordInboundLead } from '@/lib/crm/leads';
-import { MapPin, Bed, Bath, CheckCircle2, Images } from 'lucide-react';
+import { MapPin, Bed, Bath, CheckCircle2, Images, Building2 } from 'lucide-react';
 
 export default function PublicPropertiesPage() {
   const properties = useLiveQuery(() => db.propertyUnits.toArray(), []) || [];
@@ -120,8 +120,22 @@ export default function PublicPropertiesPage() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredProperties.map((prop) => (
+      {filteredProperties.length === 0 ? (
+        <div className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3 shadow-xs">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center">
+            <Building2 className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            No Property Units Listed
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Residential and commercial property developments are currently being prepared. Call{' '}
+            <strong className="text-slate-700 dark:text-slate-300">0548517277 / 0558314744</strong> or visit our office at Flower Junction, Gbawe, Accra.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredProperties.map((prop) => (
           <div
             key={prop.id}
             className="surface-card bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between"
@@ -235,6 +249,7 @@ export default function PublicPropertiesPage() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Property Inquire Modal */}
       {selectedProp && (

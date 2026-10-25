@@ -75,7 +75,7 @@ function getRoleBadgeStyle(role: AppRole): string {
 
 function WorkspaceSettingsContent() {
   const searchParams = useSearchParams();
-  const { activeTenant, currentUser, role, setRole } = useTerminal();
+  const { activeTenant, currentUser, role, setRole, cleanSlateDatabase } = useTerminal();
   const activeAppRole = normalizeAppRole(role);
   const [, startTransition] = useTransition();
 
@@ -106,6 +106,8 @@ function WorkspaceSettingsContent() {
   const [selectedUserForReset, setSelectedUserForReset] =
     useState<UserAccount | null>(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [isCleanSlateConfirmOpen, setIsCleanSlateConfirmOpen] = useState(false);
+  const [isCleanSlateLoading, setIsCleanSlateLoading] = useState(false);
 
   // New Invite Form State
   const [inviteFullName, setInviteFullName] = useState('');
@@ -314,6 +316,26 @@ function WorkspaceSettingsContent() {
         'ERROR',
         err instanceof Error ? err.message : 'Failed to update password.'
       );
+    }
+  };
+
+  const handleCleanSlateLive = async () => {
+    setIsCleanSlateLoading(true);
+    try {
+      await cleanSlateDatabase();
+      showNotification(
+        'SUCCESS',
+        'Live database successfully sanitized to clean slate. All seed/demo records purged, and Chart of Accounts set to GH₵ 0.00.'
+      );
+      setIsCleanSlateConfirmOpen(false);
+      refreshData();
+    } catch (err) {
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Clean slate operation failed.'
+      );
+    } finally {
+      setIsCleanSlateLoading(false);
     }
   };
 
@@ -1239,6 +1261,33 @@ function WorkspaceSettingsContent() {
                 </div>
               </div>
             </div>
+
+            {!activeTenant.isSandbox && (
+              <div className="mt-4 p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                      <Shield className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      Client Handover Clean Slate
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      <CheckCircle2 className="h-3 w-3" /> Zero Demo Bleed
+                    </span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    Live production database is configured with 0 opening balances and zero mock transactions for clean client handover.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCleanSlateConfirmOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  Purge Seed &amp; Verify Clean Slate
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Comprehensive RBAC Permissions Matrix (Including Staff & Payroll Separation) */}
@@ -1545,6 +1594,68 @@ function WorkspaceSettingsContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: CONFIRM CLEAN SLATE HANDOVER RESET */}
+      {isCleanSlateConfirmOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+        >
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold shadow-xs">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    Apply Clean Slate Handover State
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Database: <strong className="font-mono">AmenDeskDB_live</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCleanSlateConfirmOpen(false)}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+              This operation will permanently purge all mock lots, test vehicles, demo land parcels, test clients, and simulated journal entries from the live database. All Chart of Accounts ledger balances will be reset to <strong className="text-slate-900 dark:text-white">GH₵ 0.00</strong> ready for client handover.
+            </p>
+
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300 font-medium mb-4 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>Real website inquiries submitted by prospective clients will be preserved.</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCleanSlateConfirmOpen(false)}
+                disabled={isCleanSlateLoading}
+                className="flex-1 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCleanSlateLive}
+                disabled={isCleanSlateLoading}
+                className="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isCleanSlateLoading ? 'Purging...' : 'Confirm Clean Slate'}
+              </button>
+            </div>
           </div>
         </div>
       )}
