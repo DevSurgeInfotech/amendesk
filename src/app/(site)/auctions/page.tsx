@@ -22,6 +22,7 @@ import {
   Images,
   Globe2,
   ShieldCheck,
+  ExternalLink,
 } from 'lucide-react';
 
 function PublicAuctionsCatalog() {
@@ -284,6 +285,22 @@ function PublicAuctionsCatalog() {
                   <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-[11px] text-rose-800 dark:text-rose-300 font-mono space-y-0.5">
                     <p className="font-bold">Suit: {lot.courtCaseNumber || 'HC/ACR/COMM/2026/049'}</p>
                     <p>Sheriff Fi-Fa: {lot.sheriffInstructionRef || 'SHF/WRIT/EXEC/2026/012'}</p>
+                    {lot.courtOrderDocUrl && (
+                      <div className="pt-1 mt-1 border-t border-rose-200/80 dark:border-rose-900/80 flex items-center justify-between">
+                        <span className="text-[10px] text-rose-700 dark:text-rose-400">
+                          Official Writ on File
+                        </span>
+                        <a
+                          href={lot.courtOrderDocUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 dark:text-rose-300 hover:underline"
+                        >
+                          <ExternalLink className="h-2.5 w-2.5" />
+                          View Notice
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
 

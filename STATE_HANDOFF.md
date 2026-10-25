@@ -225,6 +225,42 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Judicial Lot Intake Sheriff Writ of Execution Remediation & Document Uploader Overhaul)
+- **Goal**: In the lot intake wizard (`/desk/auctions/intake`), under the Judicial auction category, remove the hardcoded default embedded PDF (`/docs/court_order_sample.pdf`) and properly remediate the Sheriff Writ of Execution / Court Order document attachment workflow.
+- **Root Cause Identified**:
+  - `courtOrderDocUrl` in `src/app/(erp)/desk/auctions/intake/page.tsx` was hardcoded to `useState('/docs/court_order_sample.pdf')`.
+  - When staff opened the intake wizard and selected "Judicial Auction", the form displayed a pre-attached dummy PDF `court_order_sample.pdf` with "Ready & Verified", creating false compliance and causing a 404 when "View" was clicked (as `public/docs/court_order_sample.pdf` did not exist).
+  - Furthermore, `DocumentUploader` had a hardcoded dropzone button text ("Attach Cadastral Plan or Legal Document"), lacked drag-and-drop functionality, mangled file names when displaying base64 data URLs produced during local/offline uploads, and opened data URLs via raw `<a href="..." target="_blank">` which modern Chromium browsers block for security.
+- **Accomplishments**:
+  - **Purged Default Embedded PDF (`src/app/(erp)/desk/auctions/intake/page.tsx`)**:
+    - Replaced the hardcoded default `/docs/court_order_sample.pdf` with `useState<string | undefined>(undefined)` and `courtOrderFileName`.
+    - Intake wizard now begins in a pristine, empty dropzone state awaiting authentic document upload.
+    - Added clean helper text and explicit button text: "Attach Sheriff Writ of Execution or Court Order (PDF / Scan)".
+    - Handled trimmed fields and safe submission in `handleSubmit` with `courtOrderDocUrl: category === 'JUDICIAL' ? (courtOrderDocUrl || undefined) : undefined`.
+  - **Document Uploader Overhaul (`src/components/erp/DocumentUploader.tsx`)**:
+    - Added full interactive drag-and-drop file upload support (`isDragging`, `onDragOver`, `onDragLeave`, `onDrop`).
+    - Added human-readable file name preservation (`fileName` prop and `internalFileName` state) and file size formatting (`formatFileSize` showing e.g. `(1.4 MB)`), completely preventing raw base64 data URLs from cluttering the UI.
+    - Implemented safe document viewing (`handleView`) converting base64 data URLs to Blobs (`URL.createObjectURL(blob)`) to guarantee 100% popup compatibility without top-frame data URL security blocks in Chrome/Edge.
+    - Added configurable `buttonText` and `fileName` props with complete backward compatibility for Land cadastral plan uploads.
+  - **Auction Registry & Showroom Integration (`src/app/(erp)/desk/auctions/page.tsx`, `src/app/(site)/auctions/page.tsx`)**:
+    - Added "Writ Attached" badge and "View Document" link to Judicial lot cards in the ERP auction yard when a writ is attached.
+    - Added statutory "Official Writ on File" badge and link to public showroom auction notice cards.
+  - **Statutory Document Storage (`public/docs/`)**:
+    - Generated valid, official Ghanaian statutory PDFs for demo and seed lots (`court_order_sample.pdf`, `sheriff_order_hc_049.pdf`, `court_order_gen_118.pdf`, `siteplan_el_109.pdf`, `siteplan_prampram_44.pdf`, `siteplan_sample.pdf`), preventing any 404 errors.
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/app/(erp)/desk/auctions/intake/page.tsx`
+  - `src/components/erp/DocumentUploader.tsx`
+  - `src/app/(erp)/desk/auctions/page.tsx`
+  - `src/app/(site)/auctions/page.tsx`
+  - `public/docs/court_order_sample.pdf` (New)
+  - `public/docs/sheriff_order_hc_049.pdf` (New)
+  - `public/docs/court_order_gen_118.pdf` (New)
+  - `public/docs/siteplan_el_109.pdf` (New)
+  - `public/docs/siteplan_prampram_44.pdf` (New)
+  - `public/docs/siteplan_sample.pdf` (New)
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (Stylish Breadcrumb Navigation System Rollout & Implementation Plan)
 - **Goal**: Resolve absence of breadcrumb navigation across AmenDesk pages that left yard, showroom, and cash office staff trapped in deeply nested routes without an immediate visual hierarchy or 1-click return to the primary Operations Dashboard.
 - **Root Cause & Design Strategy**:

@@ -32,6 +32,7 @@ import {
   CheckCircle2,
   FileText,
   Images,
+  ExternalLink,
 } from 'lucide-react';
 
 function generateReceiptNumber(): string {
@@ -416,6 +417,23 @@ function AuctionsContent() {
                       <p className="text-rose-700 dark:text-rose-300 text-[11px]">
                         Sheriff Writ: {lot.sheriffInstructionRef || 'SHF/WRIT/EXEC/2026/012'}
                       </p>
+                      {lot.courtOrderDocUrl && (
+                        <div className="pt-1.5 mt-1 border-t border-rose-200/80 dark:border-rose-900/80 flex items-center justify-between">
+                          <span className="text-[10px] font-semibold text-rose-800 dark:text-rose-300 flex items-center gap-1">
+                            <FileText className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+                            Writ Attached
+                          </span>
+                          <a
+                            href={lot.courtOrderDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 hover:underline"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            View Document
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
 

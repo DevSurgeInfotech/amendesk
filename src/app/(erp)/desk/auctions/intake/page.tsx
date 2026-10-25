@@ -99,7 +99,8 @@ export default function LotIntakePage() {
   // Judicial Mandatory Compliance Fields
   const [courtCaseNumber, setCourtCaseNumber] = useState('');
   const [sheriffInstructionRef, setSheriffInstructionRef] = useState('');
-  const [courtOrderDocUrl, setCourtOrderDocUrl] = useState('/docs/court_order_sample.pdf');
+  const [courtOrderDocUrl, setCourtOrderDocUrl] = useState<string | undefined>(undefined);
+  const [courtOrderFileName, setCourtOrderFileName] = useState<string | undefined>(undefined);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -147,9 +148,9 @@ export default function LotIntakePage() {
         locationArea: assetType === 'IMMOVABLE' ? locationArea : undefined,
         sizeDimensions: assetType === 'IMMOVABLE' ? sizeDimensions : undefined,
 
-        courtCaseNumber: category === 'JUDICIAL' ? courtCaseNumber : undefined,
-        sheriffInstructionRef: category === 'JUDICIAL' ? sheriffInstructionRef : undefined,
-        courtOrderDocUrl: category === 'JUDICIAL' ? courtOrderDocUrl : undefined,
+        courtCaseNumber: category === 'JUDICIAL' ? courtCaseNumber.trim() : undefined,
+        sheriffInstructionRef: category === 'JUDICIAL' ? sheriffInstructionRef.trim() : undefined,
+        courtOrderDocUrl: category === 'JUDICIAL' ? (courtOrderDocUrl || undefined) : undefined,
 
         conditionNotes,
         photos:
@@ -337,9 +338,15 @@ export default function LotIntakePage() {
                 <div className="md:col-span-2">
                   <DocumentUploader
                     documentUrl={courtOrderDocUrl}
-                    onChange={(url) => setCourtOrderDocUrl(url || '')}
+                    fileName={courtOrderFileName}
+                    onChange={(url, name) => {
+                      setCourtOrderDocUrl(url);
+                      setCourtOrderFileName(name);
+                    }}
                     entityType="AUCTION"
                     label="Sheriff Writ of Execution / Court Order Document (PDF/Scan)"
+                    helperText="Upload official sealed High Court writ of execution, fi-fa order, or Registrar/Sheriff instruction (PDF, JPG, PNG)."
+                    buttonText="Attach Sheriff Writ of Execution or Court Order (PDF / Scan)"
                   />
                 </div>
               </div>
