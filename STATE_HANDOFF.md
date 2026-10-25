@@ -888,6 +888,25 @@ flowchart TD
   - `src/lib/types/workspaceSettings.ts` (idleLockMinutes and enableIdleLock schema settings)
   - `STATE_HANDOFF.md` (Updated continuity ledger with audit analysis and bug fix log)
 
+### Session: 2026-10-25 (Featured Article Media Integration: Dr. Francis Yeboah MOGA Award Photos)
+- **Goal**: Integrate the two authentic photos placed in `/public` for the featured news article honoring Dr. Francis Kwaku Yeboah's Modern Gospel Awards (MOGA) Philanthropist of the Year recognition.
+- **Accomplishments**:
+  - **Media Integration**:
+    - Linked the two authentic photographs:
+      1. [`/dr-francis-yeboah-moga-award.jpg`](file:///d:/amendesk/public/dr-francis-yeboah-moga-award.jpg) (`public/482198702_957644336542117_1795651546821536242_n.jpg`): Dr. Francis Kwaku Yeboah holding the MOGA Philanthropist of the Year star plaque alongside Amen Mart team members and delegates.
+      2. [`/dr-francis-yeboah-moga-citation.jpg`](file:///d:/amendesk/public/dr-francis-yeboah-moga-citation.jpg) (`public/484155529_957644389875445_8289467760636480766_n.jpg`): Official presentation of the framed MOGA Citation of Honour to Dr. Francis Kwaku Yeboah at the executive offices in Accra.
+  - **Featured Hero Spotlight**: Embedded the authentic photos directly into the hero card with Next.js `<Image>`, atmospheric dark gradient vignettes, interactive photo switcher buttons (`Photo 1: Award Plaque` vs `Photo 2: Citation`), and dynamic caption plates.
+  - **News Grid Cards**: Configured grid cards with attached photography to render authentic photos as their thumbnail header backdrop with thumbnail title sub-plates.
+  - **Article Detail Modal & Fullscreen Viewer**:
+    - Built a dedicated 2-column "Official Press Photography" gallery inside the article modal with high-definition rendering and captions.
+    - Added an interactive fullscreen photo lightbox modal with backdrop blur for high-resolution inspection.
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict) passing with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/app/(site)/news/page.tsx` (Integrated MOGA award photos, hero switcher, gallery cards, and fullscreen viewer)
+  - `public/dr-francis-yeboah-moga-award.jpg` (Semantic copy of MOGA star plaque presentation photo)
+  - `public/dr-francis-yeboah-moga-citation.jpg` (Semantic copy of MOGA citation presentation photo)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
 ### Session: 2026-10-25 (News Portal Editorial Expansion & Thumbnail Titles Architecture)
 - **Goal**: Research authentic news on Dr. Francis Kwaku Yeboah and Amen Mart Auctioning Services, expand the official News page with deep-coverage stories, and introduce aesthetic thumbnail titles and editorial kickers.
 - **Accomplishments**:

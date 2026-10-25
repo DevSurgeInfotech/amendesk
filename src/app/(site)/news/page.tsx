@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Newspaper,
   ShieldCheck,
@@ -22,10 +23,19 @@ import {
   CheckCircle2,
   Sparkles,
   Share2,
+  Camera,
+  Maximize2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+
+interface NewsImage {
+  src: string;
+  alt: string;
+  caption: string;
+}
 
 interface NewsItem {
   id: string;
@@ -43,6 +53,7 @@ interface NewsItem {
   gradient: string;
   iconName: 'Award' | 'ShieldCheck' | 'Gavel' | 'Truck' | 'Landmark' | 'Building2' | 'HeartHandshake' | 'FileText';
   isPinned?: boolean;
+  images?: NewsImage[];
   summary: string;
   quote?: {
     text: string;
@@ -70,6 +81,18 @@ const newsData: NewsItem[] = [
     gradient: 'from-emerald-700 via-teal-800 to-slate-900',
     iconName: 'Award',
     isPinned: true,
+    images: [
+      {
+        src: '/dr-francis-yeboah-moga-award.jpg',
+        alt: 'Dr. Francis Kwaku Yeboah receiving MOGA Philanthropist of the Year Star Award',
+        caption: 'Dr. Francis Kwaku Yeboah holding the MOGA Philanthropist of the Year Star Plaque alongside Amen Mart team members and delegates.',
+      },
+      {
+        src: '/dr-francis-yeboah-moga-citation.jpg',
+        alt: 'Official presentation of the framed MOGA Citation to Dr. Francis Kwaku Yeboah',
+        caption: 'Official presentation of the framed MOGA Citation of Honour to Dr. Francis Kwaku Yeboah at the executive offices in Accra.',
+      },
+    ],
     summary:
       'Amen Mart CEO Dr. Francis Kwaku Yeboah has been honored at the prestigious Modern Gospel Awards (MOGA) at the GNAT Hall in Accra, receiving the Philanthropist of the Year citation for sustained community service, humanitarian giving, and youth empowerment.',
     quote: {
@@ -348,6 +371,8 @@ export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeArticle, setActiveArticle] = useState<NewsItem | null>(null);
+  const [activeLeadPhotoIdx, setActiveLeadPhotoIdx] = useState<number>(0);
+  const [modalEnlargedPhoto, setModalEnlargedPhoto] = useState<NewsImage | null>(null);
 
   const categories = [
     { label: 'All Press & Gazettes', value: 'ALL', count: newsData.length },
@@ -457,54 +482,88 @@ export default function NewsPage() {
         {selectedCategory === 'ALL' && !searchQuery && pinnedLead && (
           <div className="relative overflow-hidden bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md transition-all hover:shadow-lg">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              {/* Left Column: Visual Media Thumbnail with Thumbnail Title & Kicker */}
+              {/* Left Column: Visual Media Thumbnail with Authentic Photography & Thumbnail Title */}
               <div
-                className={`lg:col-span-6 relative min-h-[300px] sm:min-h-[360px] bg-gradient-to-br ${pinnedLead.gradient} p-6 sm:p-8 flex flex-col justify-between text-white select-none overflow-hidden`}
+                className="lg:col-span-6 relative min-h-[380px] sm:min-h-[440px] p-6 sm:p-8 flex flex-col justify-between text-white select-none overflow-hidden group cursor-pointer"
+                onClick={() => setActiveArticle(pinnedLead)}
               >
-                {/* SVG Pattern Overlay */}
-                <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none">
-                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <defs>
-                      <pattern id="grid-lead" width="8" height="8" patternUnits="userSpaceOnUse">
-                        <path d="M 8 0 L 0 0 0 8" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                      </pattern>
-                    </defs>
-                    <rect width="100" height="100" fill="url(#grid-lead)" />
-                  </svg>
-                </div>
+                {/* Authentic Background Image */}
+                {pinnedLead.images && pinnedLead.images.length > 0 ? (
+                  <>
+                    <Image
+                      src={pinnedLead.images[activeLeadPhotoIdx]?.src || pinnedLead.images[0].src}
+                      alt={pinnedLead.images[activeLeadPhotoIdx]?.alt || pinnedLead.title}
+                      fill
+                      unoptimized
+                      priority
+                      className="object-cover object-top brightness-90 group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+                    {/* Atmospheric Vignette Gradients */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/30" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-transparent" />
+                  </>
+                ) : (
+                  <div className={`absolute inset-0 bg-gradient-to-br ${pinnedLead.gradient}`} />
+                )}
 
-                {/* Top Row: Thumbnail Kicker & Reading Time */}
-                <div className="relative z-10 flex items-center justify-between gap-3">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-xs">
+                {/* Top Row: Thumbnail Kicker, Reading Time & Interactive Photo Switcher */}
+                <div className="relative z-10 flex items-center justify-between gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-black/60 backdrop-blur-md border border-white/25 text-white shadow-xs">
                     <Award className="h-3.5 w-3.5 text-amber-300" />
                     <span>{pinnedLead.thumbnailKicker}</span>
                   </span>
 
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/95 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                    <Clock className="h-3.5 w-3.5 text-amber-300" />
-                    <span>{pinnedLead.readTime}</span>
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {/* Multi-Photo Switcher Pills */}
+                    {pinnedLead.images && pinnedLead.images.length > 1 && (
+                      <div
+                        className="inline-flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-lg border border-white/20"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Camera className="h-3 w-3 text-amber-300 ml-1 hidden sm:inline" />
+                        {pinnedLead.images.map((img, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveLeadPhotoIdx(idx)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
+                              activeLeadPhotoIdx === idx
+                                ? 'bg-amber-400 text-slate-950 shadow-xs font-black'
+                                : 'bg-white/10 text-white/80 hover:bg-white/25'
+                            }`}
+                            title={img.caption}
+                          >
+                            {idx === 0 ? 'Photo 1 (Plaque)' : 'Photo 2 (Citation)'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/95 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
+                      <Clock className="h-3.5 w-3.5 text-amber-300" />
+                      <span>{pinnedLead.readTime}</span>
+                    </span>
+                  </div>
                 </div>
 
-                {/* Center/Bottom: Prominent Thumbnail Title Plate */}
-                <div className="relative z-10 space-y-3 pt-12">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/25 shadow-lg">
+                {/* Center/Bottom: Prominent Thumbnail Title Plate & Active Photo Caption */}
+                <div className="relative z-10 space-y-2 pt-16">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-950/90 backdrop-blur-md border border-white/30 shadow-xl">
                     <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
                     <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-white">
                       {pinnedLead.thumbnailTitle}
                     </span>
                   </div>
 
-                  <p className="text-sm font-medium text-emerald-100 max-w-md line-clamp-2 drop-shadow-xs">
-                    Celebrating Dr. Francis Kwaku Yeboah&apos;s national recognition at the GNAT Hall in Accra.
-                  </p>
+                  {pinnedLead.images && pinnedLead.images[activeLeadPhotoIdx] && (
+                    <p className="text-xs font-medium text-emerald-100 max-w-lg line-clamp-2 drop-shadow-md bg-slate-950/70 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/15">
+                      {pinnedLead.images[activeLeadPhotoIdx].caption}
+                    </p>
+                  )}
                 </div>
-
-                {/* Giant Watermark Icon */}
-                <Award className="absolute -bottom-8 -right-8 h-44 w-44 text-white/10 pointer-events-none transform -rotate-12" />
               </div>
 
-              {/* Right Column: Editorial Headline & Excerpt */}
+              {/* Right Column: Editorial Headline, Excerpt & Pull Quote */}
               <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -513,6 +572,12 @@ export default function NewsPage() {
                       <Calendar className="h-3.5 w-3.5" />
                       {pinnedLead.date}
                     </span>
+                    {pinnedLead.images && (
+                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
+                        <Camera className="h-3.5 w-3.5" />
+                        {pinnedLead.images.length} Official Photos Attached
+                      </span>
+                    )}
                   </div>
 
                   <h2
@@ -552,7 +617,7 @@ export default function NewsPage() {
                     onClick={() => setActiveArticle(pinnedLead)}
                     icon={<ArrowRight className="h-4 w-4" />}
                   >
-                    Read Full Feature
+                    Read Full Feature &amp; Gallery
                   </Button>
                 </div>
               </div>
@@ -615,36 +680,61 @@ export default function NewsPage() {
             >
               {/* Visual Thumbnail Header with Thumbnail Title & Kicker */}
               <div
-                className={`relative h-44 sm:h-48 w-full overflow-hidden bg-gradient-to-br ${item.gradient} p-4 flex flex-col justify-between text-white select-none`}
+                className={`relative h-48 sm:h-52 w-full overflow-hidden p-4 flex flex-col justify-between text-white select-none ${
+                  !item.images || item.images.length === 0 ? `bg-gradient-to-br ${item.gradient}` : 'bg-slate-950'
+                }`}
               >
-                {/* SVG Accent Grid */}
-                <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none">
-                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <defs>
-                      <pattern id={`grid-${item.id}`} width="10" height="10" patternUnits="userSpaceOnUse">
-                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                      </pattern>
-                    </defs>
-                    <rect width="100" height="100" fill={`url(#grid-${item.id})`} />
-                  </svg>
-                </div>
+                {/* Real Photo Thumbnail (if available) or SVG Accent Grid */}
+                {item.images && item.images.length > 0 ? (
+                  <>
+                    <Image
+                      src={item.images[0].src}
+                      alt={item.images[0].alt}
+                      fill
+                      unoptimized
+                      className="object-cover object-top brightness-90 group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-black/30" />
+                  </>
+                ) : (
+                  <>
+                    <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none">
+                      <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <defs>
+                          <pattern id={`grid-${item.id}`} width="10" height="10" patternUnits="userSpaceOnUse">
+                            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                          </pattern>
+                        </defs>
+                        <rect width="100" height="100" fill={`url(#grid-${item.id})`} />
+                      </svg>
+                    </div>
+                  </>
+                )}
 
                 {/* Top Row: Thumbnail Kicker & Reading Time */}
                 <div className="relative z-10 flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-black/45 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-black/55 backdrop-blur-md border border-white/20 text-white shadow-2xs">
                     {renderIcon(item.iconName, 'h-3 w-3 text-amber-300 shrink-0')}
                     <span>{item.thumbnailKicker}</span>
                   </span>
 
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-white/90 bg-black/35 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
-                    <Clock className="h-3 w-3 text-amber-200" />
-                    <span>{item.readTime}</span>
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {item.images && item.images.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-amber-400/30">
+                        <Camera className="h-3 w-3" />
+                        <span>{item.images.length} Photos</span>
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-white/90 bg-black/45 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
+                      <Clock className="h-3 w-3 text-amber-200" />
+                      <span>{item.readTime}</span>
+                    </span>
+                  </div>
                 </div>
 
                 {/* Bottom Row: Aesthetic Thumbnail Title Plate */}
                 <div className="relative z-10 pt-4">
-                  <div className="inline-flex items-center gap-1.5 bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/20 max-w-[95%] shadow-md">
+                  <div className="inline-flex items-center gap-1.5 bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/25 max-w-[95%] shadow-md">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
                     <p className="text-xs font-black tracking-wide text-white uppercase truncate">
                       {item.thumbnailTitle}
@@ -652,10 +742,12 @@ export default function NewsPage() {
                   </div>
                 </div>
 
-                {/* Background Watermark Icon with subtle hover expansion */}
-                <div className="absolute -bottom-3 -right-3 text-white/10 pointer-events-none transform -rotate-12 transition-transform duration-500 group-hover:scale-115">
-                  {renderIcon(item.iconName, 'h-28 w-28')}
-                </div>
+                {/* Background Watermark Icon (when no image) */}
+                {(!item.images || item.images.length === 0) && (
+                  <div className="absolute -bottom-3 -right-3 text-white/10 pointer-events-none transform -rotate-12 transition-transform duration-500 group-hover:scale-115">
+                    {renderIcon(item.iconName, 'h-28 w-28')}
+                  </div>
+                )}
               </div>
 
               {/* Card Body */}
@@ -740,7 +832,7 @@ export default function NewsPage() {
         </div>
       </section>
 
-      {/* Article Detail Modal with Rich Editorial Layout */}
+      {/* Article Detail Modal with Rich Editorial Layout & Attached Photos */}
       {activeArticle && (
         <Modal
           isOpen={Boolean(activeArticle)}
@@ -785,6 +877,50 @@ export default function NewsPage() {
                 <span>{activeArticle.author} ({activeArticle.authorRole})</span>
               </div>
             </div>
+
+            {/* Official Photo Gallery (if photos are attached to this article) */}
+            {activeArticle.images && activeArticle.images.length > 0 && (
+              <div className="space-y-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                    <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Official Press Photography ({activeArticle.images.length} Photos)</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Click any photo to enlarge
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {activeArticle.images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setModalEnlargedPhoto(img)}
+                      className="group cursor-pointer rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xs hover:shadow-md transition-all"
+                    >
+                      <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-900">
+                        <Image
+                          src={img.src}
+                          alt={img.alt}
+                          fill
+                          unoptimized
+                          className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-black/15 group-hover:bg-black/0 transition-colors" />
+                        <div className="absolute top-2.5 right-2.5 bg-slate-950/75 backdrop-blur-xs text-white p-1.5 rounded-lg opacity-80 group-hover:opacity-100 transition-opacity">
+                          <Maximize2 className="h-3.5 w-3.5" />
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                        <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                          {img.caption}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quote Box (if available) */}
             {activeArticle.quote && (
@@ -844,6 +980,45 @@ export default function NewsPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Full-Screen Enlarged Photo Viewer Modal */}
+      {modalEnlargedPhoto && (
+        <div
+          className="fixed inset-0 z-60 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setModalEnlargedPhoto(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] bg-slate-900 rounded-2xl overflow-hidden border border-slate-700 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-3 border-b border-slate-800 text-white">
+              <span className="text-xs font-bold text-slate-300">
+                Official Press Photo &bull; Amen Mart Media Desk
+              </span>
+              <button
+                type="button"
+                onClick={() => setModalEnlargedPhoto(null)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                title="Close Photo Viewer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="relative h-[65vh] w-full bg-black">
+              <Image
+                src={modalEnlargedPhoto.src}
+                alt={modalEnlargedPhoto.alt}
+                fill
+                unoptimized
+                className="object-contain"
+              />
+            </div>
+            <div className="p-4 bg-slate-900 border-t border-slate-800 text-xs text-slate-200">
+              <p className="font-semibold">{modalEnlargedPhoto.caption}</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
