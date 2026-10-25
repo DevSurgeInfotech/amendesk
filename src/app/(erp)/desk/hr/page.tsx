@@ -5,11 +5,19 @@ import { useSearchParams } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { useTerminal } from '@/context/TerminalContext';
+import {
+  getRolePermissions,
+  normalizeAppRole,
+  ROLE_LABELS,
+  type AppRole,
+} from '@/lib/types/auth';
 import { formatGHS } from '@/lib/utils/currency';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { EmployeeModal } from '@/components/erp/hr/EmployeeModal';
+import { SalaryModal } from '@/components/erp/hr/SalaryModal';
 import { PayslipModal } from '@/components/erp/hr/PayslipModal';
 import {
   buildMonthlyPayrollRun,
@@ -56,6 +64,7 @@ import {
   UserX,
   Trash2,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
 
 type HrTab = 'staff' | 'payroll' | 'leave' | 'reports' | 'attendance';
@@ -113,6 +122,10 @@ function getEmployeeStatusLabel(status: Employee['status']) {
 
 function HrModuleContent() {
   const searchParams = useSearchParams();
+  const { role, setRole, currentStaffName } = useTerminal();
+  const activeAppRole = normalizeAppRole(role);
+  const permissions = getRolePermissions(activeAppRole);
+
   const urlTab = resolveTab(searchParams.get('tab'));
   const [manualTab, setManualTab] = useState<HrTab | null>(null);
   const [lastUrlTab, setLastUrlTab] = useState<HrTab>(urlTab);
@@ -144,6 +157,9 @@ function HrModuleContent() {
   // Modals
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false);
+  const [salaryTargetEmployee, setSalaryTargetEmployee] =
+    useState<Employee | null>(null);
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(
     null
@@ -185,9 +201,14 @@ function HrModuleContent() {
   const pendingLeaveCount = leaveRequests.filter(
     (l) => l.status === 'PENDING'
   ).length;
+  const unconfiguredSalaryCount = activeEmployees.filter(
+    (e) => e.basicSalaryGhs <= 0
+  ).length;
 
-  const formatMaskedGhs = (val: number) =>
-    maskSalaries ? 'GH₵ ••••••' : formatGHS(val);
+  const formatMaskedGhs = (val: number) => {
+    if (!permissions.canConfigureSalaryAndPayroll) return 'Restricted';
+    return maskSalaries ? 'GH₵ ••••••' : formatGHS(val);
+  };
 
   // Filtered Employees
   const filteredEmployees = employees.filter((emp) => {
@@ -213,7 +234,7 @@ function HrModuleContent() {
     return true;
   });
 
-  // Active Payroll Run for selected period (plus fallback preview for reports)
+  // Active Payroll Run for selected period (plus live fallback preview for payroll & reports)
   const currentPeriodRun =
     payrollRuns.find((r) => r.period === selectedPeriod) || null;
   const currentPeriodSlips = payrollSlips.filter(
@@ -226,12 +247,13 @@ function HrModuleContent() {
     }
     return buildMonthlyPayrollRun(employees, {
       period: selectedPeriod,
-      processedBy: 'Mary Afriyie',
+      processedBy: currentStaffName || 'Chief Accountant',
     });
   })();
 
   // Staff Directory Row Actions
   const handleOpenEmployeePayslip = (emp: Employee, idx: number) => {
+    if (!permissions.canConfigureSalaryAndPayroll) return;
     const existingForPeriod = payrollSlips.find(
       (s) => s.employeeId === emp.id && s.period === selectedPeriod
     );
@@ -252,7 +274,14 @@ function HrModuleContent() {
     setSelectedSlip(generated);
   };
 
+  const handleOpenSalaryModal = (emp: Employee | null) => {
+    if (!permissions.canConfigureSalaryAndPayroll) return;
+    setSalaryTargetEmployee(emp);
+    setIsSalaryModalOpen(true);
+  };
+
   const handleToggleEmployeeStatus = async (emp: Employee) => {
+    if (!permissions.canApproveLeaveAndStatus) return;
     const nextStatus: Employee['status'] =
       emp.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     const updated: Employee = {
@@ -265,7 +294,7 @@ function HrModuleContent() {
   };
 
   const handleConfirmDeleteEmployee = async () => {
-    if (!deletingEmployee) return;
+    if (!deletingEmployee || !permissions.canApproveLeaveAndStatus) return;
     await db.employees.delete(deletingEmployee.id);
     await syncEngine.queueMutation(
       'employees',
@@ -278,13 +307,14 @@ function HrModuleContent() {
 
   // Payroll Handlers
   const handleCalculateMonthlyPayroll = async () => {
-    if (employees.length === 0) return;
+    if (employees.length === 0 || !permissions.canConfigureSalaryAndPayroll)
+      return;
     setIsProcessingPayroll(true);
     setPayrollBannerMessage(null);
     try {
       const { run, slips } = buildMonthlyPayrollRun(employees, {
         period: selectedPeriod,
-        processedBy: 'Mary Afriyie (Chief Accountant)',
+        processedBy: currentStaffName || 'Chief Accountant',
       });
       await db.payrollRuns.put(run);
       await db.payrollSlips.bulkPut(slips);
@@ -298,14 +328,19 @@ function HrModuleContent() {
   };
 
   const handleApproveAndPostLedger = async () => {
-    if (!currentPeriodRun || currentPeriodSlips.length === 0) return;
+    if (
+      !currentPeriodRun ||
+      currentPeriodSlips.length === 0 ||
+      !permissions.canDisbursePayrollAndApproveLedger
+    )
+      return;
     setIsProcessingPayroll(true);
     setPayrollBannerMessage(null);
     try {
       const updated = await approveAndPostPayrollRunToLedger(
         currentPeriodRun,
         currentPeriodSlips,
-        'Dr. Francis Kwaku Yeboah'
+        currentStaffName || 'Dr. Francis Kwaku Yeboah'
       );
       setPayrollBannerMessage(
         `Payroll ${updated.runNumber} approved and posted to General Ledger (${updated.journalEntryId}).`
@@ -316,14 +351,19 @@ function HrModuleContent() {
   };
 
   const handleExecuteHubtelAndBankPayout = async () => {
-    if (!currentPeriodRun || currentPeriodSlips.length === 0) return;
+    if (
+      !currentPeriodRun ||
+      currentPeriodSlips.length === 0 ||
+      !permissions.canDisbursePayrollAndApproveLedger
+    )
+      return;
     setIsProcessingPayroll(true);
     setPayrollBannerMessage(null);
     try {
       const { updatedRun } = await executeAutomatedHubtelAndBankDisbursement(
         currentPeriodRun,
         currentPeriodSlips,
-        'Dr. Francis Kwaku Yeboah'
+        currentStaffName || 'Dr. Francis Kwaku Yeboah'
       );
       setPayrollBannerMessage(
         `Salaries disbursed via Hubtel MoMo (${updatedRun.hubtelBatchId}) & Bank Transfer.`
@@ -371,10 +411,11 @@ function HrModuleContent() {
     leave: LeaveRequest,
     decision: 'APPROVED' | 'REJECTED'
   ) => {
+    if (!permissions.canApproveLeaveAndStatus) return;
     const updated: LeaveRequest = {
       ...leave,
       status: decision,
-      approvedBy: 'Dr. Francis Kwaku Yeboah',
+      approvedBy: currentStaffName || 'Dr. Francis Kwaku Yeboah',
       actionDate: new Date().toISOString(),
       syncStatus: 'PENDING',
     };
@@ -398,6 +439,7 @@ function HrModuleContent() {
   };
 
   const handleDeleteLeaveRequest = async (leaveId: string) => {
+    if (!permissions.canApproveLeaveAndStatus) return;
     await db.leaveRequests.delete(leaveId);
     await syncEngine.queueMutation('leaveRequests', leaveId, 'DELETE', {
       id: leaveId,
@@ -406,51 +448,85 @@ function HrModuleContent() {
 
   return (
     <div className="space-y-6">
-      {/* Clean Module Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+      {/* Clean Module Header with RBAC Role Controls */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-            Staff &amp; Payroll
-          </h1>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+              Staff &amp; Payroll
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              <Clock className="w-3 h-3 text-indigo-600" />
+              8:00 AM – 5:00 PM
+            </span>
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Salaried staff directory, monthly payroll &amp; statutory GRA / SSNIT filings
+            Staff onboarding &amp; directory, monthly salary administration, and statutory GRA / SSNIT filings
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMaskSalaries((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            {maskSalaries ? (
-              <>
-                <Eye className="w-3.5 h-3.5 text-indigo-600" />
-                Show Salaries
-              </>
-            ) : (
-              <>
-                <EyeOff className="w-3.5 h-3.5 text-slate-500" />
-                Hide Salaries
-              </>
-            )}
-          </button>
+          {/* Active RBAC Role Switcher for Staff & Payroll Governance */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <span className="text-[10px] font-bold uppercase text-slate-400">
+              RBAC:
+            </span>
+            <select
+              value={activeAppRole}
+              onChange={(e) => setRole(e.target.value as AppRole)}
+              aria-label="Active RBAC Role"
+              className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer text-xs"
+            >
+              {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => (
+                <option
+                  key={r}
+                  value={r}
+                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                >
+                  {r} ({ROLE_LABELS[r]})
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              setEditingEmployee(null);
-              setIsEmployeeModalOpen(true);
-            }}
-          >
-            <UserPlus className="w-4 h-4 mr-1.5" />
-            Add Staff
-          </Button>
+          {permissions.canConfigureSalaryAndPayroll && (
+            <button
+              type="button"
+              onClick={() => setMaskSalaries((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              {maskSalaries ? (
+                <>
+                  <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                  Show Salaries
+                </>
+              ) : (
+                <>
+                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                  Hide Salaries
+                </>
+              )}
+            </button>
+          )}
+
+          {permissions.canOnboardStaff && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setEditingEmployee(null);
+                setIsEmployeeModalOpen(true);
+              }}
+            >
+              <UserPlus className="w-4 h-4 mr-1.5" />
+              Add Staff
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* 4-Card KPI Strip (No middle sections, full titles rendered) */}
+      {/* 4-Card KPI Strip (RBAC-aware: hides salary figures from Secretary / non-finance roles) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard
           title="Salaried Workforce"
@@ -461,14 +537,22 @@ function HrModuleContent() {
         />
         <GlassCard
           title="Monthly Gross Payroll"
-          value={formatMaskedGhs(monthlyGrossCommitmentGhs)}
+          value={
+            permissions.canConfigureSalaryAndPayroll
+              ? formatMaskedGhs(monthlyGrossCommitmentGhs)
+              : 'Restricted (Payroll)'
+          }
           theme="emerald"
           icon={<Wallet className="w-5 h-5" />}
           onClick={() => setManualTab('payroll')}
         />
         <GlassCard
           title="Employer SSNIT (13%)"
-          value={formatMaskedGhs(monthlyEmployerSsnitGhs)}
+          value={
+            permissions.canConfigureSalaryAndPayroll
+              ? formatMaskedGhs(monthlyEmployerSsnitGhs)
+              : 'Restricted (Payroll)'
+          }
           theme="amber"
           icon={<ShieldCheck className="w-5 h-5" />}
           onClick={() => setManualTab('reports')}
@@ -485,15 +569,36 @@ function HrModuleContent() {
       {/* Navigation Tabs */}
       <div className="flex flex-wrap items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
         {[
-          { id: 'staff', label: 'Staff Directory', icon: Users },
-          { id: 'payroll', label: 'Monthly Payroll', icon: Wallet },
-          { id: 'leave', label: 'Leave Requests', icon: CalendarDays },
-          { id: 'reports', label: 'GRA & SSNIT Filings', icon: Scale },
+          {
+            id: 'staff',
+            label: 'Staff Directory',
+            icon: Users,
+            locked: false,
+          },
+          {
+            id: 'payroll',
+            label: 'Monthly Payroll & Salaries',
+            icon: Wallet,
+            locked: !permissions.canConfigureSalaryAndPayroll,
+          },
+          {
+            id: 'leave',
+            label: 'Leave Requests',
+            icon: CalendarDays,
+            locked: false,
+          },
+          {
+            id: 'reports',
+            label: 'GRA & SSNIT Filings',
+            icon: Scale,
+            locked: !permissions.canConfigureSalaryAndPayroll,
+          },
           {
             id: 'attendance',
             label: 'Attendance',
             icon: Clock,
             notConfigured: true,
+            locked: false,
           },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -511,6 +616,13 @@ function HrModuleContent() {
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
+              {tab.locked && (
+                <Lock
+                  className={`w-3 h-3 ${
+                    isActive ? 'text-white/80' : 'text-amber-600'
+                  }`}
+                />
+              )}
               {tab.notConfigured && (
                 <span
                   className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
@@ -564,20 +676,22 @@ function HrModuleContent() {
                 className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
               >
                 <option value="ALL">All Statuses</option>
-                <option value="ACTIVE">Active</option>
+                <option value="ACTIVE">Active (8am – 5pm)</option>
                 <option value="ON_LEAVE">On Leave</option>
                 <option value="SUSPENDED">Suspended</option>
               </select>
 
-              <select
-                value={payoutFilter}
-                onChange={(e) => setPayoutFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
-              >
-                <option value="ALL">All Payout Modes</option>
-                <option value="HUBTEL_MOMO_API">Mobile Money (Hubtel)</option>
-                <option value="BANK_TRANSFER">Bank Transfer</option>
-              </select>
+              {permissions.canConfigureSalaryAndPayroll && (
+                <select
+                  value={payoutFilter}
+                  onChange={(e) => setPayoutFilter(e.target.value)}
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                >
+                  <option value="ALL">All Payout Modes</option>
+                  <option value="HUBTEL_MOMO_API">Mobile Money (Hubtel)</option>
+                  <option value="BANK_TRANSFER">Bank Transfer</option>
+                </select>
+              )}
             </div>
           </div>
 
@@ -590,12 +704,12 @@ function HrModuleContent() {
                     Role &amp; Department
                   </th>
                   <th className="py-3 px-4 whitespace-nowrap">Statutory IDs</th>
-                  <th className="py-3 px-4 text-right whitespace-nowrap">
-                    Monthly Pay
-                  </th>
-                  <th className="py-3 px-4 whitespace-nowrap">
-                    Status &amp; Payout
-                  </th>
+                  {permissions.canConfigureSalaryAndPayroll && (
+                    <th className="py-3 px-4 text-right whitespace-nowrap">
+                      Monthly Pay
+                    </th>
+                  )}
+                  <th className="py-3 px-4 whitespace-nowrap">Status</th>
                   <th className="py-3 px-4 text-right whitespace-nowrap">
                     Actions
                   </th>
@@ -609,6 +723,7 @@ function HrModuleContent() {
                     emp.lunchAllowanceGhs +
                     emp.communicationAllowanceGhs;
                   const gross = emp.basicSalaryGhs + allowances;
+                  const hasSalarySet = emp.basicSalaryGhs > 0;
                   return (
                     <tr
                       key={emp.id}
@@ -643,15 +758,30 @@ function HrModuleContent() {
                           SSNIT: {emp.ssnitNumber || 'Pending'}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="font-mono font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
-                          {formatMaskedGhs(gross)}
-                        </div>
-                        <div className="font-mono text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
-                          Basic: {formatMaskedGhs(emp.basicSalaryGhs)} &bull;
-                          Allow: {formatMaskedGhs(allowances)}
-                        </div>
-                      </td>
+                      {permissions.canConfigureSalaryAndPayroll && (
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          {hasSalarySet ? (
+                            <>
+                              <div className="font-mono font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                                {formatMaskedGhs(gross)}
+                              </div>
+                              <div className="font-mono text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
+                                Basic: {formatMaskedGhs(emp.basicSalaryGhs)}{' '}
+                                &bull; Allow: {formatMaskedGhs(allowances)}
+                              </div>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenSalaryModal(emp)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[11px] font-bold cursor-pointer whitespace-nowrap"
+                            >
+                              <Wallet className="w-3 h-3 text-amber-600" />
+                              Set Salary in Payroll
+                            </button>
+                          )}
+                        </td>
+                      )}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 whitespace-nowrap">
                           <span
@@ -661,17 +791,18 @@ function HrModuleContent() {
                           >
                             {getEmployeeStatusLabel(emp.status)}
                           </span>
-                          {emp.paymentMethod === 'HUBTEL_MOMO_API' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 text-[11px] font-semibold whitespace-nowrap">
-                              <Smartphone className="w-3 h-3 text-emerald-600 shrink-0" />
-                              {emp.momoNetwork} ({emp.momoPhoneNumber})
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/60 text-[11px] font-semibold whitespace-nowrap">
-                              <Building2 className="w-3 h-3 text-sky-600 shrink-0" />
-                              {emp.bankName}
-                            </span>
-                          )}
+                          {permissions.canConfigureSalaryAndPayroll &&
+                            (emp.paymentMethod === 'HUBTEL_MOMO_API' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 text-[11px] font-semibold whitespace-nowrap">
+                                <Smartphone className="w-3 h-3 text-emerald-600 shrink-0" />
+                                {emp.momoNetwork} ({emp.momoPhoneNumber})
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/60 text-[11px] font-semibold whitespace-nowrap">
+                                <Building2 className="w-3 h-3 text-sky-600 shrink-0" />
+                                {emp.bankName}
+                              </span>
+                            ))}
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
@@ -686,71 +817,94 @@ function HrModuleContent() {
                             View
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEmployeePayslip(emp, idx)}
-                            title="View & Print Payslip"
-                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
-                          >
-                            <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            Payslip
-                          </button>
+                          {permissions.canConfigureSalaryAndPayroll && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSalaryModal(emp)}
+                                title="Set or Edit Staff Salary in Payroll"
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+                              >
+                                <Wallet className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                Salary
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleOpenEmployeePayslip(emp, idx)
+                                }
+                                title="View & Print Payslip"
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                Payslip
+                              </button>
+                            </>
+                          )}
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingEmployee(emp);
-                              setIsEmployeeModalOpen(true);
-                            }}
-                            title="Edit Staff Details"
-                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
-                          >
-                            <Edit2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" />
-                            Edit
-                          </button>
+                          {permissions.canOnboardStaff && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingEmployee(emp);
+                                setIsEmployeeModalOpen(true);
+                              }}
+                              title="Edit Staff Details & Statutory IDs"
+                              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" />
+                              Edit
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setLvEmployeeId(emp.id);
-                              setIsLeaveModalOpen(true);
-                            }}
-                            title="Record Leave for Staff"
-                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
-                          >
-                            <CalendarDays className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                            Leave
-                          </button>
+                          {permissions.canManageLeave && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLvEmployeeId(emp.id);
+                                setIsLeaveModalOpen(true);
+                              }}
+                              title="Record Leave for Staff"
+                              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+                            >
+                              <CalendarDays className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              Leave
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            onClick={() => handleToggleEmployeeStatus(emp)}
-                            title={
-                              emp.status === 'ACTIVE'
-                                ? 'Suspend Staff'
-                                : 'Activate Staff'
-                            }
-                            className={`inline-flex items-center p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${
-                              emp.status === 'ACTIVE'
-                                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300'
-                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/50 dark:text-emerald-300'
-                            }`}
-                          >
-                            {emp.status === 'ACTIVE' ? (
-                              <UserX className="w-3.5 h-3.5" />
-                            ) : (
-                              <UserCheck className="w-3.5 h-3.5" />
-                            )}
-                          </button>
+                          {permissions.canApproveLeaveAndStatus && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleEmployeeStatus(emp)}
+                                title={
+                                  emp.status === 'ACTIVE'
+                                    ? 'Suspend Staff'
+                                    : 'Activate Staff'
+                                }
+                                className={`inline-flex items-center p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                                  emp.status === 'ACTIVE'
+                                    ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300'
+                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                }`}
+                              >
+                                {emp.status === 'ACTIVE' ? (
+                                  <UserX className="w-3.5 h-3.5" />
+                                ) : (
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                )}
+                              </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setDeletingEmployee(emp)}
-                            title="Remove Staff Record"
-                            className="inline-flex items-center p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-400 transition-colors cursor-pointer shrink-0"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeletingEmployee(emp)}
+                                title="Remove Staff Record"
+                                className="inline-flex items-center p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-400 transition-colors cursor-pointer shrink-0"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -762,100 +916,121 @@ function HrModuleContent() {
         </div>
       )}
 
-      {/* TAB 2: MONTHLY PAYROLL */}
-      {activeTab === 'payroll' && (
-        <div className="space-y-5">
-          {/* Control Bar */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
-                  Payroll Month
-                </label>
-                <input
-                  type="month"
-                  value={selectedPeriod}
-                  onChange={(e) => {
-                    setSelectedPeriod(e.target.value);
-                    setPayrollBannerMessage(null);
-                  }}
-                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white"
-                />
-              </div>
+      {/* TAB 2: MONTHLY PAYROLL & SALARY CONFIGURATION */}
+      {activeTab === 'payroll' &&
+        (permissions.canConfigureSalaryAndPayroll ? (
+          <div className="space-y-5">
+            {/* Control Bar */}
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                    Payroll Month
+                  </label>
+                  <input
+                    type="month"
+                    value={selectedPeriod}
+                    onChange={(e) => {
+                      setSelectedPeriod(e.target.value);
+                      setPayrollBannerMessage(null);
+                    }}
+                    className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white"
+                  />
+                </div>
 
-              {currentPeriodRun && (
-                <div className="pl-3 border-l border-slate-200 dark:border-slate-800">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                    Run Status
-                  </span>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
-                      {currentPeriodRun.runNumber}
+                {currentPeriodRun && (
+                  <div className="pl-3 border-l border-slate-200 dark:border-slate-800">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                      Run Status
                     </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                        currentPeriodRun.status === 'DISBURSED'
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
-                          : currentPeriodRun.status === 'POSTED'
-                            ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
-                      }`}
-                    >
-                      {currentPeriodRun.status}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
+                        {currentPeriodRun.runNumber}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                          currentPeriodRun.status === 'DISBURSED'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                            : currentPeriodRun.status === 'POSTED'
+                              ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                        }`}
+                      >
+                        {currentPeriodRun.status}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {unconfiguredSalaryCount > 0 && (
+                  <div className="pl-3 border-l border-slate-200 dark:border-slate-800">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                      {unconfiguredSalaryCount} New Staff Awaiting Salary Setup
                     </span>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleCalculateMonthlyPayroll}
-                disabled={isProcessingPayroll}
-              >
-                <Play className="w-3.5 h-3.5 mr-1.5" />
-                {currentPeriodRun ? 'Recalculate Payroll' : 'Calculate Payroll'}
-              </Button>
-
-              {currentPeriodRun && currentPeriodRun.status === 'CALCULATED' && (
+              <div className="flex flex-wrap items-center gap-2.5">
                 <Button
-                  variant="primary"
+                  variant="outline"
                   size="sm"
-                  onClick={handleApproveAndPostLedger}
+                  onClick={() => handleOpenSalaryModal(null)}
+                >
+                  <Wallet className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+                  Set / Edit Staff Salary
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCalculateMonthlyPayroll}
                   disabled={isProcessingPayroll}
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                  Approve &amp; Post to Accounts
+                  <Play className="w-3.5 h-3.5 mr-1.5" />
+                  {currentPeriodRun
+                    ? 'Recalculate Payroll'
+                    : 'Calculate Payroll'}
                 </Button>
-              )}
 
-              {currentPeriodRun &&
-                (currentPeriodRun.status === 'POSTED' ||
-                  currentPeriodRun.status === 'CALCULATED') && (
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={handleExecuteHubtelAndBankPayout}
-                    disabled={isProcessingPayroll}
-                  >
-                    <Send className="w-3.5 h-3.5 mr-1.5" />
-                    Disburse Salaries (MoMo &amp; Bank)
-                  </Button>
-                )}
+                {currentPeriodRun &&
+                  currentPeriodRun.status === 'CALCULATED' && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleApproveAndPostLedger}
+                      disabled={isProcessingPayroll}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                      Approve &amp; Post to Accounts
+                    </Button>
+                  )}
+
+                {currentPeriodRun &&
+                  (currentPeriodRun.status === 'POSTED' ||
+                    currentPeriodRun.status === 'CALCULATED') && (
+                    <Button
+                      variant="success"
+                      size="sm"
+                      onClick={handleExecuteHubtelAndBankPayout}
+                      disabled={isProcessingPayroll}
+                    >
+                      <Send className="w-3.5 h-3.5 mr-1.5" />
+                      Disburse Salaries (MoMo &amp; Bank)
+                    </Button>
+                  )}
+              </div>
             </div>
-          </div>
 
-          {payrollBannerMessage && (
-            <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 px-4 py-3 rounded-xl text-xs font-semibold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>{payrollBannerMessage}</span>
-            </div>
-          )}
+            {payrollBannerMessage && (
+              <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 px-4 py-3 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{payrollBannerMessage}</span>
+              </div>
+            )}
 
-          {/* Payroll Slips Table */}
-          {currentPeriodRun ? (
+            {/* Payroll & Salary Structure Table (Always visible so Accountant/Owner can configure salaries anytime) */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
                 <div>
@@ -863,7 +1038,7 @@ function HrModuleContent() {
                     Total Gross Pay
                   </span>
                   <span className="font-mono font-black text-slate-900 dark:text-white">
-                    {formatMaskedGhs(currentPeriodRun.totalGrossGhs)}
+                    {formatMaskedGhs(reportRunAndSlips.run.totalGrossGhs)}
                   </span>
                 </div>
                 <div>
@@ -872,7 +1047,7 @@ function HrModuleContent() {
                   </span>
                   <span className="font-mono font-bold text-amber-600">
                     {formatMaskedGhs(
-                      currentPeriodRun.totalSsnitEmployeeTotalGhs
+                      reportRunAndSlips.run.totalSsnitEmployeeTotalGhs
                     )}
                   </span>
                 </div>
@@ -881,7 +1056,7 @@ function HrModuleContent() {
                     GRA PAYE Tax
                   </span>
                   <span className="font-mono font-bold text-rose-600">
-                    {formatMaskedGhs(currentPeriodRun.totalPayeGhs)}
+                    {formatMaskedGhs(reportRunAndSlips.run.totalPayeGhs)}
                   </span>
                 </div>
                 <div>
@@ -890,7 +1065,7 @@ function HrModuleContent() {
                   </span>
                   <span className="font-mono font-bold text-indigo-600">
                     {formatMaskedGhs(
-                      currentPeriodRun.totalSsnitTier1EmployerGhs
+                      reportRunAndSlips.run.totalSsnitTier1EmployerGhs
                     )}
                   </span>
                 </div>
@@ -899,7 +1074,7 @@ function HrModuleContent() {
                     Total Net Take-Home
                   </span>
                   <span className="font-mono font-black text-emerald-600">
-                    {formatMaskedGhs(currentPeriodRun.totalNetGhs)}
+                    {formatMaskedGhs(reportRunAndSlips.run.totalNetGhs)}
                   </span>
                 </div>
               </div>
@@ -933,101 +1108,139 @@ function HrModuleContent() {
                         Payout Status
                       </th>
                       <th className="py-3 px-4 text-right whitespace-nowrap">
-                        Payslip
+                        Salary &amp; Payslip
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800">
-                    {currentPeriodSlips.map((slip) => (
-                      <tr
-                        key={slip.id}
-                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
-                      >
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <div className="font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                            {slip.fullName}
-                          </div>
-                          <div className="text-[11px] text-slate-500 whitespace-nowrap">
-                            {slip.employeeCode} &bull; {slip.jobTitle}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono whitespace-nowrap">
-                          {formatMaskedGhs(slip.basicSalaryGhs)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                          {formatMaskedGhs(slip.allowancesGhs)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                          {formatMaskedGhs(slip.grossSalaryGhs)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-amber-700 dark:text-amber-400 whitespace-nowrap">
-                          {formatMaskedGhs(slip.ssnitEmployeeGhs)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-rose-600 dark:text-rose-400 whitespace-nowrap">
-                          {formatMaskedGhs(slip.payeTaxGhs)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
-                          {formatMaskedGhs(slip.netPayGhs)}
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <div className="flex items-center gap-1.5 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${
-                                slip.status === 'DISBURSED'
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
-                                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300'
-                              }`}
-                            >
-                              {slip.status}
-                            </span>
-                            <span className="font-mono text-[10px] text-slate-500 whitespace-nowrap">
-                              {slip.paymentReference ||
-                                (slip.paymentMethod === 'HUBTEL_MOMO_API'
-                                  ? 'MoMo'
-                                  : 'Bank')}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedSlip(slip)}
-                          >
-                            <FileText className="w-3.5 h-3.5 mr-1" />
-                            Payslip
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {reportRunAndSlips.slips.map((slip) => {
+                      const empRecord =
+                        employees.find((e) => e.id === slip.employeeId) || null;
+                      const isUnset = slip.basicSalaryGhs <= 0;
+                      return (
+                        <tr
+                          key={slip.id}
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                        >
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <div className="font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                              {slip.fullName}
+                            </div>
+                            <div className="text-[11px] text-slate-500 whitespace-nowrap">
+                              {slip.employeeCode} &bull; {slip.jobTitle}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono whitespace-nowrap">
+                            {isUnset ? (
+                              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-bold">
+                                Not Set
+                              </span>
+                            ) : (
+                              formatMaskedGhs(slip.basicSalaryGhs)
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                            {formatMaskedGhs(slip.allowancesGhs)}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                            {formatMaskedGhs(slip.grossSalaryGhs)}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                            {formatMaskedGhs(slip.ssnitEmployeeGhs)}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                            {formatMaskedGhs(slip.payeTaxGhs)}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                            {formatMaskedGhs(slip.netPayGhs)}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${
+                                  slip.status === 'DISBURSED'
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
+                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300'
+                                }`}
+                              >
+                                {currentPeriodRun ? slip.status : 'PREVIEW'}
+                              </span>
+                              <span className="font-mono text-[10px] text-slate-500 whitespace-nowrap">
+                                {slip.paymentReference ||
+                                  (slip.paymentMethod === 'HUBTEL_MOMO_API'
+                                    ? `MoMo (${slip.momoNetwork || 'MTN'})`
+                                    : slip.bankName || 'Bank')}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSalaryModal(empRecord)}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap ${
+                                  isUnset
+                                    ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700'
+                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50'
+                                }`}
+                              >
+                                <Wallet className="w-3.5 h-3.5 shrink-0" />
+                                {isUnset ? 'Set Salary' : 'Edit Salary'}
+                              </button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedSlip(slip)}
+                              >
+                                <FileText className="w-3.5 h-3.5 mr-1" />
+                                Payslip
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
-          ) : (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-8 text-center space-y-3">
-              <Wallet className="w-8 h-8 text-indigo-600 mx-auto" />
-              <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                No Payroll Calculated for {selectedPeriod}
-              </h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Click &quot;Calculate Payroll&quot; above to compute monthly salaries, GRA PAYE tax, and SSNIT contributions for all active staff.
-              </p>
-              <div className="pt-1">
+          </div>
+        ) : (
+          /* RBAC Locked State for Secretary / Non-Finance Roles */
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-8 shadow-xs">
+            <div className="max-w-lg mx-auto text-center space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div className="space-y-1.5">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  RBAC Restricted — {activeAppRole}
+                </span>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  Salary &amp; Monthly Payroll Access Restricted
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Your current role (
+                  <strong>{ROLE_LABELS[activeAppRole]}</strong>) is authorized to
+                  add staff members and manage the Staff Directory &amp; Leave
+                  Requests, but cannot view or configure staff salaries. Salary
+                  administration and payroll disbursement are restricted to{' '}
+                  <strong>Managing Director (OWNER)</strong> and{' '}
+                  <strong>Chief Accountant (ACCOUNTANT)</strong>.
+                </p>
+              </div>
+              <div className="flex justify-center gap-2 pt-2">
                 <Button
-                  variant="primary"
+                  variant="secondary"
                   size="sm"
-                  onClick={handleCalculateMonthlyPayroll}
-                  disabled={isProcessingPayroll}
+                  onClick={() => setManualTab('staff')}
                 >
-                  <Play className="w-3.5 h-3.5 mr-1.5" />
-                  Calculate {selectedPeriod} Payroll Now
+                  Return to Staff Directory
                 </Button>
               </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ))}
 
       {/* TAB 3: LEAVE REQUESTS */}
       {activeTab === 'leave' && (
@@ -1054,17 +1267,19 @@ function HrModuleContent() {
               )}
             </div>
 
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                setLvEmployeeId(employees[0]?.id || '');
-                setIsLeaveModalOpen(true);
-              }}
-            >
-              <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
-              Request Leave
-            </Button>
+            {permissions.canManageLeave && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setLvEmployeeId(employees[0]?.id || '');
+                  setIsLeaveModalOpen(true);
+                }}
+              >
+                <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
+                Request Leave
+              </Button>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -1124,7 +1339,8 @@ function HrModuleContent() {
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
                       <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
-                        {lv.status === 'PENDING' ? (
+                        {lv.status === 'PENDING' &&
+                        permissions.canApproveLeaveAndStatus ? (
                           <>
                             <Button
                               variant="success"
@@ -1147,17 +1363,21 @@ function HrModuleContent() {
                           </>
                         ) : (
                           <span className="text-[11px] text-slate-400 mr-1">
-                            By {lv.approvedBy || 'Management'}
+                            {lv.status === 'PENDING'
+                              ? 'Awaiting Approval'
+                              : `By ${lv.approvedBy || 'Management'}`}
                           </span>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteLeaveRequest(lv.id)}
-                          title="Delete Leave Request"
-                          className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {permissions.canApproveLeaveAndStatus && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteLeaveRequest(lv.id)}
+                            title="Delete Leave Request"
+                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-rose-600 hover:border-rose-200 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -1169,161 +1389,187 @@ function HrModuleContent() {
       )}
 
       {/* TAB 4: STATUTORY GRA & SSNIT FILINGS */}
-      {activeTab === 'reports' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Export Cards */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                  Monthly GRA &amp; SSNIT Returns ({selectedPeriod})
+      {activeTab === 'reports' &&
+        (permissions.canConfigureSalaryAndPayroll ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Export Cards */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    Monthly GRA &amp; SSNIT Returns ({selectedPeriod})
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Export official CSV schedules for GRA Taxpayers Portal and SSNIT filings.
+                  </p>
+                </div>
+                <input
+                  type="month"
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-bold text-xs text-slate-900 dark:text-white">
+                      GRA Monthly PAYE Tax Schedule (Form DT 0107)
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      Total PAYE Payable:{' '}
+                      <strong className="font-mono text-rose-600">
+                        {formatMaskedGhs(reportRunAndSlips.run.totalPayeGhs)}
+                      </strong>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const csv = generateGraPayeScheduleCsv(
+                        reportRunAndSlips.run,
+                        reportRunAndSlips.slips
+                      );
+                      downloadCsvFile(
+                        `GRA_PAYE_DT0107_${selectedPeriod}.csv`,
+                        csv
+                      );
+                    }}
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                    Export CSV
+                  </Button>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-bold text-xs text-slate-900 dark:text-white">
+                      SSNIT Tier 1 Schedule (13.5% Remittance)
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      13.0% Employer + 0.5% Employee:{' '}
+                      <strong className="font-mono text-indigo-600">
+                        {formatMaskedGhs(
+                          reportRunAndSlips.run.totalSsnitTier1EmployerGhs +
+                            (reportRunAndSlips.run.totalSsnitEmployeeTotalGhs -
+                              reportRunAndSlips.run.totalSsnitTier2EmployeeGhs)
+                        )}
+                      </strong>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const csv = generateSsnitTier1ScheduleCsv(
+                        reportRunAndSlips.run,
+                        reportRunAndSlips.slips
+                      );
+                      downloadCsvFile(`SSNIT_TIER1_${selectedPeriod}.csv`, csv);
+                    }}
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                    Export CSV
+                  </Button>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-bold text-xs text-slate-900 dark:text-white">
+                      Tier 2 Pension Schedule (5.0% Employee)
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      Total Tier 2 Deduction:{' '}
+                      <strong className="font-mono text-amber-600">
+                        {formatMaskedGhs(
+                          reportRunAndSlips.run.totalSsnitTier2EmployeeGhs
+                        )}
+                      </strong>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const csv = generateTier2ScheduleCsv(
+                        reportRunAndSlips.run,
+                        reportRunAndSlips.slips
+                      );
+                      downloadCsvFile(
+                        `PENSION_TIER2_${selectedPeriod}.csv`,
+                        csv
+                      );
+                    }}
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                    Export CSV
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* GRA Statutory Tax Table Reference */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs space-y-4">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                GRA Monthly PAYE Tax Brackets (Act 896)
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[10px] font-black uppercase text-slate-500">
+                      <th className="py-2.5 px-3">Monthly Chargeable Band</th>
+                      <th className="py-2.5 px-3 text-right">Band Width</th>
+                      <th className="py-2.5 px-3 text-right">Tax Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800">
+                    {GRA_MONTHLY_TAX_BANDS.map((band) => (
+                      <tr key={band.label}>
+                        <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
+                          {band.label}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-mono">
+                          {band.limitGhs === null
+                            ? 'Above GH₵ 50,396.67'
+                            : formatGHS(band.limitGhs)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                          {(band.rate * 100).toFixed(1)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-8 shadow-xs">
+            <div className="max-w-lg mx-auto text-center space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div className="space-y-1.5">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  RBAC Restricted — {activeAppRole}
+                </span>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  GRA &amp; SSNIT Statutory Filings Restricted
                 </h3>
-                <p className="text-xs text-slate-500">
-                  Export official CSV schedules for GRA Taxpayers Portal and SSNIT filings.
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Statutory tax and pension schedules contain confidential
+                  salary data and are restricted to{' '}
+                  <strong>Managing Director (OWNER)</strong> and{' '}
+                  <strong>Chief Accountant (ACCOUNTANT)</strong>.
                 </p>
               </div>
-              <input
-                type="month"
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-                <div>
-                  <div className="font-bold text-xs text-slate-900 dark:text-white">
-                    GRA Monthly PAYE Tax Schedule (Form DT 0107)
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    Total PAYE Payable:{' '}
-                    <strong className="font-mono text-rose-600">
-                      {formatMaskedGhs(reportRunAndSlips.run.totalPayeGhs)}
-                    </strong>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const csv = generateGraPayeScheduleCsv(
-                      reportRunAndSlips.run,
-                      reportRunAndSlips.slips
-                    );
-                    downloadCsvFile(
-                      `GRA_PAYE_DT0107_${selectedPeriod}.csv`,
-                      csv
-                    );
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5 mr-1.5" />
-                  Export CSV
-                </Button>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-                <div>
-                  <div className="font-bold text-xs text-slate-900 dark:text-white">
-                    SSNIT Tier 1 Schedule (13.5% Remittance)
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    13.0% Employer + 0.5% Employee:{' '}
-                    <strong className="font-mono text-indigo-600">
-                      {formatMaskedGhs(
-                        reportRunAndSlips.run.totalSsnitTier1EmployerGhs +
-                          (reportRunAndSlips.run.totalSsnitEmployeeTotalGhs -
-                            reportRunAndSlips.run.totalSsnitTier2EmployeeGhs)
-                      )}
-                    </strong>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const csv = generateSsnitTier1ScheduleCsv(
-                      reportRunAndSlips.run,
-                      reportRunAndSlips.slips
-                    );
-                    downloadCsvFile(`SSNIT_TIER1_${selectedPeriod}.csv`, csv);
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5 mr-1.5" />
-                  Export CSV
-                </Button>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-                <div>
-                  <div className="font-bold text-xs text-slate-900 dark:text-white">
-                    Tier 2 Pension Schedule (5.0% Employee)
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    Total Tier 2 Deduction:{' '}
-                    <strong className="font-mono text-amber-600">
-                      {formatMaskedGhs(
-                        reportRunAndSlips.run.totalSsnitTier2EmployeeGhs
-                      )}
-                    </strong>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const csv = generateTier2ScheduleCsv(
-                      reportRunAndSlips.run,
-                      reportRunAndSlips.slips
-                    );
-                    downloadCsvFile(`PENSION_TIER2_${selectedPeriod}.csv`, csv);
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5 mr-1.5" />
-                  Export CSV
-                </Button>
-              </div>
             </div>
           </div>
+        ))}
 
-          {/* GRA Statutory Tax Table Reference */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-black text-slate-900 dark:text-white">
-              GRA Monthly PAYE Tax Brackets (Act 896)
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[10px] font-black uppercase text-slate-500">
-                    <th className="py-2.5 px-3">Monthly Chargeable Band</th>
-                    <th className="py-2.5 px-3 text-right">Band Width</th>
-                    <th className="py-2.5 px-3 text-right">Tax Rate</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800">
-                  {GRA_MONTHLY_TAX_BANDS.map((band) => (
-                    <tr key={band.label}>
-                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
-                        {band.label}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
-                        {band.limitGhs === null
-                          ? 'Above GH₵ 50,396.67'
-                          : formatGHS(band.limitGhs)}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                        {(band.rate * 100).toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: ATTENDANCE (NOT CONFIGURED) */}
+      {/* TAB 5: ATTENDANCE (NOT CONFIGURED — 8:00 AM - 5:00 PM) */}
       {activeTab === 'attendance' && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-8 shadow-xs">
           <div className="max-w-xl mx-auto text-center space-y-4">
@@ -1339,7 +1585,10 @@ function HrModuleContent() {
                 Staff Attendance Tracking is Not Configured
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Amen Mart operates a fixed monthly salaried payroll structure for all staff. Biometric clock-in hardware and daily attendance logs are not configured for this workspace.
+                Amen Mart operates standard working hours of{' '}
+                <strong>8:00 AM – 5:00 PM</strong> with a fixed monthly salaried
+                payroll structure. Biometric clock-in hardware is not configured
+                for this workspace.
               </p>
             </div>
 
@@ -1354,10 +1603,10 @@ function HrModuleContent() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-600 dark:text-slate-300">
-                  Shift &amp; Duty Roster Rules
+                  Standard Operating Hours
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
-                  Not Configured
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300">
+                  8:00 AM – 5:00 PM
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -1402,6 +1651,24 @@ function HrModuleContent() {
         />
       )}
 
+      {isSalaryModalOpen && permissions.canConfigureSalaryAndPayroll && (
+        <SalaryModal
+          key={salaryTargetEmployee?.id || 'salary-cfg'}
+          isOpen={isSalaryModalOpen}
+          onClose={() => {
+            setIsSalaryModalOpen(false);
+            setSalaryTargetEmployee(null);
+          }}
+          employees={employees}
+          initialEmployee={salaryTargetEmployee}
+          onSaved={(empName) => {
+            setPayrollBannerMessage(
+              `Salary and payout configuration updated for ${empName}.`
+            );
+          }}
+        />
+      )}
+
       {/* View Staff Profile Modal */}
       <Modal
         isOpen={Boolean(viewingEmployee)}
@@ -1433,7 +1700,7 @@ function HrModuleContent() {
                     </div>
                     <div className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400 mt-1">
                       {viewingEmployee.employeeCode} &bull; Hired:{' '}
-                      {viewingEmployee.dateHired}
+                      {viewingEmployee.dateHired} &bull; Hours: 8:00 AM – 5:00 PM
                     </div>
                   </div>
                   <span
@@ -1473,98 +1740,131 @@ function HrModuleContent() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
-                  <div className="font-black uppercase text-[10px] tracking-wider text-indigo-600 dark:text-indigo-400">
-                    Monthly Salary &amp; Statutory Breakdown
+                {permissions.canConfigureSalaryAndPayroll ? (
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                    <div className="font-black uppercase text-[10px] tracking-wider text-indigo-600 dark:text-indigo-400">
+                      Monthly Salary &amp; Statutory Breakdown (Payroll RBAC)
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div>
+                        <span className="text-[10px] uppercase text-slate-400 block">
+                          Basic Salary
+                        </span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">
+                          {formatMaskedGhs(previewSlip.basicSalaryGhs)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase text-slate-400 block">
+                          Allowances
+                        </span>
+                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                          {formatMaskedGhs(previewSlip.allowancesGhs)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase text-slate-400 block">
+                          Gross Salary
+                        </span>
+                        <span className="font-mono font-black text-slate-900 dark:text-white">
+                          {formatMaskedGhs(previewSlip.grossSalaryGhs)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase text-slate-400 block">
+                          SSNIT Employee (5.5%)
+                        </span>
+                        <span className="font-mono font-semibold text-amber-600">
+                          {formatMaskedGhs(previewSlip.ssnitEmployeeGhs)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase text-slate-400 block">
+                          GRA PAYE Tax
+                        </span>
+                        <span className="font-mono font-semibold text-rose-600">
+                          {formatMaskedGhs(previewSlip.payeTaxGhs)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase text-slate-400 block">
+                          Net Take-Home Pay
+                        </span>
+                        <span className="font-mono font-black text-emerald-600">
+                          {formatMaskedGhs(previewSlip.netPayGhs)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div>
-                      <span className="text-[10px] uppercase text-slate-400 block">
-                        Basic Salary
-                      </span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">
-                        {formatMaskedGhs(previewSlip.basicSalaryGhs)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase text-slate-400 block">
-                        Allowances
-                      </span>
-                      <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                        {formatMaskedGhs(previewSlip.allowancesGhs)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase text-slate-400 block">
-                        Gross Salary
-                      </span>
-                      <span className="font-mono font-black text-slate-900 dark:text-white">
-                        {formatMaskedGhs(previewSlip.grossSalaryGhs)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase text-slate-400 block">
-                        SSNIT Employee (5.5%)
-                      </span>
-                      <span className="font-mono font-semibold text-amber-600">
-                        {formatMaskedGhs(previewSlip.ssnitEmployeeGhs)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase text-slate-400 block">
-                        GRA PAYE Tax
-                      </span>
-                      <span className="font-mono font-semibold text-rose-600">
-                        {formatMaskedGhs(previewSlip.payeTaxGhs)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase text-slate-400 block">
-                        Net Take-Home Pay
-                      </span>
-                      <span className="font-mono font-black text-emerald-600">
-                        {formatMaskedGhs(previewSlip.netPayGhs)}
-                      </span>
-                    </div>
+                ) : (
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-500">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      Salary &amp; payout figures are restricted to Chief Accountant and Managing Director.
+                    </span>
                   </div>
-                </div>
+                )}
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
                   <div className="text-[11px] text-slate-500">
-                    Payout:{' '}
-                    <strong className="text-slate-800 dark:text-slate-200">
-                      {viewingEmployee.paymentMethod === 'HUBTEL_MOMO_API'
-                        ? `Mobile Money (${viewingEmployee.momoNetwork} ${viewingEmployee.momoPhoneNumber})`
-                        : `${viewingEmployee.bankName} (${viewingEmployee.bankAccountNumber})`}
-                    </strong>
+                    {permissions.canConfigureSalaryAndPayroll ? (
+                      <>
+                        Payout:{' '}
+                        <strong className="text-slate-800 dark:text-slate-200">
+                          {viewingEmployee.paymentMethod === 'HUBTEL_MOMO_API'
+                            ? `Mobile Money (${viewingEmployee.momoNetwork} ${viewingEmployee.momoPhoneNumber})`
+                            : `${viewingEmployee.bankName} (${viewingEmployee.bankAccountNumber})`}
+                        </strong>
+                      </>
+                    ) : (
+                      <span>Standard Hours: 8:00 AM – 5:00 PM</span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const emp = viewingEmployee;
-                        setViewingEmployee(null);
-                        handleOpenEmployeePayslip(emp, 0);
-                      }}
-                    >
-                      <FileText className="w-3.5 h-3.5 mr-1" />
-                      Payslip
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        const emp = viewingEmployee;
-                        setViewingEmployee(null);
-                        setEditingEmployee(emp);
-                        setIsEmployeeModalOpen(true);
-                      }}
-                    >
-                      <Edit2 className="w-3.5 h-3.5 mr-1" />
-                      Edit Staff
-                    </Button>
+                    {permissions.canConfigureSalaryAndPayroll && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const emp = viewingEmployee;
+                            setViewingEmployee(null);
+                            handleOpenSalaryModal(emp);
+                          }}
+                        >
+                          <Wallet className="w-3.5 h-3.5 mr-1" />
+                          Configure Salary
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const emp = viewingEmployee;
+                            setViewingEmployee(null);
+                            handleOpenEmployeePayslip(emp, 0);
+                          }}
+                        >
+                          <FileText className="w-3.5 h-3.5 mr-1" />
+                          Payslip
+                        </Button>
+                      </>
+                    )}
+                    {permissions.canOnboardStaff && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          const emp = viewingEmployee;
+                          setViewingEmployee(null);
+                          setEditingEmployee(emp);
+                          setIsEmployeeModalOpen(true);
+                        }}
+                      >
+                        <Edit2 className="w-3.5 h-3.5 mr-1" />
+                        Edit Profile
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

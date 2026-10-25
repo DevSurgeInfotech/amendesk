@@ -5,9 +5,19 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTerminal, ROLE_STAFF_NAMES } from '@/context/TerminalContext';
 import { authService } from '@/lib/auth/authService';
+import { db } from '@/lib/db';
+import { syncEngine } from '@/lib/sync/syncEngine';
 import type { AppRole, UserAccount } from '@/lib/types/auth';
-import { ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/lib/types/auth';
-import type { WorkspaceSettings, StaffInvitation } from '@/lib/types/workspaceSettings';
+import {
+  ROLE_LABELS,
+  ROLE_DESCRIPTIONS,
+  RBAC_PERMISSIONS,
+  normalizeAppRole,
+} from '@/lib/types/auth';
+import type {
+  WorkspaceSettings,
+  StaffInvitation,
+} from '@/lib/types/workspaceSettings';
 import {
   Users,
   Building2,
@@ -29,9 +39,12 @@ import {
   UserCheck,
   ExternalLink,
   Lock,
+  Briefcase,
 } from 'lucide-react';
 
-function resolveSettingsTab(tabParam: string | null): 'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY' {
+function resolveSettingsTab(
+  tabParam: string | null
+): 'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY' {
   const normalized = tabParam?.toLowerCase();
   if (normalized === 'profile') return 'PROFILE';
   if (normalized === 'rules') return 'RULES';
@@ -39,22 +52,47 @@ function resolveSettingsTab(tabParam: string | null): 'STAFF' | 'PROFILE' | 'RUL
   return 'STAFF';
 }
 
+function getRoleBadgeStyle(role: AppRole): string {
+  switch (role) {
+    case 'OWNER':
+      return 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800';
+    case 'ACCOUNTANT':
+      return 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800';
+    case 'HR_ADMIN':
+      return 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800';
+    case 'SECRETARY':
+      return 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800';
+    case 'AUCTION_MANAGER':
+      return 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800';
+    case 'CASHIER':
+      return 'bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800';
+    case 'SALES_OFFICER':
+      return 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800';
+    case 'STAFF':
+      return 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+  }
+}
+
 function WorkspaceSettingsContent() {
   const searchParams = useSearchParams();
-  const { activeTenant, currentUser, role } = useTerminal();
+  const { activeTenant, currentUser, role, setRole } = useTerminal();
+  const activeAppRole = normalizeAppRole(role);
   const [, startTransition] = useTransition();
 
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY'>(() =>
-    resolveSettingsTab(tabParam)
-  );
+  const [activeTab, setActiveTab] = useState<
+    'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY'
+  >(() => resolveSettingsTab(tabParam));
   const [prevTabParam, setPrevTabParam] = useState(tabParam);
   if (tabParam !== prevTabParam) {
     setPrevTabParam(tabParam);
     setActiveTab(resolveSettingsTab(tabParam));
   }
 
-  const [feedback, setFeedback] = useState<{ type: 'SUCCESS' | 'ERROR'; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: 'SUCCESS' | 'ERROR';
+    message: string;
+  } | null>(null);
 
   // Users & Invitations State
   const [users, setUsers] = useState<UserAccount[]>([]);
@@ -63,8 +101,10 @@ function WorkspaceSettingsContent() {
 
   // Modals
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
-  const [selectedUserForReset, setSelectedUserForReset] = useState<UserAccount | null>(null);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+    useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] =
+    useState<UserAccount | null>(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
 
   // New Invite Form State
@@ -116,11 +156,13 @@ function WorkspaceSettingsContent() {
     );
   }, [users, searchQuery]);
 
-  const handleSendInvite = (e: React.FormEvent) => {
+  const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (!inviteFullName.trim() || !inviteEmail.trim()) {
-        throw new Error('Please provide the staff member&apos;s full name and email address.');
+        throw new Error(
+          'Please provide the staff member&apos;s full name and email address.'
+        );
       }
 
       const { invitation, user } = authService.inviteStaff({
@@ -133,9 +175,75 @@ function WorkspaceSettingsContent() {
         password: invitePassword.trim() || 'amen@2026',
       });
 
+      // Also sync basic staff record into Staff & Payroll directory (without salary)
+      try {
+        const existingEmps = await db.employees.toArray();
+        const alreadyExists = existingEmps.some(
+          (emp) =>
+            emp.email?.toLowerCase() === inviteEmail.trim().toLowerCase() ||
+            emp.fullName.toLowerCase() === inviteFullName.trim().toLowerCase()
+        );
+        if (!alreadyExists) {
+          const nextCode = `AM-EMP-${String(existingEmps.length + 1).padStart(
+            3,
+            '0'
+          )}`;
+          const newEmp = {
+            id: `emp-${Date.now()}`,
+            employeeCode: nextCode,
+            fullName: inviteFullName.trim(),
+            phone: invitePhone.trim() || '0548517277',
+            email: inviteEmail.trim().toLowerCase(),
+            ghanaCardNumber: 'GHA-Pending',
+            ssnitNumber: '',
+            tinNumber: '',
+            gender: 'MALE' as const,
+            address: 'Accra',
+            nextOfKinName: '',
+            nextOfKinPhone: '',
+            department:
+              inviteRole === 'ACCOUNTANT'
+                ? ('FINANCE_ACCOUNTS' as const)
+                : inviteRole === 'SECRETARY' || inviteRole === 'HR_ADMIN'
+                  ? ('LEGAL_ADMIN' as const)
+                  : inviteRole === 'SALES_OFFICER'
+                    ? ('DEALERSHIP_SHOWROOM' as const)
+                    : ('AUCTION_OPERATIONS' as const),
+            jobTitle: ROLE_LABELS[inviteRole],
+            employmentType: 'FULL_TIME_SALARIED' as const,
+            dateHired: new Date().toISOString().split('T')[0],
+            locationId: 'loc-gbawe',
+            status: 'ACTIVE' as const,
+            isCashier: inviteRole === 'CASHIER',
+            basicSalaryGhs: 0,
+            transportAllowanceGhs: 0,
+            housingAllowanceGhs: 0,
+            lunchAllowanceGhs: 0,
+            communicationAllowanceGhs: 0,
+            personalTaxReliefGhs: 0,
+            hasSsnitContribution: true,
+            tier3VoluntaryPct: 0,
+            paymentMethod: 'HUBTEL_MOMO_API' as const,
+            momoNetwork: 'MTN' as const,
+            momoPhoneNumber: invitePhone.trim(),
+            momoAccountName: inviteFullName.trim(),
+            createdAt: new Date().toISOString(),
+          };
+          await db.employees.put(newEmp);
+          await syncEngine.queueMutation(
+            'employees',
+            newEmp.id,
+            'CREATE',
+            newEmp
+          );
+        }
+      } catch {
+        // Non-blocking sync to local employees store
+      }
+
       showNotification(
         'SUCCESS',
-        `Invitation created and account @${user.username} provisioned for ${invitation.fullName}.`
+        `Account @${user.username} provisioned for ${invitation.fullName} and synced to Staff & Payroll directory.`
       );
 
       setIsInviteModalOpen(false);
@@ -146,7 +254,26 @@ function WorkspaceSettingsContent() {
       setInvitePassword('amen@2026');
       refreshData();
     } catch (err) {
-      showNotification('ERROR', err instanceof Error ? err.message : 'Failed to send invitation.');
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Failed to send invitation.'
+      );
+    }
+  };
+
+  const handleChangeUserRole = (user: UserAccount, newRole: AppRole) => {
+    try {
+      authService.updateUser(user.id, { role: newRole });
+      showNotification(
+        'SUCCESS',
+        `Updated RBAC role for ${user.fullName} to ${newRole} (${ROLE_LABELS[newRole]}).`
+      );
+      refreshData();
+    } catch (err) {
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Failed to update role.'
+      );
     }
   };
 
@@ -155,11 +282,16 @@ function WorkspaceSettingsContent() {
       authService.updateUser(user.id, { isActive: !user.isActive });
       showNotification(
         'SUCCESS',
-        `Account for ${user.fullName} is now ${!user.isActive ? 'ACTIVE' : 'SUSPENDED'}.`
+        `Account for ${user.fullName} is now ${
+          !user.isActive ? 'ACTIVE' : 'SUSPENDED'
+        }.`
       );
       refreshData();
     } catch (err) {
-      showNotification('ERROR', err instanceof Error ? err.message : 'Action failed.');
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Action failed.'
+      );
     }
   };
 
@@ -167,13 +299,21 @@ function WorkspaceSettingsContent() {
     e.preventDefault();
     if (!selectedUserForReset || !newPasswordInput.trim()) return;
     try {
-      authService.updateUser(selectedUserForReset.id, { password: newPasswordInput.trim() });
-      showNotification('SUCCESS', `Password for @${selectedUserForReset.username} reset successfully.`);
+      authService.updateUser(selectedUserForReset.id, {
+        password: newPasswordInput.trim(),
+      });
+      showNotification(
+        'SUCCESS',
+        `Password for @${selectedUserForReset.username} reset successfully.`
+      );
       setIsResetPasswordModalOpen(false);
       setSelectedUserForReset(null);
       setNewPasswordInput('');
     } catch (err) {
-      showNotification('ERROR', err instanceof Error ? err.message : 'Failed to update password.');
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Failed to update password.'
+      );
     }
   };
 
@@ -182,7 +322,11 @@ function WorkspaceSettingsContent() {
       alert('You cannot delete your own currently signed-in account.');
       return;
     }
-    if (!confirm(`Are you sure you want to permanently remove staff account "${user.fullName}" (@${user.username})?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to permanently remove staff account "${user.fullName}" (@${user.username})?`
+      )
+    ) {
       return;
     }
     try {
@@ -190,7 +334,10 @@ function WorkspaceSettingsContent() {
       showNotification('SUCCESS', `Staff account @${user.username} deleted.`);
       refreshData();
     } catch (err) {
-      showNotification('ERROR', err instanceof Error ? err.message : 'Failed to delete user.');
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Failed to delete user.'
+      );
     }
   };
 
@@ -200,7 +347,10 @@ function WorkspaceSettingsContent() {
       showNotification('SUCCESS', 'Invitation revoked successfully.');
       refreshData();
     } catch (err) {
-      showNotification('ERROR', err instanceof Error ? err.message : 'Failed to revoke.');
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Failed to revoke.'
+      );
     }
   };
 
@@ -210,16 +360,26 @@ function WorkspaceSettingsContent() {
       showNotification('SUCCESS', 'Fresh invitation code generated and resent.');
       refreshData();
     } catch (err) {
-      showNotification('ERROR', err instanceof Error ? err.message : 'Failed to resend.');
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Failed to resend.'
+      );
     }
   };
 
   const handleCopyInviteLink = (invite: StaffInvitation) => {
-    const inviteUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/login?invite=${invite.inviteCode}&email=${encodeURIComponent(invite.email)}`;
+    const inviteUrl = `${
+      typeof window !== 'undefined' ? window.location.origin : ''
+    }/login?invite=${invite.inviteCode}&email=${encodeURIComponent(
+      invite.email
+    )}`;
     navigator.clipboard.writeText(inviteUrl);
     setCopiedInviteId(invite.id);
     setTimeout(() => setCopiedInviteId(null), 2500);
-    showNotification('SUCCESS', 'Invitation onboarding link copied to clipboard.');
+    showNotification(
+      'SUCCESS',
+      'Invitation onboarding link copied to clipboard.'
+    );
   };
 
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -227,9 +387,15 @@ function WorkspaceSettingsContent() {
     setIsSaving(true);
     try {
       authService.updateWorkspaceSettings(activeTenant.id, settings);
-      showNotification('SUCCESS', 'Workspace settings and configuration saved successfully.');
+      showNotification(
+        'SUCCESS',
+        'Workspace settings and configuration saved successfully.'
+      );
     } catch (err) {
-      showNotification('ERROR', err instanceof Error ? err.message : 'Failed to save settings.');
+      showNotification(
+        'ERROR',
+        err instanceof Error ? err.message : 'Failed to save settings.'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -255,12 +421,19 @@ function WorkspaceSettingsContent() {
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Staff directory, organization profile, business rules, and role permissions
+            Terminal login access, RBAC role assignments, organization profile, and business rules
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {role === 'OWNER' && (
+          <Link
+            href="/desk/hr"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all border border-indigo-200 dark:border-indigo-800"
+          >
+            <Briefcase className="h-3.5 w-3.5" />
+            <span>Staff &amp; Payroll Directory</span>
+          </Link>
+          {activeAppRole === 'OWNER' && (
             <Link
               href="/platform"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700"
@@ -312,7 +485,7 @@ function WorkspaceSettingsContent() {
           }`}
         >
           <Users className="h-4 w-4" />
-          <span>Staff &amp; Invitations ({users.length})</span>
+          <span>Terminal Accounts &amp; RBAC ({users.length})</span>
         </button>
 
         <button
@@ -351,13 +524,36 @@ function WorkspaceSettingsContent() {
           }`}
         >
           <Shield className="h-4 w-4" />
-          <span>Session &amp; Security</span>
+          <span>RBAC Matrix &amp; Security</span>
         </button>
       </div>
 
-      {/* TAB 1: STAFF DIRECTORY & INVITATIONS */}
+      {/* TAB 1: TERMINAL ACCOUNTS & RBAC */}
       {activeTab === 'STAFF' && (
         <div className="space-y-6">
+          {/* Unified Staff Onboarding Guidance Banner */}
+          <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="space-y-0.5">
+              <div className="font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Briefcase className="w-4 h-4 text-indigo-600" />
+                <span>
+                  Unified Staff Onboarding &amp; Terminal Access
+                </span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-400">
+                Full staff onboarding (personal details, department, and Ghana Card / SSNIT / TIN) is done in{' '}
+                <strong>Staff &amp; Payroll</strong> (accessible to Secretary &amp; HR without salary fields) and automatically provisions login access here. Use this tab to manage RBAC roles and passwords.
+              </p>
+            </div>
+            <Link
+              href="/desk/hr"
+              className="shrink-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors"
+            >
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Add Staff in Staff &amp; Payroll</span>
+            </Link>
+          </div>
+
           {/* Action & Search Bar */}
           <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
@@ -366,7 +562,7 @@ function WorkspaceSettingsContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search staff by name, email, role..."
+                placeholder="Search accounts by name, email, role..."
                 className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all"
               />
             </div>
@@ -378,7 +574,7 @@ function WorkspaceSettingsContent() {
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 <Plus className="h-4 w-4" />
-                <span>Invite New Staff Member</span>
+                <span>Provision Login Account</span>
               </button>
             </div>
           </div>
@@ -390,11 +586,12 @@ function WorkspaceSettingsContent() {
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                   <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
-                    Pending Staff Invitations ({invitations.filter((i) => i.status === 'PENDING').length})
+                    Provisioned Onboarding Invitations (
+                    {invitations.filter((i) => i.status === 'PENDING').length})
                   </h3>
                 </div>
                 <span className="text-[11px] text-slate-500">
-                  Invited staff can sign in using their invitation link or initial credentials
+                  Staff can sign in using their invitation link or initial credentials
                 </span>
               </div>
 
@@ -406,7 +603,9 @@ function WorkspaceSettingsContent() {
                   >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <strong className="text-slate-900 dark:text-white font-bold">{inv.fullName}</strong>
+                        <strong className="text-slate-900 dark:text-white font-bold">
+                          {inv.fullName}
+                        </strong>
                         <span
                           className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${
                             inv.status === 'PENDING'
@@ -421,8 +620,14 @@ function WorkspaceSettingsContent() {
                         {inv.email} &bull; {inv.phone || 'No phone'}
                       </div>
                       <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
-                        Role: <strong className="text-purple-700 dark:text-purple-300">{inv.role}</strong> &bull; Code:{' '}
-                        <code className="font-mono font-bold text-slate-800 dark:text-slate-200">{inv.inviteCode}</code>
+                        Role:{' '}
+                        <strong className="text-indigo-700 dark:text-indigo-300">
+                          {inv.role} ({ROLE_LABELS[inv.role]})
+                        </strong>{' '}
+                        &bull; Code:{' '}
+                        <code className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                          {inv.inviteCode}
+                        </code>
                       </div>
                     </div>
 
@@ -469,7 +674,7 @@ function WorkspaceSettingsContent() {
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <h3 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-2">
                 <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Authorized Staff Members ({filteredUsers.length})</span>
+                <span>Authorized Terminal Accounts ({filteredUsers.length})</span>
               </h3>
               <span className="text-xs text-slate-500">
                 Workspace: <strong>{activeTenant.name}</strong>
@@ -478,10 +683,10 @@ function WorkspaceSettingsContent() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-black tracking-wider text-[10px]">
+                <thead className="bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 text-slate-500 uppercase font-black tracking-wider text-[10px] whitespace-nowrap">
                   <tr>
                     <th className="py-3 px-4">Staff Member</th>
-                    <th className="py-3 px-4">RBAC Role</th>
+                    <th className="py-3 px-4">Assigned RBAC Role</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Last Login</th>
                     <th className="py-3 px-4 text-right">Actions</th>
@@ -490,38 +695,58 @@ function WorkspaceSettingsContent() {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
-                        No staff members found matching your search.
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-slate-500"
+                      >
+                        No staff accounts found matching your search.
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="font-bold text-slate-900 dark:text-white">{u.fullName}</div>
+                      <tr
+                        key={u.id}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                      >
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="font-bold text-slate-900 dark:text-white">
+                            {u.fullName}
+                          </div>
                           <div className="text-[11px] text-slate-500 font-mono">
                             @{u.username} &bull; {u.email}
                           </div>
                         </td>
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                              u.role === 'OWNER'
-                                ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
-                                : u.role === 'ACCOUNTANT'
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
-                                : u.role === 'SECRETARY'
-                                ? 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-                                : 'bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                            }`}
-                          >
-                            {u.role}
-                          </span>
-                          <span className="block text-[10px] text-slate-500 mt-0.5">
-                            {ROLE_LABELS[u.role]}
-                          </span>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${getRoleBadgeStyle(
+                                u.role
+                              )}`}
+                            >
+                              {u.role}
+                            </span>
+                            <select
+                              value={u.role}
+                              onChange={(e) =>
+                                handleChangeUserRole(
+                                  u,
+                                  e.target.value as AppRole
+                                )
+                              }
+                              aria-label={`Change role for ${u.fullName}`}
+                              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
+                            >
+                              {(Object.keys(ROLE_LABELS) as AppRole[]).map(
+                                (r) => (
+                                  <option key={r} value={r}>
+                                    {ROLE_LABELS[r]}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </div>
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleToggleUserStatus(u)}
@@ -535,10 +760,12 @@ function WorkspaceSettingsContent() {
                             {u.isActive ? 'Active' : 'Suspended'}
                           </button>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
-                          {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('en-GB') : 'Never'}
+                        <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                          {u.lastLoginAt
+                            ? new Date(u.lastLoginAt).toLocaleString('en-GB')
+                            : 'Never'}
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
@@ -597,7 +824,12 @@ function WorkspaceSettingsContent() {
                   type="text"
                   required
                   value={settings.organizationName}
-                  onChange={(e) => setSettings({ ...settings, organizationName: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      organizationName: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -610,7 +842,9 @@ function WorkspaceSettingsContent() {
                   type="text"
                   required
                   value={settings.shortName}
-                  onChange={(e) => setSettings({ ...settings, shortName: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, shortName: e.target.value })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -623,7 +857,9 @@ function WorkspaceSettingsContent() {
               <input
                 type="text"
                 value={settings.tagline}
-                onChange={(e) => setSettings({ ...settings, tagline: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, tagline: e.target.value })
+                }
                 className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -637,7 +873,9 @@ function WorkspaceSettingsContent() {
                   type="email"
                   required
                   value={settings.contactEmail}
-                  onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, contactEmail: e.target.value })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -650,7 +888,9 @@ function WorkspaceSettingsContent() {
                   type="text"
                   required
                   value={settings.phone}
-                  onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, phone: e.target.value })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -664,7 +904,9 @@ function WorkspaceSettingsContent() {
                 type="text"
                 required
                 value={settings.address}
-                onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, address: e.target.value })
+                }
                 className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -677,7 +919,12 @@ function WorkspaceSettingsContent() {
                 <input
                   type="text"
                   value={settings.gaaLicenseNumber}
-                  onChange={(e) => setSettings({ ...settings, gaaLicenseNumber: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      gaaLicenseNumber: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
               </div>
@@ -689,7 +936,9 @@ function WorkspaceSettingsContent() {
                 <input
                   type="text"
                   value={settings.tinNumber}
-                  onChange={(e) => setSettings({ ...settings, tinNumber: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, tinNumber: e.target.value })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
               </div>
@@ -719,7 +968,7 @@ function WorkspaceSettingsContent() {
                   Statutory Auction, Settlement &amp; POS Receipt Rules
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Enforce legal settlement windows, buyer registration fees, and receipt printer hardware settings
+                  Enforce legal settlement windows, buyer registration fees, and receipt printer hardware settings (Operating Hours: 8:00 AM – 5:00 PM)
                 </p>
               </div>
             </div>
@@ -735,10 +984,17 @@ function WorkspaceSettingsContent() {
                   max="60"
                   required
                   value={settings.settlementDays}
-                  onChange={(e) => setSettings({ ...settings, settlementDays: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      settlementDays: Number(e.target.value),
+                    })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">Default is 14 days per GAA statutory rules</p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Default is 14 days per GAA statutory rules
+                </p>
               </div>
 
               <div>
@@ -751,10 +1007,17 @@ function WorkspaceSettingsContent() {
                   step="10"
                   required
                   value={settings.buyerRegistrationFee}
-                  onChange={(e) => setSettings({ ...settings, buyerRegistrationFee: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      buyerRegistrationFee: Number(e.target.value),
+                    })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">Bidders pay to obtain paddle before auction</p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Bidders pay to obtain paddle before auction
+                </p>
               </div>
 
               <div>
@@ -767,10 +1030,17 @@ function WorkspaceSettingsContent() {
                   max="30"
                   required
                   value={settings.defaultBuyersPremium}
-                  onChange={(e) => setSettings({ ...settings, defaultBuyersPremium: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      defaultBuyersPremium: Number(e.target.value),
+                    })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">Auction house fee calculated atop hammer price</p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Auction house fee calculated atop hammer price
+                </p>
               </div>
             </div>
 
@@ -781,14 +1051,31 @@ function WorkspaceSettingsContent() {
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { id: '80mm', label: '80mm POS Thermal (Standard)', desc: 'Standard desktop till thermal printer' },
-                  { id: '58mm', label: '58mm Mobile Thermal', desc: 'Compact handheld mobile Bluetooth printer' },
-                  { id: 'A4', label: 'A4 Full Page Invoice', desc: 'Standard office laser or inkjet sheet' },
+                  {
+                    id: '80mm',
+                    label: '80mm POS Thermal (Standard)',
+                    desc: 'Standard desktop till thermal printer',
+                  },
+                  {
+                    id: '58mm',
+                    label: '58mm Mobile Thermal',
+                    desc: 'Compact handheld mobile Bluetooth printer',
+                  },
+                  {
+                    id: 'A4',
+                    label: 'A4 Full Page Invoice',
+                    desc: 'Standard office laser or inkjet sheet',
+                  },
                 ].map((p) => (
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setSettings({ ...settings, receiptPrinterWidth: p.id as '80mm' | '58mm' | 'A4' })}
+                    onClick={() =>
+                      setSettings({
+                        ...settings,
+                        receiptPrinterWidth: p.id as '80mm' | '58mm' | 'A4',
+                      })
+                    }
                     className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                       settings.receiptPrinterWidth === p.id
                         ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/20'
@@ -796,7 +1083,9 @@ function WorkspaceSettingsContent() {
                     }`}
                   >
                     <div className="font-bold text-xs">{p.label}</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">{p.desc}</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      {p.desc}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -807,7 +1096,12 @@ function WorkspaceSettingsContent() {
                 <input
                   type="checkbox"
                   checked={settings.autoPrintReceipt}
-                  onChange={(e) => setSettings({ ...settings, autoPrintReceipt: e.target.checked })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      autoPrintReceipt: e.target.checked,
+                    })
+                  }
                   className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 <div>
@@ -824,7 +1118,12 @@ function WorkspaceSettingsContent() {
                 <input
                   type="checkbox"
                   checked={settings.enableSmsReceiptAlerts}
-                  onChange={(e) => setSettings({ ...settings, enableSmsReceiptAlerts: e.target.checked })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      enableSmsReceiptAlerts: e.target.checked,
+                    })
+                  }
                   className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 <div>
@@ -844,61 +1143,214 @@ function WorkspaceSettingsContent() {
                 disabled={isSaving}
                 className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50"
               >
-                {isSaving ? 'Saving Changes...' : 'Save Rules & Hardware Settings'}
+                {isSaving
+                  ? 'Saving Changes...'
+                  : 'Save Rules & Hardware Settings'}
               </button>
             </div>
           </div>
         </form>
       )}
 
-      {/* TAB 4: SESSION & SECURITY */}
+      {/* TAB 4: RBAC MATRIX & SECURITY */}
       {activeTab === 'SECURITY' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Active Operator Session */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 text-xs">
-            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-              <Lock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <div>
-                <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                  Active Operator Authentication &amp; Terminal Session
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  Inspect terminal security identity and encrypted offline database isolation
-                </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    Active Operator Authentication &amp; Role Simulator
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Standard Operating Hours: 8:00 AM – 5:00 PM &bull; Switch active RBAC role below to test module and salary restrictions
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase text-slate-400">
+                  Active Role:
+                </span>
+                <select
+                  value={activeAppRole}
+                  onChange={(e) => setRole(e.target.value as AppRole)}
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 cursor-pointer"
+                >
+                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => (
+                    <option key={r} value={r}>
+                      {r} — {ROLE_LABELS[r]}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
-                <span className="text-[10px] font-bold uppercase text-slate-400">Authenticated Staff User</span>
-                <div className="font-bold text-slate-900 dark:text-white text-sm">{currentUser?.fullName || 'Anonymous'}</div>
-                <div className="text-slate-500 font-mono text-xs">@{currentUser?.username} &bull; {currentUser?.email}</div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
-                <span className="text-[10px] font-bold uppercase text-slate-400">Granted Role Assignment</span>
-                <div className="font-bold text-purple-700 dark:text-purple-300 text-sm">{role}</div>
-                <div className="text-slate-500 text-xs">{ROLE_STAFF_NAMES[role] || role}</div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
-                <span className="text-[10px] font-bold uppercase text-slate-400">Assigned Workspace Tenant</span>
-                <div className="font-bold text-slate-900 dark:text-white text-sm">{activeTenant.name}</div>
-                <div className="text-slate-500 font-mono text-xs">ID: {activeTenant.id} ({activeTenant.code})</div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
-                <span className="text-[10px] font-bold uppercase text-slate-400">Local Physical Store</span>
-                <div className="font-bold text-emerald-700 dark:text-emerald-400 font-mono text-sm">
-                  {activeTenant.isSandbox ? 'AmenDeskDB_sandbox' : 'AmenDeskDB_live'}
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Authenticated Staff User
+                </span>
+                <div className="font-bold text-slate-900 dark:text-white text-sm">
+                  {currentUser?.fullName || 'Kwesi Boateng'}
                 </div>
-                <div className="text-slate-500 text-xs">Strict zero-bleed client physical store</div>
+                <div className="text-slate-500 font-mono text-xs">
+                  @{currentUser?.username || 'kwesi.boateng'}
+                </div>
               </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Granted Role Assignment
+                </span>
+                <div className="font-bold text-indigo-700 dark:text-indigo-300 text-sm">
+                  {activeAppRole}
+                </div>
+                <div className="text-slate-500 text-xs">
+                  {ROLE_STAFF_NAMES[activeAppRole] || ROLE_LABELS[activeAppRole]}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Assigned Workspace Tenant
+                </span>
+                <div className="font-bold text-slate-900 dark:text-white text-sm">
+                  {activeTenant.name}
+                </div>
+                <div className="text-slate-500 font-mono text-xs">
+                  ID: {activeTenant.id} ({activeTenant.code})
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Local Physical Store
+                </span>
+                <div className="font-bold text-emerald-700 dark:text-emerald-400 font-mono text-sm">
+                  {activeTenant.isSandbox
+                    ? 'AmenDeskDB_sandbox'
+                    : 'AmenDeskDB_live'}
+                </div>
+                <div className="text-slate-500 text-xs">
+                  Strict zero-bleed offline store
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comprehensive RBAC Permissions Matrix (Including Staff & Payroll Separation) */}
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                AmenDesk Role-Based Access Control (RBAC) Matrix
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Enforces strict separation between Staff Onboarding (Secretary / HR) and Salary &amp; Payroll Administration (Owner / Accountant).
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                    <th className="py-3 px-4">RBAC Role</th>
+                    <th className="py-3 px-3 text-center">
+                      Add Staff (No Salary)
+                    </th>
+                    <th className="py-3 px-3 text-center">
+                      Salaries &amp; Payroll
+                    </th>
+                    <th className="py-3 px-3 text-center">
+                      GRA / SSNIT Filings
+                    </th>
+                    <th className="py-3 px-3 text-center">Approve Leave</th>
+                    <th className="py-3 px-3 text-center">
+                      Accounts &amp; Banking
+                    </th>
+                    <th className="py-3 px-3 text-center">
+                      POS (8am – 5pm)
+                    </th>
+                    <th className="py-3 px-3 text-center">
+                      Auctions &amp; Waybills
+                    </th>
+                    <th className="py-3 px-3 text-center">
+                      Dealership / Land
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => {
+                    const p = RBAC_PERMISSIONS[r];
+                    const renderCheck = (allowed: boolean) =>
+                      allowed ? (
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
+                          ✓
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600">
+                          —
+                        </span>
+                      );
+                    return (
+                      <tr
+                        key={r}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 whitespace-nowrap"
+                      >
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${getRoleBadgeStyle(
+                                r
+                              )}`}
+                            >
+                              {r}
+                            </span>
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {ROLE_LABELS[r]}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            {ROLE_DESCRIPTIONS[r]}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canOnboardStaff)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canConfigureSalaryAndPayroll)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canConfigureSalaryAndPayroll)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canApproveLeaveAndStatus)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canManageAccountsAndDeposits)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canProcessPosPayments)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canManageAuctionsAndWaybills)}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {renderCheck(p.canManageDirectSales)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL 1: INVITE STAFF MEMBER */}
+      {/* MODAL 1: PROVISION STAFF LOGIN ACCOUNT */}
       {isInviteModalOpen && (
         <div
           role="dialog"
@@ -912,9 +1364,11 @@ function WorkspaceSettingsContent() {
                   <Plus className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">Invite Staff Member</h3>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                    Provision Staff Login Account
+                  </h3>
                   <p className="text-xs text-slate-500">
-                    Invite to workspace: <strong>{activeTenant.name}</strong>
+                    Workspace: <strong>{activeTenant.name}</strong> (Synced with Staff &amp; Payroll)
                   </p>
                 </div>
               </div>
@@ -979,12 +1433,15 @@ function WorkspaceSettingsContent() {
                   onChange={(e) => setInviteRole(e.target.value as AppRole)}
                   className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold focus:outline-hidden focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
-                  <option value="OWNER">Managing Director &amp; Owner (Full Control &amp; Approvals)</option>
-                  <option value="ACCOUNTANT">Chief Accountant (Ledgers, Cashiering &amp; Deposits)</option>
-                  <option value="SECRETARY">Auction Secretary (Lot Registration &amp; Waybills)</option>
-                  <option value="STAFF">Operations Officer &amp; Cashier (Till Shift &amp; Intake)</option>
+                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => (
+                    <option key={r} value={r}>
+                      {r} — {ROLE_LABELS[r]}
+                    </option>
+                  ))}
                 </select>
-                <p className="text-[11px] text-slate-500 mt-1">{ROLE_DESCRIPTIONS[inviteRole]}</p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {ROLE_DESCRIPTIONS[inviteRole]}
+                </p>
               </div>
 
               <div>
@@ -1016,7 +1473,7 @@ function WorkspaceSettingsContent() {
                   type="submit"
                   className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black text-white transition-colors shadow-xs cursor-pointer"
                 >
-                  Send Invite &amp; Provision
+                  Provision Account
                 </button>
               </div>
             </form>
@@ -1047,12 +1504,21 @@ function WorkspaceSettingsContent() {
             </div>
 
             <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
-              Set a new password for <strong className="text-slate-900 dark:text-white">{selectedUserForReset.fullName}</strong> (@{selectedUserForReset.username}).
+              Set a new password for{' '}
+              <strong className="text-slate-900 dark:text-white">
+                {selectedUserForReset.fullName}
+              </strong>{' '}
+              (@{selectedUserForReset.username}).
             </p>
 
-            <form onSubmit={handleSavePasswordReset} className="space-y-4 text-xs">
+            <form
+              onSubmit={handleSavePasswordReset}
+              className="space-y-4 text-xs"
+            >
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  New Password
+                </label>
                 <input
                   type="text"
                   required

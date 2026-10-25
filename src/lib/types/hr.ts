@@ -54,7 +54,7 @@ export interface Employee {
   dateHired: string;
   locationId: string; // references accountingLocations (e.g. loc-gbawe, loc-showroom)
   status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED' | 'SUSPENDED';
-  isCashier: boolean; // whether employee can open/close front-desk cash till shifts
+  isCashier: boolean; // whether employee is authorized to operate the front-desk cash till (8:00 AM - 5:00 PM)
 
   // Salaried Remuneration Structure (strictly monthly salaried + allowances; no casuals, no sales commissions)
   basicSalaryGhs: number;
@@ -170,7 +170,7 @@ export interface StaffAttendance {
   status: AttendanceStatus;
   shiftType: 'STANDARD_DAY' | 'AUCTION_EVENT_DUTY' | 'WEEKEND_DUTY';
   hoursWorked: number;
-  linkedShiftId?: string; // if tied to a front-desk cash till shift
+  linkedShiftId?: string;
   recordedBy: string;
   notes?: string;
   syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';

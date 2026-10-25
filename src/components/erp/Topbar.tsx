@@ -66,7 +66,7 @@ const QUICK_MODULES: SearchResultItem[] = [
   {
     id: 'mod-payments',
     category: 'MODULE',
-    title: 'Payment Terminal (POS) & Till Shift',
+    title: 'Payment Terminal (POS) & Collections',
     subtitle: 'Multi-mode cashier receipting (Cash, MoMo, Bank, Card)',
     badge: 'POS',
     href: '/desk/payments',

@@ -58,7 +58,6 @@ const erpModules: ModuleItem[] = [
     icon: CreditCard,
     submodules: [
       { label: 'POS Terminal', href: '/desk/payments' },
-      { label: 'Cash Shift & Till', href: '/desk/payments?view=shift' },
       { label: 'Collections', href: '/desk/payments?view=collections' },
     ],
   },

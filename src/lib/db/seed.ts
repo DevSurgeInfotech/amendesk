@@ -1775,7 +1775,7 @@ export const initialCashShifts: CashShift[] = [
     expectedCashInDrawerGhs: 24500,
     actualCashInDrawerGhs: 24500,
     varianceGhs: 0,
-    notes: 'Morning shift till balanced. MoMo & Bank reconciliations confirmed with statements.',
+    notes: 'Daily till (8:00 AM – 5:00 PM) balanced. MoMo & Bank reconciliations confirmed with statements.',
     status: 'OPEN',
   },
 ];

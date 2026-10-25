@@ -536,7 +536,7 @@ export interface BankDeposit {
   clearedReceiptIds: string[]; // IDs of receipts cleared from 1015 / 1035
   bankSlipReference?: string; // Teller reference / deposit slip #
   depositorName: string;
-  depositedByRole: 'ACCOUNTANT' | 'ADMIN';
+  depositedByRole: 'ACCOUNTANT' | 'OWNER' | 'ADMIN';
   notes?: string;
   syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';
   createdAt: string;

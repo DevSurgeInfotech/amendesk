@@ -11,7 +11,6 @@ import type {
   PaymentSplit,
   PaymentPlan,
   Customer,
-  CashShift,
 } from '@/lib/types';
 import { useTerminal } from '@/context/TerminalContext';
 import { syncEngine } from '@/lib/sync/syncEngine';
@@ -73,15 +72,7 @@ function generatePlanId(): string {
   return `plan-${Date.now()}`;
 }
 
-function generateShiftId(): string {
-  return `shift-${Date.now()}`;
-}
-
-function generateShiftNumber(): string {
-  return `SHF-${Date.now().toString().slice(-6)}`;
-}
-
-type PaymentView = 'terminal' | 'shift' | 'collections';
+type PaymentView = 'terminal' | 'collections';
 
 const viewMeta: Record<
   PaymentView,
@@ -90,14 +81,8 @@ const viewMeta: Record<
   terminal: {
     title: 'Record Payment Terminal (Multi-Mode POS)',
     subtitle: 'Accept Cash, Mobile Money (Hubtel/MTN/Telecel), Bank Transfer & Card settlements for Auction lots, Vehicles, Land, Property & Invoices.',
-    badge: 'Front Desk Cash Office • Active Till',
+    badge: 'Front Desk Cash Office • 8:00 AM – 5:00 PM',
     icon: CreditCard,
-  },
-  shift: {
-    title: 'Cash Drawer & Till Shift Balancing',
-    subtitle: 'Audit reconciliation of physical cash float, mobile money, and electronic deposits with zero-variance shift closing.',
-    badge: 'Front Desk Till Reconciliation',
-    icon: Banknote,
   },
   collections: {
     title: 'Recent Collections Ledger',
@@ -110,7 +95,7 @@ const viewMeta: Record<
 function RecordPaymentContent() {
   const searchParams = useSearchParams();
   const viewParam = searchParams.get('view') as PaymentView | null;
-  const activeView: PaymentView = viewParam && ['terminal', 'shift', 'collections'].includes(viewParam) ? viewParam : 'terminal';
+  const activeView: PaymentView = viewParam === 'collections' ? 'collections' : 'terminal';
 
   const currentMeta = viewMeta[activeView];
   const CurrentIcon = currentMeta.icon;
@@ -124,9 +109,8 @@ function RecordPaymentContent() {
   const customers = useLiveQuery(() => db.customers.toArray(), []) || [];
   const paymentPlans = useLiveQuery(() => db.paymentPlans.toArray(), []) || [];
   const receipts = useLiveQuery(() => db.receipts.orderBy('printedAt').reverse().toArray(), []) || [];
-  const shifts = useLiveQuery(() => db.cashShifts.toArray(), []) || [];
 
-  // Active cashier & shift
+  // Active cashier
   const { currentStaffName } = useTerminal();
   const cashierName = currentStaffName || 'Mary Afriyie';
   const issuedLocation = 'Front Desk — Amen Mart Gbawe';
@@ -151,7 +135,6 @@ function RecordPaymentContent() {
   const [selectedLandId, setSelectedLandId] = useState(defaultCategory === 'LAND' && idParam ? idParam : '');
   const [selectedPropertyId, setSelectedPropertyId] = useState(defaultCategory === 'PROPERTY' && idParam ? idParam : '');
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(defaultCategory === 'INVOICE' && idParam ? idParam : '');
-  const [shiftSuccessMsg, setShiftSuccessMsg] = useState('');
 
   // General particulars
   const [generalTitle, setGeneralTitle] = useState('Bidder Registration Fee (Catalog)');
@@ -611,38 +594,6 @@ function RecordPaymentContent() {
   const todayMomo = todayReceipts.filter((r) => r.paymentMethod === 'MOMO').reduce((acc, r) => acc + r.amountPaidGhs, 0);
   const todayBank = todayReceipts.filter((r) => r.paymentMethod === 'BANK_TRANSFER').reduce((acc, r) => acc + r.amountPaidGhs, 0);
 
-  const todayShift = shifts.find(
-    (s) => s.shiftDate === getTodayDatePrefix() && s.cashierName === cashierName
-  );
-
-  const handleVerifyCloseShift = async () => {
-    const shiftRecord: CashShift = {
-      id: todayShift?.id || generateShiftId(),
-      shiftNumber: todayShift?.shiftNumber || generateShiftNumber(),
-      cashierName,
-      facilityLocation: issuedLocation,
-      shiftDate: getTodayDatePrefix(),
-      openingFloatGhs: 5000,
-      cashCollectionsGhs: todayCash,
-      momoCollectionsGhs: todayMomo,
-      bankCollectionsGhs: todayBank,
-      cardCollectionsGhs: todayReceipts
-        .filter((r) => r.paymentMethod === 'CARD_PAYSTACK')
-        .reduce((acc, r) => acc + r.amountPaidGhs, 0),
-      cashDisbursementsGhs: 0,
-      expectedCashInDrawerGhs: 5000 + todayCash,
-      actualCashInDrawerGhs: 5000 + todayCash,
-      varianceGhs: 0,
-      notes: 'Shift balanced and verified at front desk till.',
-      status: 'CLOSED',
-      closedAt: getIsoTimestamp(),
-    };
-
-    await db.cashShifts.put(shiftRecord);
-    await syncEngine.queueMutation('cashShifts', shiftRecord.id, todayShift ? 'UPDATE' : 'CREATE', shiftRecord);
-    setShiftSuccessMsg(`Shift verified and closed successfully! Expected Till Cash: ${formatGHS(5000 + todayCash)}`);
-  };
-
   // Filtered recent receipts
   const filteredRecent = receipts.filter((r) => {
     if (!recentSearch) return true;
@@ -682,7 +633,7 @@ function RecordPaymentContent() {
         </div>
       </div>
 
-      {/* Till Shift Summary Strip */}
+      {/* Daily Till Summary Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <GlassCard
           theme="emerald"
@@ -1307,9 +1258,14 @@ function RecordPaymentContent() {
             </div>
           ) : (
             <div className="surface-card bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                Front-Desk Till Reconciliation (Shift)
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                  Front-Desk Daily Till Summary
+                </h3>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                  8:00 AM – 5:00 PM
+                </span>
+              </div>
               <p className="text-xs text-slate-500">
                 Logged in cashier: <span className="font-semibold text-slate-800 dark:text-slate-200">{cashierName}</span>
               </p>
@@ -1349,147 +1305,6 @@ function RecordPaymentContent() {
           )}
         </div>
       </div>
-      )}
-
-      {/* SHIFT VIEW: Till Shift & Drawer Balancing Console */}
-      {activeView === 'shift' && (
-        <div className="space-y-6">
-          <div className="surface-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
-            {shiftSuccessMsg && (
-              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
-                <span>{shiftSuccessMsg}</span>
-              </div>
-            )}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div>
-                <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${todayShift?.status === 'CLOSED' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'}`}>
-                  Drawer Status: {todayShift?.status === 'CLOSED' ? `Closed at ${todayShift.closedAt ? formatDateTime(todayShift.closedAt) : 'End of Shift'}` : 'Active • In-Balance'}
-                </span>
-                <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-                  Cash Drawer &amp; Till Shift Balancing
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Audit reconciliation of physical cash float, mobile money, and electronic deposits for cashier <strong className="text-slate-800 dark:text-slate-200">{cashierName}</strong> at {issuedLocation}.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant={todayShift?.status === 'CLOSED' ? 'outline' : 'primary'}
-                  icon={<CheckCircle className="h-4 w-4" />}
-                  onClick={handleVerifyCloseShift}
-                >
-                  {todayShift?.status === 'CLOSED' ? 'Re-Verify & Save Shift' : 'Verify & Close Shift'}
-                </Button>
-              </div>
-            </div>
-
-            {/* Reconciliation Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Box 1: Physical Cash Till Float */}
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <Banknote className="h-4 w-4 text-emerald-500" />
-                    Physical Till Drawer Cash
-                  </h4>
-                  <span className="text-[11px] font-mono font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
-                    Account 1010
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs font-mono">
-                  <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-                    <span className="text-slate-500">Opening Till Float:</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">{formatGHS(5000)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700 text-emerald-600">
-                    <span>Cash Collections (Today):</span>
-                    <span className="font-bold">+{formatGHS(todayCash)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700 text-slate-400">
-                    <span>Cash Payouts / Petty AP:</span>
-                    <span className="font-bold">-GH₵ 0.00</span>
-                  </div>
-                  <div className="flex justify-between pt-2 font-bold text-sm text-slate-900 dark:text-slate-100">
-                    <span>Expected Cash in Till:</span>
-                    <span className="text-emerald-600">{formatGHS(5000 + todayCash)}</span>
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-slate-500">
-                  Keep physical notes sorted by GH₵ 200, 100, 50, 20 denominations in the front drawer tray.
-                </p>
-              </div>
-
-              {/* Box 2: Digital MoMo & Bank Settlements */}
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <Smartphone className="h-4 w-4 text-amber-500" />
-                    Electronic Settlements
-                  </h4>
-                  <span className="text-[11px] font-mono font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded">
-                    Accounts 1020 &bull; 1030
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs font-mono">
-                  <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700 text-amber-600">
-                    <span>Mobile Money (MTN/Telecel/Hubtel):</span>
-                    <span className="font-bold">+{formatGHS(todayMomo)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700 text-blue-600">
-                    <span>Direct Bank Wires / Escrow:</span>
-                    <span className="font-bold">+{formatGHS(todayBank)}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700 text-purple-600">
-                    <span>Paystack Card POS:</span>
-                    <span className="font-bold">
-                      +{formatGHS(todayReceipts.filter((r) => r.paymentMethod === 'CARD_PAYSTACK').reduce((acc, r) => acc + r.amountPaidGhs, 0))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-2 font-bold text-sm text-slate-900 dark:text-slate-100">
-                    <span>Total Digital Inflow:</span>
-                    <span className="text-indigo-600">{formatGHS(todayTotal - todayCash)}</span>
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-slate-500">
-                  Electronic receipts automatically sync to GCB Escrow and MTN MoMo Merchant wallets.
-                </p>
-              </div>
-
-              {/* Box 3: Shift Verification & Audit Certificate */}
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <Scale className="h-4 w-4 text-indigo-500" />
-                    General Ledger Audit Status
-                  </h4>
-                  <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded">
-                    Double-Entry OK
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  <p className="text-slate-600 dark:text-slate-400">
-                    All receipts issued in this shift have been journalized to their corresponding asset accounts (1010/1020/1030) and credited against Accounts Receivable (1200) or Auction revenue.
-                  </p>
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-emerald-800 dark:text-emerald-300 text-[11px] space-y-1">
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                      <span>Zero Variance Detected</span>
-                    </div>
-                    <p>Total logged: {formatGHS(todayTotal)} across {todayReceipts.length} transactions.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* COLLECTIONS VIEW or Below Terminal: Recent Collections Ledger */}

@@ -26,19 +26,19 @@ import { authService, SESSION_STORAGE_KEY } from '@/lib/auth/authService';
 export type UserRole =
   | AppRole
   | 'ADMIN'
-  | 'AUCTION_MANAGER'
-  | 'CASHIER'
   | 'DEALERSHIP_AGENT'
   | 'INVENTORY_OFFICER';
 
 export const ROLE_STAFF_NAMES: Record<UserRole, string> = {
   OWNER: 'Managing Director & Owner',
-  ACCOUNTANT: 'Chief Accountant & Finance Lead',
-  SECRETARY: 'Auction Secretary & Operations',
-  STAFF: 'Operations Staff & Cashier',
+  ACCOUNTANT: 'Chief Accountant & Payroll Lead',
+  HR_ADMIN: 'HR & Administrative Officer',
+  SECRETARY: 'Auction Secretary & Staff Onboarding',
+  AUCTION_MANAGER: 'Auction & Yard Manager',
+  CASHIER: 'Front Desk Cashier (POS)',
+  SALES_OFFICER: 'Dealership, Land & Property Officer',
+  STAFF: 'Operations & Yard Officer',
   ADMIN: 'Kwesi Boateng (Managing Director)',
-  AUCTION_MANAGER: 'Kofi Asante (Chief Auctioneer)',
-  CASHIER: 'Mary Afriyie (Senior Cashier)',
   DEALERSHIP_AGENT: 'Yaw Osei (Showroom Manager)',
   INVENTORY_OFFICER: 'David Mensah (Yard Supervisor)',
 };
@@ -108,12 +108,12 @@ function subscribeRole(callback: () => void) {
 
 function getRoleSnapshot(): UserRole {
   try {
-    const session = authService.getSession();
-    if (session?.user?.role) return session.user.role;
     const saved = localStorage.getItem(ROLE_STORAGE_KEY) as UserRole | null;
     if (saved && ROLE_STAFF_NAMES[saved]) {
       return saved;
     }
+    const session = authService.getSession();
+    if (session?.user?.role) return session.user.role;
   } catch {
     // Ignore
   }

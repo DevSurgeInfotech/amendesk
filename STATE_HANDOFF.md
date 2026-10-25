@@ -380,6 +380,50 @@ flowchart TD
   - `src/app/platform/page.tsx` (Decoupled from SiteHeader, imported from ui/GhanaFlag)
   - `STATE_HANDOFF.md` (Updated session changelog)
 
+### Session: 2026-10-25 (Staff & Payroll RBAC Separation, Salary Decoupling, Unified Staff Onboarding & 8am–5pm Operating Hours)
+- **Goal**:
+  1. Unify staff creation across `Staff & Payroll` (`/desk/hr`) and `Settings` (`/desk/settings`) so `Staff & Payroll -> Add Staff Member` is the primary HR onboarding workflow and automatically syncs with `Settings -> Staff & Roles` login accounts.
+  2. Remove salary & payout configuration from the `Add Staff Member` modal ([`EmployeeModal.tsx`](file:///d:/amendesk/src/components/erp/hr/EmployeeModal.tsx)) so a Secretary or HR Admin can onboard staff without viewing or setting salaries; move salary configuration exclusively into `Monthly Payroll` (`/desk/hr?tab=payroll`) via a dedicated [`SalaryModal.tsx`](file:///d:/amendesk/src/components/erp/hr/SalaryModal.tsx).
+  3. Implement comprehensive **Staff & Payroll Role-Based Access Control (RBAC)** separating Staff Onboarding (`SECRETARY` / `HR_ADMIN` / `OWNER` / `ACCOUNTANT`) from Salary & Payroll Administration (`OWNER` / `ACCOUNTANT` only).
+  4. Remove all "shift" references across the application and standardize on Amen Mart's fixed operating hours (**8:00 AM – 5:00 PM**).
+- **Accomplishments**:
+  - **Expanded RBAC System (`src/lib/types/auth.ts`, `src/context/TerminalContext.tsx`)**:
+    - Expanded `AppRole` to `'OWNER' | 'ACCOUNTANT' | 'HR_ADMIN' | 'SECRETARY' | 'AUCTION_MANAGER' | 'CASHIER' | 'SALES_OFFICER' | 'STAFF'`.
+    - Defined `RBAC_PERMISSIONS` and `getRolePermissions(role)` enforcing strict separation between `canAddEditStaff` (`OWNER`, `ACCOUNTANT`, `HR_ADMIN`, `SECRETARY`) and `canViewSalaries` / `canConfigureSalary` / `canRunPayroll` (`OWNER`, `ACCOUNTANT` only).
+  - **Decoupled Salary from Staff Onboarding (`src/components/erp/hr/EmployeeModal.tsx`, `src/components/erp/hr/SalaryModal.tsx`)**:
+    - Removed Section 3 (*Monthly Salary & Allowances*) and Section 4 (*Salary Payment Mode*) from `EmployeeModal.tsx` so Secretaries and HR Admins only enter Personal/Statutory KYC (`Ghana Card`, `SSNIT`, `TIN`) and Employment details (`Department`, `Job Title`, `Role`, `Work Email`).
+    - Added automatic login account provisioning in `EmployeeModal.tsx` via `authService.inviteStaff()` so adding staff in `/desk/hr` immediately provisions their terminal login in `/desk/settings`.
+    - Created [`SalaryModal.tsx`](file:///d:/amendesk/src/components/erp/hr/SalaryModal.tsx) with live GRA PAYE & SSNIT calculation preview and Hubtel MoMo / Bank Transfer payout configuration, accessible exclusively from the **Monthly Payroll** tab (`/desk/hr?tab=payroll`) by `OWNER` or `ACCOUNTANT`.
+  - **Protected Staff & Payroll Views (`src/app/(erp)/desk/hr/page.tsx`)**:
+    - Added live RBAC role switcher and permission enforcement in `/desk/hr`.
+    - Hidden all salary KPIs, `Monthly Pay` columns, and `Payslip` actions when viewed by non-finance roles (`SECRETARY`, `HR_ADMIN`, etc.), while locking the `Monthly Payroll` and `GRA & SSNIT Filings` tabs to `OWNER` and `ACCOUNTANT`.
+    - Added `Set / Edit Staff Salary` button and inline `Set Salary` / `Edit Salary` actions in the `Monthly Payroll` tab.
+  - **Unified Settings & RBAC Matrix (`src/app/(erp)/desk/settings/page.tsx`)**:
+    - Synced `/desk/settings` account provisioning with `db.employees` (creating an HR record with `basicSalaryGhs: 0` if not yet present) and added direct cross-links to `/desk/hr` and `/desk/hr?tab=payroll`.
+    - Added an interactive **AmenDesk Role-Based Access Control (RBAC) Matrix** table in `Settings -> Security & RBAC`.
+  - **Removed All "Shift" References & Enforced 8:00 AM – 5:00 PM Operating Hours**:
+    - Removed `Cash Shift & Till` from [`Sidebar.tsx`](file:///d:/amendesk/src/components/erp/Sidebar.tsx), [`Topbar.tsx`](file:///d:/amendesk/src/components/erp/Topbar.tsx), and [`src/app/(erp)/desk/payments/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/payments/page.tsx), replacing shift terminology with `Front-Desk Daily Till Summary (8:00 AM – 5:00 PM)`.
+    - Updated attendance schedule rules in `/desk/hr?tab=attendance` to `Standard Operating Hours: 8:00 AM – 5:00 PM (No Shift Rotation)`.
+    - Cleaned up remaining shift references in `BankDepositModal.tsx`, `src/lib/types/hr.ts`, and `src/lib/db/seed.ts`.
+  - Passed all mandatory quality gates: `npm run check` (`tsc --noEmit` + `eslint --max-warnings 0`) with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/lib/types/auth.ts`
+  - `src/context/TerminalContext.tsx`
+  - `src/components/erp/hr/EmployeeModal.tsx`
+  - `src/components/erp/hr/SalaryModal.tsx` (Created)
+  - `src/app/(erp)/desk/hr/page.tsx`
+  - `src/app/(erp)/desk/settings/page.tsx`
+  - `src/components/erp/Sidebar.tsx`
+  - `src/components/erp/Topbar.tsx`
+  - `src/app/(erp)/desk/payments/page.tsx`
+  - `src/components/erp/accounting/BankDepositModal.tsx`
+  - `src/app/(erp)/desk/accounts/page.tsx`
+  - `src/lib/accounting/banking.ts`
+  - `src/lib/types/index.ts`
+  - `src/lib/types/hr.ts`
+  - `src/lib/db/seed.ts`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (Amen Mart Brand Asset Rollout: 4K Icon, App Icon, Horizontal Print Logos)
 - **Goal**: Apply official Amen Mart brand identity assets across AmenDesk ERP, public showroom, printable thermal receipts, waybills, login page, and application metadata.
 - **Accomplishments**:

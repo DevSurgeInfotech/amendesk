@@ -29,7 +29,7 @@ interface BankDepositModalProps {
 
 export function BankDepositModal({ isOpen, onClose, onSuccess }: BankDepositModalProps) {
   const { role, currentStaffName } = useTerminal();
-  const isAuthorized = role === 'ACCOUNTANT' || role === 'ADMIN';
+  const isAuthorized = role === 'ACCOUNTANT' || role === 'OWNER' || role === 'ADMIN';
 
   // Live queries
   const unclearedReceipts = useLiveQuery(
@@ -123,7 +123,7 @@ export function BankDepositModal({ isOpen, onClose, onSuccess }: BankDepositModa
         depositDate,
         notes: notes.trim() || undefined,
         depositorName: currentStaffName,
-        depositedByRole: role as 'ACCOUNTANT' | 'ADMIN',
+        depositedByRole: role as 'ACCOUNTANT' | 'OWNER' | 'ADMIN',
       });
 
       setSelectedReceiptIds([]);
@@ -374,7 +374,7 @@ export function BankDepositModal({ isOpen, onClose, onSuccess }: BankDepositModa
           </label>
           <input
             type="text"
-            placeholder="e.g. End of morning auction shift cash banked at GCB High Street branch"
+            placeholder="e.g. End of day (5:00 PM) cash collections banked at GCB High Street branch"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 font-medium"

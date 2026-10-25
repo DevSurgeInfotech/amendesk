@@ -146,7 +146,7 @@ function AccountsContent() {
   const lots = useLiveQuery(() => db.auctionLots.toArray(), []) || [];
 
   const { role, currentStaffName } = useTerminal();
-  const isAuthorizedBanker = role === 'ACCOUNTANT' || role === 'ADMIN';
+  const isAuthorizedBanker = role === 'ACCOUNTANT' || role === 'OWNER' || role === 'ADMIN';
 
   // Modals state
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);

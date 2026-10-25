@@ -27,13 +27,17 @@ export async function postBankDeposit(params: {
   clearedReceiptIds: string[];
   bankSlipReference?: string;
   depositorName: string;
-  depositedByRole: 'ACCOUNTANT' | 'ADMIN';
+  depositedByRole: 'ACCOUNTANT' | 'OWNER' | 'ADMIN';
   depositDate?: string;
   notes?: string;
 }): Promise<BankDeposit> {
-  // 1. Role enforcement: Strictly Accountant or Admin
-  if (params.depositedByRole !== 'ACCOUNTANT' && params.depositedByRole !== 'ADMIN') {
-    throw new Error('Unauthorized: Bank Deposits can strictly only be posted by an Accountant or Admin.');
+  // 1. Role enforcement: Strictly Accountant or Owner/Admin
+  if (
+    params.depositedByRole !== 'ACCOUNTANT' &&
+    params.depositedByRole !== 'OWNER' &&
+    params.depositedByRole !== 'ADMIN'
+  ) {
+    throw new Error('Unauthorized: Bank Deposits can strictly only be posted by an Accountant or Owner.');
   }
 
   if (params.clearedReceiptIds.length === 0) {
