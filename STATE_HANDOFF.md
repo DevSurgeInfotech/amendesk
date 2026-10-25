@@ -225,6 +225,25 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (WhatsApp UI Remediation — Dedicated Official WhatsApp Symbol & Green Theme)
+- **Goal**: Remediate WhatsApp (`wa.me`) action buttons across the Communication Hub and CRM module to use authentic WhatsApp brand green (`#25D366`) and the official WhatsApp speech-bubble/handset symbol, completely eliminating any indigo button styling or generic Lucide message icons.
+- **Accomplishments**:
+  - **Authentic WhatsApp SVG Component (`src/components/ui/WhatsAppIcon.tsx`)**:
+    - Created a lightweight, scalable SVG component matching WhatsApp's official mark (speech-bubble with telephone handset).
+  - **Communication Hub Remediation (`src/app/(erp)/desk/communication/page.tsx`)**:
+    - Replaced generic Lucide `MessageSquare` icons and `<Button variant="primary">` overrides (which caused buttons to render with indigo backgrounds) with dedicated WhatsApp buttons styled in authentic WhatsApp brand green (`bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white shadow-sm`).
+    - Updated selected message action bar, Compose tab dispatch button, modal confirmation launcher, channel filter indicators, KPI card, and outbox logs to use `WhatsAppIcon` and green badge styling.
+  - **CRM Module Remediation (`src/app/(erp)/desk/crm/page.tsx`)**:
+    - Updated `ManageLeadModal` WhatsApp direct connect button with `WhatsAppIcon` and `bg-[#25D366]`.
+    - Updated Lead cards in the customer directory with `WhatsAppIcon` and green button styling.
+    - Added instant WhatsApp chat triggers to unified customer profile cards next to client phone numbers.
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
+- **Changed Files**:
+  - `src/components/ui/WhatsAppIcon.tsx` (New)
+  - `src/app/(erp)/desk/communication/page.tsx` (Replaced MessageSquare & indigo classes with WhatsAppIcon & green buttons)
+  - `src/app/(erp)/desk/crm/page.tsx` (Replaced MessageSquare & styled WhatsApp triggers with WhatsAppIcon & green styling)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
 ### Session: 2026-10-25 (Amen Mart Communication Hub — Inbound Messages, Resend API Email Engine & WhatsApp wa.me Dispatch)
 - **Goal**: Curate a dedicated communication hub for Amen Mart so staff can manage and reply to inbound website messages, dispatch official branded emails via the Resend API, and trigger WhatsApp consultations via `wa.me` links with Ghanaian commercial templates.
 - **Root Cause / Architecture Need**:

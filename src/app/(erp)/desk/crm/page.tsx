@@ -13,6 +13,7 @@ import {
 } from '@/lib/crm/leads';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { WhatsAppIcon } from '@/components/ui/WhatsAppIcon';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import { formatGHS } from '@/lib/utils/currency';
 import Link from 'next/link';
@@ -140,9 +141,9 @@ function ManageLeadModal({ lead, onClose, onUpdateStatus, onConvert }: ManageLea
             href={`https://wa.me/${phoneForWa}?text=${waGreeting}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold text-center flex items-center justify-center gap-1.5 transition-colors"
+            className="px-3 py-2 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white text-xs font-bold text-center flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
           >
-            <MessageSquare className="h-4 w-4" />
+            <WhatsAppIcon className="h-4 w-4 shrink-0 text-white" />
             <span>WhatsApp</span>
           </a>
 
@@ -772,9 +773,23 @@ function CrmContent() {
 
                   {/* Contact Info */}
                   <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5 pt-1">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                      <span className="font-semibold text-slate-900 dark:text-slate-200">{cust.phone}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                        <span className="font-semibold text-slate-900 dark:text-slate-200">{cust.phone}</span>
+                      </div>
+                      {!isLead && cust.phone && (
+                        <a
+                          href={`https://wa.me/${phoneForWa}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-0.5 rounded-md bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white text-[10px] font-bold inline-flex items-center gap-1 shadow-2xs"
+                          title="Chat on WhatsApp"
+                        >
+                          <WhatsAppIcon className="h-3 w-3 shrink-0 text-white" />
+                          <span>WhatsApp</span>
+                        </a>
+                      )}
                     </div>
                     {cust.email && (
                       <div className="flex items-center gap-2">
@@ -853,9 +868,9 @@ function CrmContent() {
                           href={`https://wa.me/${phoneForWa}?text=${waGreeting}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-center text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                          className="px-2.5 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white text-center text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
                         >
-                          <MessageSquare className="h-3.5 w-3.5" />
+                          <WhatsAppIcon className="h-3.5 w-3.5 shrink-0 text-white" />
                           <span>WhatsApp</span>
                         </a>
 

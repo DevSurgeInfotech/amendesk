@@ -17,11 +17,11 @@ import {
 } from '@/lib/communication/templates';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { WhatsAppIcon } from '@/components/ui/WhatsAppIcon';
 import { useTerminal } from '@/context/TerminalContext';
 import {
   Mail,
   Send,
-  MessageSquare,
   Clock,
   CheckCircle2,
   Phone,
@@ -566,7 +566,7 @@ function CommunicationHubContent() {
         <div className="surface-card p-4 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-sm">
           <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300 text-xs font-semibold mb-1">
             <span>WhatsApp (wa.me)</span>
-            <MessageSquare className="h-4 w-4 text-emerald-600" />
+            <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
           </div>
           <div className="text-2xl font-black text-emerald-950 dark:text-emerald-100">
             {kpiStats.whatsappSent}
@@ -730,7 +730,7 @@ function CommunicationHubContent() {
                             {msg.channel === 'EMAIL' ? (
                               <Mail className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                             ) : msg.channel === 'WHATSAPP' ? (
-                              <MessageSquare className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                              <WhatsAppIcon className="h-3.5 w-3.5 text-[#25D366] shrink-0" />
                             ) : (
                               <Inbox className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                             )}
@@ -848,15 +848,14 @@ function CommunicationHubContent() {
                         </a>
                       )}
 
-                      <Button
-                        variant="primary"
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={() => handleOpenWhatsAppReply(selectedMessage)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5"
+                        className="px-3.5 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer ring-1 ring-emerald-500/30"
                       >
-                        <MessageSquare className="h-3.5 w-3.5" />
+                        <WhatsAppIcon className="h-4 w-4 shrink-0 text-white" />
                         <span>WhatsApp (wa.me)</span>
-                      </Button>
+                      </button>
 
                       <Button
                         variant="primary"
@@ -968,7 +967,7 @@ function CommunicationHubContent() {
                                   {hist.channel === 'EMAIL' ? (
                                     <Mail className="h-3 w-3 text-indigo-500" />
                                   ) : hist.channel === 'WHATSAPP' ? (
-                                    <MessageSquare className="h-3 w-3 text-emerald-500" />
+                                    <WhatsAppIcon className="h-3 w-3 text-[#25D366]" />
                                   ) : (
                                     <Inbox className="h-3 w-3 text-amber-500" />
                                   )}
@@ -1140,7 +1139,7 @@ function CommunicationHubContent() {
             {/* Option B: WhatsApp (wa.me) */}
             <div className="p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-4">
               <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-200 font-bold text-sm">
-                <MessageSquare className="h-4 w-4 text-emerald-600" />
+                <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                 <span>Send via WhatsApp (wa.me)</span>
               </div>
 
@@ -1176,15 +1175,15 @@ function CommunicationHubContent() {
                 </div>
               )}
 
-              <Button
-                variant="primary"
+              <button
+                type="button"
                 onClick={handleSendWhatsApp}
                 disabled={!waPhone || !waMessageText}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
               >
-                <MessageSquare className="h-4 w-4" />
-                <span>Launch WhatsApp (wa.me) & Log</span>
-              </Button>
+                <WhatsAppIcon className="h-4 w-4 shrink-0 text-white" />
+                <span>Launch WhatsApp (wa.me) &amp; Log Interaction</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1349,7 +1348,7 @@ function CommunicationHubContent() {
                           {msg.channel === 'EMAIL' ? (
                             <Mail className="h-3.5 w-3.5 text-indigo-500" />
                           ) : msg.channel === 'WHATSAPP' ? (
-                            <MessageSquare className="h-3.5 w-3.5 text-emerald-500" />
+                            <WhatsAppIcon className="h-3.5 w-3.5 text-[#25D366]" />
                           ) : (
                             <Inbox className="h-3.5 w-3.5 text-amber-500" />
                           )}
@@ -1575,16 +1574,15 @@ function CommunicationHubContent() {
               >
                 Cancel
               </Button>
-              <Button
-                variant="primary"
+              <button
                 type="button"
                 onClick={handleSendWhatsApp}
                 disabled={!waPhone || !waMessageText}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
               >
-                <MessageSquare className="h-4 w-4" />
-                <span>Open WhatsApp (wa.me) & Log</span>
-              </Button>
+                <WhatsAppIcon className="h-4 w-4 shrink-0 text-white" />
+                <span>Open WhatsApp (wa.me) &amp; Log</span>
+              </button>
             </div>
           </div>
         </Modal>
