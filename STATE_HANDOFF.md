@@ -226,6 +226,19 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Print Stylesheet Syntax Remediation — Elimination of Premature `@media print` Closure)
+- **Goal**: Remediate Turbopack runtime `CssSyntaxError` (`globals.css:176:1: Missing opening {`) blocking page compilation on `desk.localhost:3001/desk`.
+- **Root Cause Identified**:
+  - In `src/app/globals.css`, a stray closing curly brace `}` existed immediately following `.a4-document-container img { ... }` at line 155.
+  - This stray brace prematurely terminated the parent `@media print { ... }` block declaration, causing the legitimate closing brace at line 176 (closing the media query after `@page { ... }`) to have no matching opening `{`.
+  - While JavaScript/TypeScript compilers (`tsc`) and ESLint do not validate raw CSS brace syntax, Next.js 16 / Turbopack's PostCSS loader failed compilation on runtime evaluation.
+- **Accomplishments**:
+  - **Syntax Correction (`src/app/globals.css`)**: Removed the stray closing brace at line 155, properly nesting all print styling rules (`.thermal-receipt-container`, `.a4-document-container`, `.a5-document-container`, and `@page`) within the `@media print` scope.
+  - **Verified Quality Gates**: Ran `npm run check` (`tsc --noEmit` + strict ESLint `--max-warnings 0`) which passed 100% with exit code 0.
+- **Changed Files**:
+  - `src/app/globals.css` (Removed stray closing brace in `@media print` declaration)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+
 ### Session: 2026-10-25 (Enterprise Idle Lock Premium Pedestal Overhaul, Privacy Remediation & Terminal Shielding)
 - **Goal**:
   1. Enhance the AmenDesk workspace idle lock screen to a world-standard, ultra-premium executive aesthetic matching the light-theme pedestal architecture of `/login`.
