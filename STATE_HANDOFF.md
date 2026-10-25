@@ -148,6 +148,14 @@ flowchart TD
 - [ ] End-to-end Paystack card deposit subaccount integration testing in live environment.
 - [ ] Final yard staff acceptance testing and thermal printer hardware pairing checks.
 
+#### Auxiliary Module: HR & Payroll Engine (Ghana Statutory Compliance & Staff Management) — **PLANNED / ARCHITECTED**
+- [x] Comprehensive Master Implementation Plan curated and published ([`amen-mart-hr-payroll-plan.md`](file:///d:/amendesk/amen-mart-hr-payroll-plan.md)).
+- [x] Multi-tier workforce architecture specified: Salaried Executives, Commission Sales Agents, Auction Casual Handlers & Retained Specialists.
+- [x] Ghana statutory tax & pension engine specified: GRA PAYE Act 896 graduated tax bands (0%–35%), SSNIT Act 766 Tier 1 (13.5% employer) and Tier 2 (5.0% employee private pension trustee), and Tier 3 voluntary.
+- [x] Dexie.js Schema v5 evolution architected: `employees`, `payrollRuns`, `payrollSlips`, `staffAttendance`, `leaveRequests`, `commissionLedger`.
+- [x] QuickBooks-style double-entry accounting integration architected: `acc-2150` (GRA PAYE Payable), `acc-2160` (SSNIT Tier 1 Payable), `acc-2170` (Tier 2 Trustee Payable), `acc-2180` (Accrued Net Salaries), `acc-6085` (Employer SSNIT Expense), `acc-6090` (Commissions Expense).
+- [x] Auction-day casual muster roll and direct till cash-out reconciliation with active `cashShifts` and 80mm thermal slip generation.
+
 ---
 
 ## 4. Module & Route Navigation Index
@@ -205,6 +213,31 @@ flowchart TD
 ---
 
 ## 6. Execution History & Session Changelog
+
+### Session: 2026-10-25 (HR & Payroll Module Architectural Specification & Master Implementation Plan)
+- **Goal**: Curate and publish a comprehensive, production-grade master implementation plan for adding an offline-first HR & Payroll module to AmenDesk for staff management, Ghanaian statutory compliance, and yard casual operations.
+- **Accomplishments**:
+  - **Comprehensive Master Implementation Plan (`amen-mart-hr-payroll-plan.md` & Artifact)**:
+    - Authored and committed [`amen-mart-hr-payroll-plan.md`](file:///d:/amendesk/amen-mart-hr-payroll-plan.md) in the project root alongside [`amen-mart-erp-website-plan.md`](file:///d:/amendesk/amen-mart-erp-website-plan.md), with full technical and operational blueprints.
+    - Generated interactive user-facing artifact in brain storage with feedback capability.
+  - **Workforce Profile & Remuneration Architecture**:
+    - Architected support for 4 distinct workforce cohorts at Amen Mart: Salaried Permanent Staff (Executives, Auctioneer Francis Kwaku Yeboah, Chief Accountant, Secretaries), Commission Sales Agents (Showroom vehicles, land, properties), Auction Day Casual Handlers (Bid spotters, marshals, riggers, drivers), and Retained Specialists (Surveyors, Mechanics, Towing operators).
+  - **Ghana Statutory Compliance Engine**:
+    - Formulated the exact 2026 GRA PAYE graduated monthly tax bands (0% to 35%) with personal reliefs.
+    - Modeled the SSNIT Act 766 pension structure: Tier 1 (13.5% employer contribution - 2.5% NHIS + 11% pension), Tier 2 (5.0% employee deduction to private occupational pension trustee), and Tier 3 voluntary provident funds.
+  - **Offline-First Data Architecture (Dexie.js Schema v5)**:
+    - Designed 6 typed IndexedDB tables: `employees`, `payrollRuns`, `payrollSlips`, `staffAttendance`, `leaveRequests`, `commissionLedger`.
+    - Integrated with background sync engine (`syncOutbox`) to enable field attendance tracking and casual wage slip printing without internet access.
+  - **QuickBooks Double-Entry Accounting Ledger Integration**:
+    - Expanded Chart of Accounts with `acc-2150` (GRA PAYE Payable), `acc-2160` (SSNIT Tier 1 Payable), `acc-2170` (Tier 2 Trustee Payable), `acc-2180` (Accrued Net Salaries), `acc-6085` (Employer Pension Expense), and `acc-6090` (Sales Commissions Expense).
+    - Specified automated balanced General Journal Entry creation upon payroll approval and cash-out reconciliation with active `cashShifts` for auction-day cash till payouts (`acc-1010`).
+  - **Dual Slip Generation & Statutory Exporters**:
+    - Architected 80mm POS thermal payslip layout for instant yard distribution alongside formal A4 executive payslips with statutory tax breakdowns and YTD totals.
+    - Specified export generators for GRA Form DT 0107, SSNIT Tier 1 electronic schedule, Tier 2 trustee remittance files, and commercial bank/MoMo batch disburse CSVs.
+  - Verified mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `amen-mart-hr-payroll-plan.md` (Comprehensive master implementation plan)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog & auxiliary module status)
 
 ### Session: 2026-10-24 (ERP Dashboard & Sidebar Module-by-Module Remediation)
 - **Goal**: Remediate text overload, repetitive descriptions, truncated KPI currency figures, and unnecessary Licensing & Affiliation clutter across the ERP Dashboard ([`src/app/(erp)/desk/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/page.tsx)) and audit the ERP Sidebar ([`src/components/erp/Sidebar.tsx`](file:///d:/amendesk/src/components/erp/Sidebar.tsx)) and all linked ERP modules module-by-module.
