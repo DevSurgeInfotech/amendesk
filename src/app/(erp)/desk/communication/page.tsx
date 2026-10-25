@@ -696,7 +696,7 @@ function CommunicationHubContent() {
           {/* Inbox Split-Pane (Left: List, Right: Selected Thread Detail) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             {/* Thread List (5 cols) */}
-            <div className="lg:col-span-5 surface-card rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col max-h-[720px]">
+            <div className="lg:col-span-5 surface-card rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col max-h-[720px] min-w-0">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Messages ({filteredMessages.length})
@@ -789,42 +789,42 @@ function CommunicationHubContent() {
             </div>
 
             {/* Conversation & Action Pane (7 cols) */}
-            <div className="lg:col-span-7 surface-card rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 space-y-5">
+            <div className="lg:col-span-7 surface-card rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 space-y-5 min-w-0">
               {selectedMessage ? (
                 <>
                   {/* Header Bar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-base font-black text-slate-900 dark:text-white">
+                  <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-base font-black text-slate-900 dark:text-white truncate">
                           {selectedMessage.customerName}
                         </h2>
                         {associatedCustomer?.kycVerified && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
                             <ShieldCheck className="h-3 w-3" />
                             KYC Verified
                           </span>
                         )}
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 uppercase">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 uppercase shrink-0">
                           {selectedMessage.businessLine || 'GENERAL'}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-1">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-1">
                         {selectedMessage.customerPhone && (
                           <span className="flex items-center gap-1 font-mono">
-                            <Phone className="h-3 w-3 text-slate-400" />
+                            <Phone className="h-3 w-3 text-slate-400 shrink-0" />
                             {selectedMessage.customerPhone}
                           </span>
                         )}
                         {selectedMessage.customerEmail && (
-                          <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3 text-slate-400" />
+                          <span className="flex items-center gap-1 truncate">
+                            <Mail className="h-3 w-3 text-slate-400 shrink-0" />
                             {selectedMessage.customerEmail}
                           </span>
                         )}
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-slate-400" />
+                        <span className="flex items-center gap-1 shrink-0">
+                          <Clock className="h-3 w-3 text-slate-400 shrink-0" />
                           {new Date(selectedMessage.createdAt).toLocaleString('en-GB', {
                             day: 'numeric',
                             month: 'short',
@@ -837,13 +837,13 @@ function CommunicationHubContent() {
                     </div>
 
                     {/* Quick Channel Actions */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 pt-1 2xl:pt-0 shrink-0">
                       {selectedMessage.customerPhone && (
                         <a
                           href={`tel:${selectedMessage.customerPhone}`}
-                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors whitespace-nowrap"
                         >
-                          <Phone className="h-3.5 w-3.5 text-indigo-600" />
+                          <Phone className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
                           <span>Call</span>
                         </a>
                       )}
@@ -851,7 +851,7 @@ function CommunicationHubContent() {
                       <button
                         type="button"
                         onClick={() => handleOpenWhatsAppReply(selectedMessage)}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer ring-1 ring-emerald-500/30"
+                        className="px-3.5 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1da850] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer ring-1 ring-emerald-500/30 whitespace-nowrap"
                       >
                         <WhatsAppIcon className="h-4 w-4 shrink-0 text-white" />
                         <span>WhatsApp (wa.me)</span>
@@ -861,9 +861,9 @@ function CommunicationHubContent() {
                         variant="primary"
                         size="sm"
                         onClick={() => handleOpenEmailReply(selectedMessage)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 whitespace-nowrap"
                       >
-                        <Mail className="h-3.5 w-3.5" />
+                        <Mail className="h-3.5 w-3.5 shrink-0" />
                         <span>Resend Email</span>
                       </Button>
                     </div>

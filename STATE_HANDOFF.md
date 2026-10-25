@@ -226,6 +226,27 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Communication Hub Action Toolbar Layout & Resend Button Overflow Remediation)
+- **Goal**: Resolve UI clipping and horizontal overflow where the "Resend Email" button overflowed past the right border of the conversation and action card in `/desk/communication`.
+- **Root Cause Identified**:
+  - In `src/app/(erp)/desk/communication/page.tsx`, the conversation header was wrapped in `flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`. Because `sm:` activates at 640px viewport width, the header was forced into a single horizontal row on desktop displays.
+  - However, within the 12-column grid (`grid-cols-1 lg:grid-cols-12`), the conversation detail pane is allocated only 7 columns (`lg:col-span-7`). On standard laptop viewports (1280px–1440px) with the ERP sidebar open (~260px), the 7-column card's inner width is approximately 520px–560px.
+  - The left side (customer name + "KYC Verified" badge + business trading line badge) requires ~280px.
+  - The right side (Quick Channel Actions with `Call`, `WhatsApp (wa.me)`, and `Resend Email` buttons) had `shrink-0` with no `flex-wrap`, requiring ~366px minimum width.
+  - Combined width (~646px) exceeded available inner container width (~520px). Because `shrink-0` prevented the actions container from shrinking, the rightmost button ("Resend Email") was forced past the card boundary and clipped.
+  - Additionally, the grid columns (`lg:col-span-5` and `lg:col-span-7`) lacked `min-w-0`, allowing intrinsic minimum width of flex contents to trigger grid column blowouts.
+- **Accomplishments**:
+  - **Responsive Header Re-architecture (`src/app/(erp)/desk/communication/page.tsx`)**:
+    - Replaced premature `sm:flex-row` with `flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3`. On viewports under 1536px (including standard laptop screens), the quick channel actions toolbar cleanly renders on its own dedicated row beneath the client details with `pt-1 2xl:pt-0`.
+    - Added `min-w-0` and `truncate` to the customer name container so long names never blow out the card.
+    - Added `shrink-0` to badges and contact meta icons to preserve their visual proportions.
+    - Updated Quick Channel Actions container to `flex flex-wrap items-center gap-2 pt-1 2xl:pt-0 shrink-0` and added `whitespace-nowrap` to each button (`Call`, `WhatsApp`, `Resend Email`).
+    - Added `min-w-0` to both `lg:col-span-5` and `lg:col-span-7` grid items to prevent CSS grid track blowouts.
+  - **Quality Gates Passed**: Ran `npm run check` (`tsc --noEmit` + strict ESLint `--max-warnings 0`) with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/app/(erp)/desk/communication/page.tsx` (Responsive header re-architecture and actions toolbar wrapping)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+
 ### Session: 2026-10-25 (Print Stylesheet Syntax Remediation — Elimination of Premature `@media print` Closure)
 - **Goal**: Remediate Turbopack runtime `CssSyntaxError` (`globals.css:176:1: Missing opening {`) blocking page compilation on `desk.localhost:3001/desk`.
 - **Root Cause Identified**:
