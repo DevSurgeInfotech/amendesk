@@ -260,6 +260,11 @@ flowchart TD
     - Linked `OperationalAlerts.tsx` inbound inquiries directly to `/desk/communication`.
     - Added `Communication Hub` to Topbar global search index and notification click-through.
     - Universal Inbound Lead Handler (`src/lib/crm/leads.ts`) dual-records inbound communication records.
+  - **Live Resend API Credentials Verification & Environment Configuration**:
+    - Configured live production Resend API Key (`re_6TbrFjiV...`) in local `.env.local` (isolated from Git repository via `.gitignore`).
+    - Verified account domains via live API call: verified domain `kehillahos.app` with live sending capability confirmed.
+    - Successfully dispatched live verification email via Resend API to `devsurgeinfotech@gmail.com` with confirmation message ID `01a17356-0d7a-7444-ab69-67a1d6999702`.
+    - Created `.env.example` as a clean environment configuration blueprint for team deployments.
   - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
 - **Changed Files**:
   - `src/lib/types/communication.ts` (New)
@@ -288,6 +293,11 @@ flowchart TD
   - **Matching Skeleton Fallback (`SettingsSkeleton`)**: Rendered an identical structured skeleton (`SettingsSkeleton`) during SSR and initial hydration, and connected it as the Suspense fallback.
   - **Production RBAC Guard**: Gated the interactive role simulator dropdown in Settings to sandbox mode (`activeTenant.isSandbox`), while rendering a secure, immutable static role badge in live production.
   - **Seamless URL Synchronization**: Upgraded tab navigation buttons to push URL search parameters via `router.replace(..., { scroll: false })`, maintaining perfect alignment with Sidebar submodules (`?tab=users`, `?tab=profile`, `?tab=rules`, `?tab=security`).
+  - **Live Resend API Credentials Verification & Environment Configuration**:
+    - Configured live production Resend API Key (`re_6TbrFjiV...`) in local `.env.local` (isolated from Git repository via `.gitignore`).
+    - Verified account domains via live API call: verified domain `kehillahos.app` with live sending capability confirmed.
+    - Successfully dispatched live verification email via Resend API to `devsurgeinfotech@gmail.com` with confirmation message ID `01a17356-0d7a-7444-ab69-67a1d6999702`.
+    - Created `.env.example` as a clean environment configuration blueprint for team deployments.
   - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
 - **Changed Files**:
   - `src/app/(erp)/desk/settings/page.tsx`
