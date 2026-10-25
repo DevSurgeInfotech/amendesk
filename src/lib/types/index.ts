@@ -201,6 +201,7 @@ export type LeadSource =
   | 'LAND'
   | 'PROPERTY'
   | 'PORTAL'
+  | 'AI_ASSISTANT'
   | 'DIRECT';
 
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'RESOLVED' | 'CONVERTED';

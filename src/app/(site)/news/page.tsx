@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -21,11 +21,11 @@ import {
   Clock,
   Quote,
   CheckCircle2,
-  Sparkles,
   Share2,
   Camera,
   Maximize2,
   X,
+  FileCheck2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -83,12 +83,12 @@ const newsData: NewsItem[] = [
     isPinned: true,
     images: [
       {
-        src: '/dr-francis-yeboah-moga-award.jpg',
-        alt: 'Dr. Francis Kwaku Yeboah receiving MOGA Philanthropist of the Year Star Award',
+        src: '/images/news/moga-award-plaque.jpg',
+        alt: 'Dr. Francis Kwaku Yeboah holding the MOGA Philanthropist of the Year star award plaque with delegates',
         caption: 'Dr. Francis Kwaku Yeboah holding the MOGA Philanthropist of the Year Star Plaque alongside Amen Mart team members and delegates.',
       },
       {
-        src: '/dr-francis-yeboah-moga-citation.jpg',
+        src: '/images/news/moga-citation-presentation.jpg',
         alt: 'Official presentation of the framed MOGA Citation to Dr. Francis Kwaku Yeboah',
         caption: 'Official presentation of the framed MOGA Citation of Honour to Dr. Francis Kwaku Yeboah at the executive offices in Accra.',
       },
@@ -129,6 +129,13 @@ const newsData: NewsItem[] = [
     gradient: 'from-indigo-800 via-blue-900 to-slate-950',
     iconName: 'ShieldCheck',
     isPinned: false,
+    images: [
+      {
+        src: '/images/news/statutory-certification.jpg',
+        alt: 'Official statutory compliance licensing and PNDCL 230 legal certification',
+        caption: 'Official 2026 statutory licensing and compliance re-certification under the Auction Sales Law (PNDCL 230).',
+      },
+    ],
     summary:
       'The Auctioneers Registration Board and the Ministry of the Interior have reaffirmed Amen Mart Auctioning Services’ statutory operating credentials under the Auction Sales Law (PNDCL 230) and the Constitution of Ghana.',
     quote: {
@@ -165,6 +172,13 @@ const newsData: NewsItem[] = [
     gradient: 'from-amber-700 via-orange-800 to-slate-900',
     iconName: 'Gavel',
     isPinned: false,
+    images: [
+      {
+        src: '/images/news/judicial-fleet-auction.jpg',
+        alt: 'High Court Sheriff attached commercial fleet and heavy haulage machinery at Gbawe Yard',
+        caption: 'Court-attached haulage trucks, utility pickups, and industrial earthmoving equipment scheduled for judicial auction.',
+      },
+    ],
     summary:
       'Formal notice is hereby given of an upcoming Judicial Auction of High Court-attached motor vehicles, earthmoving machinery, and industrial commercial equipment at the Gbawe Yard pursuant to valid execution warrants.',
     quote: {
@@ -201,6 +215,13 @@ const newsData: NewsItem[] = [
     gradient: 'from-cyan-800 via-blue-900 to-slate-900',
     iconName: 'Truck',
     isPinned: false,
+    images: [
+      {
+        src: '/images/news/gbawe-holding-yard.jpg',
+        alt: 'Amen Mart multi-acre vehicle staging and diagnostic inspection yard at Flower Junction, Gbawe',
+        caption: 'Phase Two expansion of the primary asset inspection staging facility at Flower Junction, Gbawe, Accra.',
+      },
+    ],
     summary:
       'Amen Mart has finalized its multi-acre staging and inspection facility at Flower Junction, Gbawe, doubling vehicle capacity, adding 24/7 biometric security surveillance, and installing dedicated mechanical diagnostic bays.',
     quote: {
@@ -237,6 +258,13 @@ const newsData: NewsItem[] = [
     gradient: 'from-violet-800 via-purple-900 to-slate-950',
     iconName: 'Landmark',
     isPinned: false,
+    images: [
+      {
+        src: '/images/news/digital-kyc-banking.jpg',
+        alt: 'Ghana Card verification and real-time bank reconciliation terminal in AmenDesk ERP',
+        caption: 'Integrated point-of-sale cashiering and Bank of Ghana compliant settlement reconciliation.',
+      },
+    ],
     summary:
       'At the National Auctioneering Symposium, GAA executive leadership praised Amen Mart’s proprietary AmenDesk ERP infrastructure for eliminating unreceipted cash handling through direct bank settlement and Ghana Card verification.',
     quote: {
@@ -273,6 +301,13 @@ const newsData: NewsItem[] = [
     gradient: 'from-slate-800 via-indigo-950 to-slate-950',
     iconName: 'FileText',
     isPinned: false,
+    images: [
+      {
+        src: '/images/news/state-assets-colloquium.jpg',
+        alt: 'Dr. Francis Kwaku Yeboah addressing the National Public Sector Asset Liquidation Colloquium',
+        caption: 'Executive address to district coordinating directors and public auditors on transparent state asset liquidations.',
+      },
+    ],
     summary:
       'Addressing public sector procurement officers and internal auditors, Dr. Francis Kwaku Yeboah shared actionable frameworks for state asset auctions, closing documentation loopholes, and ensuring strict Bank of Ghana account remittances.',
     quote: {
@@ -309,6 +344,13 @@ const newsData: NewsItem[] = [
     gradient: 'from-rose-800 via-pink-900 to-slate-950',
     iconName: 'HeartHandshake',
     isPinned: false,
+    images: [
+      {
+        src: '/images/news/kwashieman-anniversary.jpg',
+        alt: 'Amen Mart executive auction team celebrating a decade of excellence in Accra',
+        caption: 'Ten years of professional auctioneering excellence across Greater Accra and nationwide since 2016.',
+      },
+    ],
     summary:
       'From its founding roots in Kwashieman on Lofoi Street in 2016 to conducting high-volume auctions across Greater Accra and regional centers, Amen Mart reflects on ten years of integrity, growth, and customer satisfaction.',
     quote: {
@@ -345,6 +387,13 @@ const newsData: NewsItem[] = [
     gradient: 'from-emerald-800 via-teal-950 to-slate-950',
     iconName: 'Building2',
     isPinned: false,
+    images: [
+      {
+        src: '/images/news/commercial-land-cadastre.jpg',
+        alt: 'Surveyed commercial land parcels with certified Lands Commission cadastre site plans',
+        caption: 'Cadastral site plans and surveyed light-industrial land parcels gazetted for public auction.',
+      },
+    ],
     summary:
       'Public auction announcement for 12 strategically located commercial and light-industrial land parcels in Greater Accra, fully verified with Lands Commission cadastral plans and statutory transfer indentures.',
     quote: {
@@ -373,6 +422,17 @@ export default function NewsPage() {
   const [activeArticle, setActiveArticle] = useState<NewsItem | null>(null);
   const [activeLeadPhotoIdx, setActiveLeadPhotoIdx] = useState<number>(0);
   const [modalEnlargedPhoto, setModalEnlargedPhoto] = useState<NewsImage | null>(null);
+
+  const pinnedLead = newsData.find((item) => item.isPinned);
+
+  // Automated Slideshow: Changes photos automatically every 4.5 seconds with no user clicking needed
+  useEffect(() => {
+    if (!pinnedLead?.images || pinnedLead.images.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveLeadPhotoIdx((prev) => (prev + 1) % pinnedLead.images!.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [pinnedLead]);
 
   const categories = [
     { label: 'All Press & Gazettes', value: 'ALL', count: newsData.length },
@@ -413,8 +473,6 @@ export default function NewsPage() {
       item.author.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
-
-  const pinnedLead = newsData.find((item) => item.isPinned);
 
   // Helper to render icon by name
   const renderIcon = (name: NewsItem['iconName'], className: string) => {
@@ -482,31 +540,40 @@ export default function NewsPage() {
         {selectedCategory === 'ALL' && !searchQuery && pinnedLead && (
           <div className="relative overflow-hidden bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md transition-all hover:shadow-lg">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              {/* Left Column: Visual Media Thumbnail with Authentic Photography & Thumbnail Title */}
+              {/* Left Column: Visual Media Thumbnail with Authentic Photography & Automatic Crossfade Slideshow */}
               <div
                 className="lg:col-span-6 relative min-h-[380px] sm:min-h-[440px] p-6 sm:p-8 flex flex-col justify-between text-white select-none overflow-hidden group cursor-pointer"
                 onClick={() => setActiveArticle(pinnedLead)}
               >
-                {/* Authentic Background Image */}
-                {pinnedLead.images && pinnedLead.images.length > 0 ? (
-                  <>
-                    <Image
-                      src={pinnedLead.images[activeLeadPhotoIdx]?.src || pinnedLead.images[0].src}
-                      alt={pinnedLead.images[activeLeadPhotoIdx]?.alt || pinnedLead.title}
-                      fill
-                      unoptimized
-                      priority
-                      className="object-cover object-top brightness-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-                    />
-                    {/* Atmospheric Vignette Gradients */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/30" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-transparent" />
-                  </>
-                ) : (
-                  <div className={`absolute inset-0 bg-gradient-to-br ${pinnedLead.gradient}`} />
-                )}
+                {/* Automatic Slideshow Crossfade Layers (changes smoothly by itself, no user clicking) */}
+                <div className="absolute inset-0 overflow-hidden">
+                  {pinnedLead.images && pinnedLead.images.length > 0 ? (
+                    pinnedLead.images.map((img, idx) => (
+                      <div
+                        key={idx}
+                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                          activeLeadPhotoIdx === idx ? 'opacity-100 z-1' : 'opacity-0 z-0 pointer-events-none'
+                        }`}
+                      >
+                        <Image
+                          src={img.src}
+                          alt={img.alt}
+                          fill
+                          unoptimized
+                          priority={idx === 0}
+                          className="object-cover object-top brightness-90 transform scale-102 transition-transform duration-700 ease-out"
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${pinnedLead.gradient}`} />
+                  )}
+                  {/* Atmospheric Vignette Gradients */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-slate-950/30 z-2" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-transparent z-2" />
+                </div>
 
-                {/* Top Row: Thumbnail Kicker, Reading Time & Interactive Photo Switcher */}
+                {/* Top Row: Thumbnail Kicker, Reading Time & Automatic Slideshow Slide Indicator */}
                 <div className="relative z-10 flex items-center justify-between gap-2 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-black/60 backdrop-blur-md border border-white/25 text-white shadow-xs">
                     <Award className="h-3.5 w-3.5 text-amber-300" />
@@ -514,28 +581,21 @@ export default function NewsPage() {
                   </span>
 
                   <div className="flex items-center gap-2">
-                    {/* Multi-Photo Switcher Pills */}
+                    {/* Automatic Slide Indicator (Updates by itself) */}
                     {pinnedLead.images && pinnedLead.images.length > 1 && (
-                      <div
-                        className="inline-flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-lg border border-white/20"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Camera className="h-3 w-3 text-amber-300 ml-1 hidden sm:inline" />
-                        {pinnedLead.images.map((img, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setActiveLeadPhotoIdx(idx)}
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
-                              activeLeadPhotoIdx === idx
-                                ? 'bg-amber-400 text-slate-950 shadow-xs font-black'
-                                : 'bg-white/10 text-white/80 hover:bg-white/25'
-                            }`}
-                            title={img.caption}
-                          >
-                            {idx === 0 ? 'Photo 1 (Plaque)' : 'Photo 2 (Citation)'}
-                          </button>
-                        ))}
+                      <div className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 text-[10px] font-bold text-amber-300">
+                        <Camera className="h-3 w-3" />
+                        <span>Photo {activeLeadPhotoIdx + 1} of {pinnedLead.images.length}</span>
+                        <div className="flex items-center gap-1 ml-0.5">
+                          {pinnedLead.images.map((_, idx) => (
+                            <span
+                              key={idx}
+                              className={`h-1.5 rounded-full transition-all duration-500 ${
+                                activeLeadPhotoIdx === idx ? 'w-4 bg-amber-400' : 'w-1.5 bg-white/40'
+                              }`}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -546,17 +606,17 @@ export default function NewsPage() {
                   </div>
                 </div>
 
-                {/* Center/Bottom: Prominent Thumbnail Title Plate & Active Photo Caption */}
+                {/* Center/Bottom: Prominent Thumbnail Title Plate & Dynamic Photo Caption (No AI star) */}
                 <div className="relative z-10 space-y-2 pt-16">
                   <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-950/90 backdrop-blur-md border border-white/30 shadow-xl">
-                    <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                    <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
                     <span className="text-xs sm:text-sm font-black tracking-wider uppercase text-white">
                       {pinnedLead.thumbnailTitle}
                     </span>
                   </div>
 
                   {pinnedLead.images && pinnedLead.images[activeLeadPhotoIdx] && (
-                    <p className="text-xs font-medium text-emerald-100 max-w-lg line-clamp-2 drop-shadow-md bg-slate-950/70 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/15">
+                    <p className="text-xs font-medium text-emerald-100 max-w-lg line-clamp-2 drop-shadow-md bg-slate-950/70 backdrop-blur-xs px-3 py-1.5 rounded-lg border border-white/15 transition-all duration-500">
                       {pinnedLead.images[activeLeadPhotoIdx].caption}
                     </p>
                   )}
@@ -575,7 +635,7 @@ export default function NewsPage() {
                     {pinnedLead.images && (
                       <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
                         <Camera className="h-3.5 w-3.5" />
-                        {pinnedLead.images.length} Official Photos Attached
+                        {pinnedLead.images.length} Official Photos
                       </span>
                     )}
                   </div>
@@ -667,7 +727,7 @@ export default function NewsPage() {
           </div>
         </div>
 
-        {/* News Grid with Thumbnail Titles */}
+        {/* News Grid with Thumbnail Titles and Researched Photos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNews.map((item) => (
             <article
@@ -680,11 +740,10 @@ export default function NewsPage() {
             >
               {/* Visual Thumbnail Header with Thumbnail Title & Kicker */}
               <div
-                className={`relative h-48 sm:h-52 w-full overflow-hidden p-4 flex flex-col justify-between text-white select-none ${
-                  !item.images || item.images.length === 0 ? `bg-gradient-to-br ${item.gradient}` : 'bg-slate-950'
-                }`}
+                className="relative h-48 sm:h-52 w-full overflow-hidden p-4 flex flex-col justify-between text-white select-none bg-slate-950 cursor-pointer"
+                onClick={() => setActiveArticle(item)}
               >
-                {/* Real Photo Thumbnail (if available) or SVG Accent Grid */}
+                {/* Researched Photo Thumbnail */}
                 {item.images && item.images.length > 0 ? (
                   <>
                     <Image
@@ -692,23 +751,12 @@ export default function NewsPage() {
                       alt={item.images[0].alt}
                       fill
                       unoptimized
-                      className="object-cover object-top brightness-90 group-hover:scale-105 transition-transform duration-500 ease-out"
+                      className="object-cover object-center brightness-90 group-hover:scale-105 transition-transform duration-500 ease-out"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-black/30" />
                   </>
                 ) : (
-                  <>
-                    <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none">
-                      <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <defs>
-                          <pattern id={`grid-${item.id}`} width="10" height="10" patternUnits="userSpaceOnUse">
-                            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                          </pattern>
-                        </defs>
-                        <rect width="100" height="100" fill={`url(#grid-${item.id})`} />
-                      </svg>
-                    </div>
-                  </>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient}`} />
                 )}
 
                 {/* Top Row: Thumbnail Kicker & Reading Time */}
@@ -719,7 +767,7 @@ export default function NewsPage() {
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    {item.images && item.images.length > 0 && (
+                    {item.images && item.images.length > 1 && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full border border-amber-400/30">
                         <Camera className="h-3 w-3" />
                         <span>{item.images.length} Photos</span>
@@ -732,7 +780,7 @@ export default function NewsPage() {
                   </div>
                 </div>
 
-                {/* Bottom Row: Aesthetic Thumbnail Title Plate */}
+                {/* Bottom Row: Aesthetic Thumbnail Title Plate (No AI star) */}
                 <div className="relative z-10 pt-4">
                   <div className="inline-flex items-center gap-1.5 bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/25 max-w-[95%] shadow-md">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
@@ -741,13 +789,6 @@ export default function NewsPage() {
                     </p>
                   </div>
                 </div>
-
-                {/* Background Watermark Icon (when no image) */}
-                {(!item.images || item.images.length === 0) && (
-                  <div className="absolute -bottom-3 -right-3 text-white/10 pointer-events-none transform -rotate-12 transition-transform duration-500 group-hover:scale-115">
-                    {renderIcon(item.iconName, 'h-28 w-28')}
-                  </div>
-                )}
               </div>
 
               {/* Card Body */}
@@ -884,14 +925,14 @@ export default function NewsPage() {
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">
                     <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Official Press Photography ({activeArticle.images.length} Photos)</span>
+                    <span>Official Press Photography ({activeArticle.images.length} {activeArticle.images.length === 1 ? 'Photo' : 'Photos'})</span>
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">
                     Click any photo to enlarge
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 ${activeArticle.images.length > 1 ? 'sm:grid-cols-2' : ''} gap-4`}>
                   {activeArticle.images.map((img, idx) => (
                     <div
                       key={idx}
@@ -942,11 +983,11 @@ export default function NewsPage() {
               ))}
             </div>
 
-            {/* Highlights Checklist */}
+            {/* Highlights Checklist (No AI star icon) */}
             {activeArticle.highlights && activeArticle.highlights.length > 0 && (
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
                 <h5 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                  <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <FileCheck2 className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                   Key Highlights &amp; Statutory Notes
                 </h5>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400">

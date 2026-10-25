@@ -9,6 +9,7 @@ export type LeadSource =
   | 'LAND'
   | 'PROPERTY'
   | 'PORTAL'
+  | 'AI_ASSISTANT'
   | 'DIRECT';
 
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'RESOLVED' | 'CONVERTED';
@@ -70,6 +71,7 @@ export function getLeadSourceLabel(cust: Customer): string {
   if (cust.leadSource === 'LAND') return 'Land Desk';
   if (cust.leadSource === 'PROPERTY') return 'Property Desk';
   if (cust.leadSource === 'AUCTIONS') return 'Auction Desk';
+  if (cust.leadSource === 'AI_ASSISTANT') return 'Amen AI Assistant';
   if (cust.leadSource === 'PORTAL') return 'Web Portal';
 
   const card = (cust.ghanaCardNumber || '').toUpperCase();

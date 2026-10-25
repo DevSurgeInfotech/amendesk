@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { SiteHeader } from '@/components/site/SiteHeader';
 import { SiteFooter } from '@/components/site/SiteFooter';
 import { SiteBreadcrumbs } from '@/components/site/SiteBreadcrumbs';
+import { AmenAiAssistant } from '@/components/site/AmenAiAssistant';
 
 export default function SiteLayout({
   children,
@@ -14,6 +15,7 @@ export default function SiteLayout({
       <SiteBreadcrumbs />
       <main className="flex-1">{children}</main>
       <SiteFooter />
+      <AmenAiAssistant />
     </div>
   );
 }

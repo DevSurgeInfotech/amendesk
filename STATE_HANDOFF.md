@@ -197,6 +197,7 @@ flowchart TD
 | `/api/inquiries` | Inbound Inquiries API | Server-side persistence & cross-device sync bridge for website leads | ✅ Active |
 | `/api/communication/send-email` | Resend Email API | Server endpoint for branded HTML emails with live & offline simulation | ✅ Active |
 | `/api/communication/messages` | Communication Ledger API | Server persistence for inbound and outbound communication history | ✅ Active |
+| `/api/ai/assistant` | Amen AI Assistant API | Hybrid knowledge-base & live ERP inventory AI advisor for website visitors | ✅ Active |
 
 ---
 
@@ -224,6 +225,38 @@ flowchart TD
 ---
 
 ## 6. Execution History & Session Changelog
+
+### Session: 2026-10-25 (Amen AI Assistant — Website AI Concierge, Statutory Knowledge Base & Live Inventory Integration)
+- **Goal**: Plan and build the **Amen AI Assistant (Amen AI Concierge)** across the public website (`/` and all subpages), trained on the complete statutory, operational, financial, and live inventory knowledge of Amen Mart Auctioning Services to answer client inquiries 24/7 and convert high-intent visitors into CRM leads.
+- **Accomplishments**:
+  - **Master Architecture & Knowledge Plan (`amen-ai-assistant-plan.md`)**:
+    - Designed the end-to-end architecture connecting the public floating AI widget, the 12-domain Amen Mart Knowledge Engine, live IndexedDB (`Dexie`) inventory queries, optional Gemini LLM server enrichment, and the Universal Inbound Lead Handler (`recordInboundLead`).
+  - **Amen Mart Knowledge Base Engine (`src/lib/ai/amenKnowledgeBase.ts`)**:
+    - Trained on all authoritative Amen Mart domains:
+      1. **Company & Statutory Mandate**: Amen Mart Auctioning Services, approved by the **Auctioneers Registration Board (ARB)** and the **Ministry of the Interior** under **PNDCL 230**, and affiliated with the **Ghana Auctioneers Association (GAA)**.
+      2. **Executive Leadership**: **Dr. Francis Kwaku Yeboah** (*"Mr. Yeboah"*), Managing Director & Licensed Principal Auctioneer with 10+ years of leadership and 2x **Modern Gospel Awards (MOGA 2024 & 2025)** *Philanthropist of the Year* honoree.
+      3. **Location, Contacts & Operating Hours**: **Gbawe, Flower Junction, Accra** (Postal: P. O. Box DC 1013, Dansoman, Accra); hotlines **`0548517277` / `0558314744`**; email **`amenmart2291@gmail.com`**; operating hours **Mon–Fri 8:00 AM – 5:00 PM** and **Sat 9:00 AM – 2:00 PM**.
+      4. **3 Statutory Auction Categories**: **Judicial** (High Court / Circuit Court Sheriff Writs of Execution with Court Case No. & Sheriff Ref), **Government** (state/ministry fleet disposals, mainly movable), and **Private** (corporate, bank & voluntary consignments).
+      5. **Deposit & 14-Day Settlement Engine**: Mandatory **25% non-refundable deposit** at the fall of the hammer, **14 calendar days (2 weeks)** to settle the remaining **75% balance** (single payment or multiple instalments), strict hold until 100% paid, and overdue rules.
+      6. **Corporate Fee Structure**: **7% statutory auction fee** on all auction lots vs. **0% auction fee** on direct **Car Dealership Showroom (`/showroom`)** vehicles.
+      7. **Movable vs. Immovable Disposal Documentation**: **A5 Gate Release Waybill (`AM-WB-2026-XXXX`)** + **Certificate of Sale** for Movable assets (vehicles, equipment) vs. **Sale/Transfer Deed (`AM-TRF-2026-XXXX`)** + **Cadastral Site Plan / Indenture** for Immovable assets (land, buildings).
+      8. **Titled Land & Real Estate Properties**: Tripartite **Lands Commission** official searches, surveyor-stamped cadastral site plans, solicitor-drafted indentures, and escorted site visits.
+      9. **Payments, Receipts & KYC**: **Cash**, **Mobile Money** (MTN MoMo, Telecel/Vodafone Cash, AirtelTigo via Hubtel), **Bank Transfer / Draft**, and **Paystack Card**; instant 80mm thermal receipts & A4 invoices (`AM-RCP-2026-XXXX`); mandatory **Ghana Card (`GHA-XXXXXXXXX-X`)** KYC.
+      10. **Asset Consignment & Valuations**: Step-by-step guidance for individuals, banks, courts, and companies consigning vehicles, real estate, or equipment with Dr. Francis Kwaku Yeboah.
+    - Built live inventory query matching so questions about available cars, auctions, land, or properties dynamically inspect `db.auctionLots`, `db.dealershipVehicles`, `db.landParcels`, and `db.propertyUnits` and return interactive preview cards with `GH₵` pricing.
+  - **Hybrid Server API Route (`src/app/api/ai/assistant/route.ts`)**:
+    - Created `GET` and `POST` handlers executing the deterministic knowledge engine with optional `GEMINI_API_KEY` conversational enrichment and 100% offline resilience.
+  - **Interactive Website AI Widget (`src/components/site/AmenAiAssistant.tsx`, `src/app/(site)/layout.tsx`)**:
+    - Mounted globally across all public pages via `SiteLayout`.
+    - Features floating launcher with Amen Mart 4K icon and welcome callout pill, expandable chat window, 8 one-click topic chips, formatted bullet/bold responses, live inventory preview cards, follow-up prompt suggestions, direct **WhatsApp (`wa.me/233548517277`)** and **Phone (`tel:0548517277`)** actions, and an embedded **"Direct Inquiry to Amen Mart Desk"** form that logs leads with `leadSource: 'AI_ASSISTANT'` directly into CRM (`/desk/crm?filter=INQUIRIES`) and Communication Hub (`/desk/communication`).
+- **Changed Files**:
+  - `src/lib/ai/amenKnowledgeBase.ts` (New)
+  - `src/app/api/ai/assistant/route.ts` (New)
+  - `src/components/site/AmenAiAssistant.tsx` (New)
+  - `src/app/(site)/layout.tsx` (Mounted AmenAiAssistant)
+  - `src/lib/types/index.ts` (Added `AI_ASSISTANT` to `LeadSource`)
+  - `src/lib/crm/leads.ts` (Added `AI_ASSISTANT` origin badge label)
+  - `STATE_HANDOFF.md` (Updated route index and session changelog)
 
 ### Session: 2026-10-25 (Enterprise Workspace Idle Lock Screen & Terminal Security — Light Mode Rollout)
 - **Goal**: Curate a premium enterprise idle lock screen for AmenDesk with a statutory default lock threshold of 15 minutes, requiring staff to re-authenticate with their account password to continue working in their AmenDesk workspace, rendered in a crisp, executive light mode theme.
@@ -887,6 +920,27 @@ flowchart TD
   - `src/lib/auth/authService.ts` (verifyPassword and unlockWorkspace helpers)
   - `src/lib/types/workspaceSettings.ts` (idleLockMinutes and enableIdleLock schema settings)
   - `STATE_HANDOFF.md` (Updated continuity ledger with audit analysis and bug fix log)
+
+### Session: 2026-10-25 (Operations Dashboard: Quick Operation "Issue Waybill" Multi-Source Gate Pass Architecture)
+- **Goal**: Fix the "Issue Waybill" quick operation on the Operations Dashboard (`/desk`), which was not opening or working when clicked without pre-selected candidate lots (especially on clean-slate live tenant `amen-mart-live`).
+- **Root Cause Analysis**:
+  - `handleOpenWaybillQuickAction` was looking for a pre-existing candidate lot (`candidate = lots.find(...) || lots[0]`). If no candidate existed (such as on live production clean slate or when no movable lots are cataloged), `candidate` was `undefined`.
+  - `setSelectedLotForWaybill(candidate)` was skipped, keeping `selectedLotForWaybill` as `null` and preventing `<WaybillModal />` from rendering.
+  - Furthermore, `WaybillModal` previously required a non-nullable `lot: AuctionLot` prop, preventing direct yard gate pass clearance or showroom vehicle clearance from the quick actions bar.
+- **Accomplishments**:
+  - **Universal Gate Pass Quick Action Triggering**: Added `isGeneralWaybillOpen` state to [`src/app/(erp)/desk/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/page.tsx). Clicking "Issue Waybill" from Quick Operations now immediately opens the A5 Waybill & Gate Pass modal in 100% of scenarios without silently failing.
+  - **Multi-Source Clearance Architecture in `WaybillModal`**:
+    - **Auction Lots Mode**: Select from movable auction lots (`db.auctionLots.where('assetType').equals('MOVABLE')`), with automated pre-fill of title, chassis/tag ID, registration plate, winning bidder name, and contact details, and automatic status badges (`[Ready for Release]`, `[Waybill Already Issued]`, etc.).
+    - **Showroom Dealership Stock Mode**: Select from showroom vehicles (`db.dealershipVehicles`), with automated pre-fill of year/make/model, VIN, and status.
+    - **Direct Gate Pass / Manual Clearance Mode**: Seamlessly handles walk-in yard exits, third-party asset releases, or clean-slate operations where no cataloged lots exist yet. Full manual entry for asset description, chassis/serial/tag, consignee name and phone.
+  - **Haulage & Security Clearance Logging**: Captures transporter name, driver phone, driver Ghana Card ID, transport vehicle plate number, destination delivery address, and gate officer on duty.
+  - **Ledger & Sync Integration**: Generates official sequential waybill numbers (`AM-WB-2026-XXXX`), saves to IndexedDB `db.waybills`, updates lot status to `DISPOSED` or vehicle to `SOLD`, queues mutation to `syncEngine`, and renders printable A5 Landscape Official Waybill & Gate Pass with Print and Done buttons.
+  - **Pure Reactive State Architecture**: Eliminated `useEffect` with setState cascading renders, computing derived values cleanly during render and adhering strictly to React 19 and Next.js 16 standards.
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict) passing with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/components/erp/WaybillModal.tsx` (Refactored to support multi-source clearance: Auction, Showroom, and Direct Yard Gate Pass with derived state)
+  - `src/app/(erp)/desk/page.tsx` (Added `isGeneralWaybillOpen` trigger and replaced brittle candidate fallback with universal modal opening)
+  - `STATE_HANDOFF.md` (Updated session changelog and continuity ledger)
 
 ### Session: 2026-10-25 (Featured Article Media Integration: Dr. Francis Yeboah MOGA Award Photos)
 - **Goal**: Integrate the two authentic photos placed in `/public` for the featured news article honoring Dr. Francis Kwaku Yeboah's Modern Gospel Awards (MOGA) Philanthropist of the Year recognition.

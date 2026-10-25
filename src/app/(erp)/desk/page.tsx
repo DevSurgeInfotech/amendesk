@@ -99,6 +99,7 @@ export default function DeskDashboardPage() {
   const [isGeneralPaymentOpen, setIsGeneralPaymentOpen] = useState(false);
   const [selectedLotForExtension, setSelectedLotForExtension] = useState<AuctionLot | null>(null);
   const [selectedLotForWaybill, setSelectedLotForWaybill] = useState<AuctionLot | null>(null);
+  const [isGeneralWaybillOpen, setIsGeneralWaybillOpen] = useState(false);
   const [isVehicleIntakeOpen, setIsVehicleIntakeOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [isBankDepositOpen, setIsBankDepositOpen] = useState(false);
@@ -433,23 +434,6 @@ export default function DeskDashboardPage() {
     }
   };
 
-  // Find a fallback lot if Waybill Quick Action is clicked without pre-selection
-  const handleOpenWaybillQuickAction = () => {
-    const candidate =
-      lots.find(
-        (l) =>
-          l.assetType === 'MOVABLE' &&
-          (l.status === 'FULLY_PAID' || (l.balanceDueGhs === 0 && l.hammerPriceGhs && l.hammerPriceGhs > 0)) &&
-          !l.waybillId
-      ) ||
-      lots.find((l) => l.assetType === 'MOVABLE') ||
-      lots[0];
-
-    if (candidate) {
-      setSelectedLotForWaybill(candidate);
-    }
-  };
-
   return (
     <div className="space-y-5">
       {/* Compact Page Header */}
@@ -492,7 +476,7 @@ export default function DeskDashboardPage() {
       <QuickActionBar
         onOpenPayment={() => setIsGeneralPaymentOpen(true)}
         onOpenVehicleIntake={() => setIsVehicleIntakeOpen(true)}
-        onOpenWaybillModal={handleOpenWaybillQuickAction}
+        onOpenWaybillModal={() => setIsGeneralWaybillOpen(true)}
         onOpenExpenseModal={() => setIsExpenseOpen(true)}
         onOpenBankDepositModal={() => setIsBankDepositOpen(true)}
       />
@@ -588,13 +572,19 @@ export default function DeskDashboardPage() {
         />
       )}
 
-      {/* 4. A5 Waybill Modal */}
-      {selectedLotForWaybill && (
+      {/* 4. A5 Waybill Modal (For preselected lot or Quick Actions) */}
+      {(selectedLotForWaybill || isGeneralWaybillOpen) && (
         <WaybillModal
           isOpen={true}
-          onClose={() => setSelectedLotForWaybill(null)}
+          onClose={() => {
+            setSelectedLotForWaybill(null);
+            setIsGeneralWaybillOpen(false);
+          }}
           lot={selectedLotForWaybill}
-          onSuccess={() => setSelectedLotForWaybill(null)}
+          onSuccess={() => {
+            setSelectedLotForWaybill(null);
+            setIsGeneralWaybillOpen(false);
+          }}
         />
       )}
 
