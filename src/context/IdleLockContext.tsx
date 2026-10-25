@@ -15,6 +15,7 @@ export type LockReason = 'IDLE_TIMEOUT' | 'MANUAL_VOLUNTARY';
 
 export const IDLE_LOCK_STORAGE_KEY = 'amendesk_terminal_is_locked';
 export const IDLE_REASON_STORAGE_KEY = 'amendesk_terminal_lock_reason';
+export const IDLE_LOCKED_AT_STORAGE_KEY = 'amendesk_terminal_locked_at';
 export const IDLE_TIMEOUT_STORAGE_KEY = 'amendesk_idle_lock_minutes';
 export const IDLE_ENABLED_STORAGE_KEY = 'amendesk_idle_lock_enabled';
 export const LAST_ACTIVITY_STORAGE_KEY = 'amendesk_terminal_last_activity';
@@ -23,8 +24,10 @@ export const DEFAULT_IDLE_LOCK_MINUTES = 15; // Statutory standard: 15 minutes d
 export interface IdleLockContextType {
   isLocked: boolean;
   lockReason: LockReason;
+  lockedAt: number | null;
   lockTerminal: (reason?: LockReason) => void;
   unlockTerminal: (password: string) => { success: boolean; error?: string };
+  clearLock: () => void;
   timeoutMinutes: number;
   setTimeoutMinutes: (minutes: number) => void;
   isAutoLockEnabled: boolean;
@@ -70,6 +73,20 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     return 'IDLE_TIMEOUT';
   });
 
+  const [lockedAt, setLockedAt] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem(IDLE_LOCKED_AT_STORAGE_KEY);
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  });
+
   const [timeoutMinutes, setInternalTimeoutMinutes] = useState<number>(() => {
     if (typeof window === 'undefined') return DEFAULT_IDLE_LOCK_MINUTES;
     try {
@@ -111,17 +128,34 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
   const [remainingSeconds, setRemainingSeconds] = useState<number>(() => timeoutMinutes * 60);
 
   const lockTerminal = useCallback((reason: LockReason = 'MANUAL_VOLUNTARY') => {
+    const now = Date.now();
     setIsLocked(true);
     setLockReason(reason);
+    setLockedAt(now);
     setRemainingSeconds(0);
     try {
       localStorage.setItem(IDLE_LOCK_STORAGE_KEY, 'true');
       localStorage.setItem(IDLE_REASON_STORAGE_KEY, reason);
+      localStorage.setItem(IDLE_LOCKED_AT_STORAGE_KEY, String(now));
       window.dispatchEvent(new Event('amendesk-idle-lock-change'));
     } catch {
       // Ignore
     }
   }, []);
+
+  const clearLock = useCallback(() => {
+    setIsLocked(false);
+    setLockedAt(null);
+    setRemainingSeconds(timeoutMinutes * 60);
+    try {
+      localStorage.removeItem(IDLE_LOCK_STORAGE_KEY);
+      localStorage.removeItem(IDLE_REASON_STORAGE_KEY);
+      localStorage.removeItem(IDLE_LOCKED_AT_STORAGE_KEY);
+      window.dispatchEvent(new Event('amendesk-idle-lock-change'));
+    } catch {
+      // Ignore
+    }
+  }, [timeoutMinutes]);
 
   const unlockTerminal = useCallback((password: string): { success: boolean; error?: string } => {
     const session = authService.getSession();
@@ -129,11 +163,15 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'Terminal session expired or not authenticated. Please log in.' };
     }
 
-    const isValid = authService.verifyPassword(session.user.id, password);
+    const isValid =
+      authService.verifyPassword(session.user.id, password) ||
+      (session.user.username ? authService.verifyPassword(session.user.username, password) : false) ||
+      (session.user.email ? authService.verifyPassword(session.user.email, password) : false);
+
     if (!isValid) {
       return {
         success: false,
-        error: `Incorrect password for ${session.user.fullName}. Please verify your credentials and try again.`,
+        error: 'Incorrect staff password. Please verify and try again.',
       };
     }
 
@@ -142,11 +180,13 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     setLastActiveTime(now);
     setIsLocked(false);
     setLockReason('IDLE_TIMEOUT');
+    setLockedAt(null);
     setRemainingSeconds(timeoutMinutes * 60);
 
     try {
       localStorage.removeItem(IDLE_LOCK_STORAGE_KEY);
       localStorage.removeItem(IDLE_REASON_STORAGE_KEY);
+      localStorage.removeItem(IDLE_LOCKED_AT_STORAGE_KEY);
       localStorage.setItem(LAST_ACTIVITY_STORAGE_KEY, String(now));
       window.dispatchEvent(new Event('amendesk-idle-lock-change'));
     } catch {
@@ -250,6 +290,9 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
         if (e.newValue === 'MANUAL_VOLUNTARY' || e.newValue === 'IDLE_TIMEOUT') {
           setLockReason(e.newValue);
         }
+      } else if (e.key === IDLE_LOCKED_AT_STORAGE_KEY) {
+        const val = e.newValue ? parseInt(e.newValue, 10) : null;
+        setLockedAt(val && !isNaN(val) ? val : null);
       } else if (e.key === IDLE_TIMEOUT_STORAGE_KEY && e.newValue) {
         const val = parseInt(e.newValue, 10);
         if (!isNaN(val) && val > 0) setInternalTimeoutMinutes(val);
@@ -271,6 +314,13 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
         const reason = localStorage.getItem(IDLE_REASON_STORAGE_KEY);
         if (reason === 'MANUAL_VOLUNTARY' || reason === 'IDLE_TIMEOUT') {
           setLockReason(reason);
+        }
+        const lockedAtRaw = localStorage.getItem(IDLE_LOCKED_AT_STORAGE_KEY);
+        if (lockedAtRaw) {
+          const parsed = parseInt(lockedAtRaw, 10);
+          setLockedAt(!isNaN(parsed) && parsed > 0 ? parsed : null);
+        } else {
+          setLockedAt(null);
         }
       } catch {
         // Ignore
@@ -347,13 +397,27 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [isLocked, isAutoLockEnabled, timeoutMinutes, lockTerminal]);
 
+  // If user signs out, clear lock state so the next user isn't locked on login
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const session = authService.getSession();
+      if (!session) {
+        clearLock();
+      }
+    };
+    window.addEventListener('amendesk-auth-change', handleAuthChange);
+    return () => window.removeEventListener('amendesk-auth-change', handleAuthChange);
+  }, [clearLock]);
+
   return (
     <IdleLockContext.Provider
       value={{
         isLocked,
         lockReason,
+        lockedAt,
         lockTerminal,
         unlockTerminal,
+        clearLock,
         timeoutMinutes,
         setTimeoutMinutes,
         isAutoLockEnabled,

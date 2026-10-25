@@ -7,7 +7,7 @@ import { Topbar } from '@/components/erp/Topbar';
 import { Breadcrumbs } from '@/components/erp/Breadcrumbs';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { useTerminal } from '@/context/TerminalContext';
-import { IdleLockProvider } from '@/context/IdleLockContext';
+import { IdleLockProvider, useIdleLock } from '@/context/IdleLockContext';
 import { IdleLockScreen } from '@/components/erp/IdleLockScreen';
 import { authService, SESSION_STORAGE_KEY } from '@/lib/auth/authService';
 import type { AuthSession } from '@/lib/types/auth';
@@ -63,6 +63,39 @@ function SandboxModeBanner() {
   );
 }
 
+function DeskShell({ children }: { children: ReactNode }) {
+  const { isLocked } = useIdleLock();
+
+  return (
+    <div
+      aria-hidden={isLocked ? true : undefined}
+      className={`flex flex-col h-screen h-[100dvh] overflow-hidden bg-[var(--background)] transition-all duration-300 ${
+        isLocked ? 'pointer-events-none select-none filter blur-xs opacity-40' : ''
+      }`}
+    >
+      <SandboxModeBanner />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div className="no-print h-full shrink-0 flex flex-col">
+          <Suspense fallback={<aside className="w-[264px] h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" />}>
+            <Sidebar />
+          </Suspense>
+        </div>
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+          <div className="no-print shrink-0">
+            <Topbar />
+            <Breadcrumbs />
+          </div>
+          <main className="flex-1 p-6 overflow-y-auto min-h-0">
+            <Suspense fallback={<div className="p-6 text-slate-500 text-xs">Loading terminal...</div>}>
+              {children}
+            </Suspense>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DeskLayout({
   children,
 }: {
@@ -94,27 +127,7 @@ export default function DeskLayout({
   return (
     <IdleLockProvider>
       <SidebarProvider>
-        <div className="flex flex-col h-screen h-[100dvh] overflow-hidden bg-[var(--background)]">
-          <SandboxModeBanner />
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            <div className="no-print h-full shrink-0 flex flex-col">
-              <Suspense fallback={<aside className="w-[264px] h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" />}>
-                <Sidebar />
-              </Suspense>
-            </div>
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-              <div className="no-print shrink-0">
-                <Topbar />
-                <Breadcrumbs />
-              </div>
-              <main className="flex-1 p-6 overflow-y-auto min-h-0">
-                <Suspense fallback={<div className="p-6 text-slate-500 text-xs">Loading terminal...</div>}>
-                  {children}
-                </Suspense>
-              </main>
-            </div>
-          </div>
-        </div>
+        <DeskShell>{children}</DeskShell>
         <IdleLockScreen />
       </SidebarProvider>
     </IdleLockProvider>

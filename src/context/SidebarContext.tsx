@@ -56,6 +56,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        if (typeof window !== 'undefined' && localStorage.getItem('amendesk_terminal_is_locked') === 'true') {
+          return;
+        }
         const target = e.target as HTMLElement | null;
         if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
           return;

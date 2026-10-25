@@ -3,6 +3,7 @@
 import { useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useIdleLock } from '@/context/IdleLockContext';
 import {
   LayoutDashboard,
   ChevronRight,
@@ -207,10 +208,12 @@ function BreadcrumbsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { isLocked } = useIdleLock();
 
   // Global hotkey: Alt + D jumps directly to the Dashboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isLocked) return;
       if (e.altKey && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();
         router.push('/desk');
@@ -219,7 +222,7 @@ function BreadcrumbsContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router]);
+  }, [router, isLocked]);
 
   const items: BreadcrumbItem[] = useMemo(() => {
     // If we're on the dashboard root

@@ -187,7 +187,7 @@ export function Topbar() {
     role,
   } = useTerminal();
   const { theme, setTheme } = useTheme();
-  const { lockTerminal, timeoutMinutes } = useIdleLock();
+  const { lockTerminal, timeoutMinutes, isLocked } = useIdleLock();
 
   // Live Clock State (Hydration-safe)
   const [now, setNow] = useState<Date | null>(null);
@@ -268,6 +268,7 @@ export function Topbar() {
   // Global keyboard shortcut: Ctrl+K / Cmd+K to open search, Escape to close popovers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isLocked) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setSearchOpen((prev) => !prev);
@@ -281,7 +282,7 @@ export function Topbar() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isLocked]);
 
   // Auto-focus search input when modal opens
   useEffect(() => {

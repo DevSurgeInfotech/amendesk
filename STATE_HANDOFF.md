@@ -226,6 +226,54 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Enterprise Idle Lock Premium Pedestal Overhaul, Privacy Remediation & Terminal Shielding)
+- **Goal**:
+  1. Enhance the AmenDesk workspace idle lock screen to a world-standard, ultra-premium executive aesthetic matching the light-theme pedestal architecture of `/login`.
+  2. Audit and remediate privacy & credential leakage: ensure staff email addresses and `@username` login handles are completely purged from the lock screen.
+  3. Seal background interactivity and keyboard shortcut leakage while the terminal is locked.
+  4. Fix critical logout/switch account lock state persistence bug.
+- **Root Cause & Security Gaps Identified**:
+  - The previous lock screen rendered `@{username}` (e.g. `@amenmart.live`, `@francis.yeboah`), which in many cases was derived from or identical to the staff member's work email address, inadvertently displaying sensitive login handles to anyone viewing unattended terminals in public cash offices or open auction yards.
+  - Furthermore, if `fullName` contained an email address, there was no defensive sanitization to prevent email rendering.
+  - The lock screen included a tacky sandbox demo hint box that literally printed the production password `amen@2026`, an auto-fill button, and an AI sparkle icon `<Sparkles>`, reducing executive visual gravity.
+  - When a staff member clicked "Switch Account / Sign Out" on the locked screen or logged out, `amendesk_terminal_is_locked` was NOT cleared from `localStorage`. When the next user authenticated on `/login` and routed to `/desk`, they were immediately locked out by the lingering lock flag.
+  - When locked, background workspace keyboard shortcuts (`Ctrl+K` for global search in `Topbar`, `Alt+D` for dashboard in `Breadcrumbs`, `Ctrl+B` for sidebar toggle in `SidebarContext`) were still active and could fire behind the lock overlay. Background DOM was also interactive to Tab navigation.
+- **Accomplishments**:
+  - **Zero Staff Email / Handle Exposure (`src/components/erp/IdleLockScreen.tsx`)**:
+    - Completely purged all occurrences of staff email addresses, `currentUser.email`, `session.user.email`, `username`, and `@{username}` from the lock screen.
+    - Added defensive `displayName` formatter: if `fullName` ever contains an email address (e.g. `k.boateng@amenmart.com`), it automatically converts it into a human-readable name (`Kwesi Boateng`) and never renders raw email characters.
+    - Replaced username subtitle with an executive location descriptor: `Amen Mart Head Office Yard • Gbawe Cash Office`.
+  - **World-Standard Double-Bezel Pedestal Architecture (`src/components/erp/IdleLockScreen.tsx`)**:
+    - Aligned with `/login`'s executive pedestal design: outer double-bezel pedestal frame (`rounded-[28px] bg-white/75 p-2 backdrop-blur-2xl border border-white/90 shadow-[0_24px_60px_-15px_rgba(15,23,42,0.14),0_10px_25px_-5px_rgba(15,23,42,0.06),0_0_0_1px_rgba(15,23,42,0.06)]`) wrapping a pure white inner surface card (`rounded-[22px] bg-white border border-slate-200/80 shadow-[0_2px_12px_-2px_rgba(15,23,42,0.04)] p-7 sm:p-8`).
+    - Signature Amen Mart Gold & Navy top hairline accent (`h-1 w-full bg-gradient-to-r from-[#D5AA40] via-[#0B1F3A] to-[#D5AA40] absolute top-0 left-0`).
+    - Architectural porcelain-slate background canvas (`#eef2f6`) with fine 40px radial-masked grid and studio ambient lighting.
+  - **Precision Digital Chronometer & Contextual Status**:
+    - High-contrast tabular digital chronometer (`font-mono text-5xl sm:text-6xl font-black text-[#0B1F3A]`) with Ghanaian calendar date and live Accra GMT+0 time.
+    - Contextual security badge (`Voluntary Terminal Lock • Workspace Protected` vs `Inactivity Terminal Lock • 15-Minute Policy`) displaying exact lock time stamp (`Locked 14:32 GMT`).
+  - **Form Ergonomics & Caps Lock Active Detection**:
+    - Added real-time Caps Lock detection (`event.getModifierState('CapsLock')`) rendering an alert pill (`Caps Lock ON`), avoiding unnecessary failed attempts.
+    - Added CSS `@keyframes terminalLockShake` and `.animate-lock-shake` in `globals.css` for smooth horizontal shake feedback on invalid password attempts.
+    - Upgraded CTA to executive Amen Mart Navy (`#0B1F3A` / `hover:bg-[#132d52]`) with subtle top highlight.
+    - Purged tacky demo hint box, password printout, and `<Sparkles>` AI icon.
+  - **Terminal Shielding & Background Lockout (`src/app/(erp)/desk/layout.tsx`, `Topbar.tsx`, `Breadcrumbs.tsx`, `SidebarContext.tsx`)**:
+    - Wrapped workspace shell in `DeskShell` applying `aria-hidden={isLocked}` and `pointer-events-none select-none filter blur-xs opacity-40` when locked.
+    - Guarded `Ctrl+K` (global search), `Alt+D` (dashboard return), and `Ctrl+B` (sidebar toggle) so background actions cannot be triggered while the screen is locked.
+  - **Switch Account / Logout Lock State Cleanup (`src/lib/auth/authService.ts`, `IdleLockContext.tsx`)**:
+    - Added `clearLock()` method in `IdleLockContext`.
+    - Configured `authService.login()`, `authService.loginWithGoogleEmail()`, and `authService.logout()` to immediately clear all lock keys (`amendesk_terminal_is_locked`, `amendesk_terminal_lock_reason`, `amendesk_terminal_locked_at`).
+    - Configured `handleSignOut()` on `IdleLockScreen` to reset lock state before logging out, completely eliminating the bug where switching accounts greeted the new user with a locked screen.
+- **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
+- **Changed Files**:
+  - `src/components/erp/IdleLockScreen.tsx`
+  - `src/context/IdleLockContext.tsx`
+  - `src/app/(erp)/desk/layout.tsx`
+  - `src/components/erp/Topbar.tsx`
+  - `src/components/erp/Breadcrumbs.tsx`
+  - `src/context/SidebarContext.tsx`
+  - `src/lib/auth/authService.ts`
+  - `src/app/globals.css`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (Website Main Navigation & Megamenu High-Contrast Bold Overhaul)
 - **Goal**: Make the main website navigation / megamenu bold and high contrast across desktop and mobile screens to elevate visual readability and accessibility.
 - **Root Cause & Visual Deficiency**:

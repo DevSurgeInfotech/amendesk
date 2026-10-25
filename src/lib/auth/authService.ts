@@ -535,8 +535,13 @@ class AuthService {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
       localStorage.setItem(TENANT_STORAGE_KEY, tenant.id);
       localStorage.setItem('amendesk_staff_role', user.role);
+      localStorage.removeItem('amendesk_terminal_is_locked');
+      localStorage.removeItem('amendesk_terminal_lock_reason');
+      localStorage.removeItem('amendesk_terminal_locked_at');
+      localStorage.setItem('amendesk_terminal_last_activity', String(Date.now()));
       window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
       window.dispatchEvent(new Event('amendesk-tenant-change'));
+      window.dispatchEvent(new Event('amendesk-idle-lock-change'));
     }
 
     return session;
@@ -652,8 +657,13 @@ class AuthService {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
       localStorage.setItem(TENANT_STORAGE_KEY, tenant.id);
       localStorage.setItem('amendesk_staff_role', user.role);
+      localStorage.removeItem('amendesk_terminal_is_locked');
+      localStorage.removeItem('amendesk_terminal_lock_reason');
+      localStorage.removeItem('amendesk_terminal_locked_at');
+      localStorage.setItem('amendesk_terminal_last_activity', String(Date.now()));
       window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
       window.dispatchEvent(new Event('amendesk-tenant-change'));
+      window.dispatchEvent(new Event('amendesk-idle-lock-change'));
     }
 
     return session;
@@ -664,7 +674,11 @@ class AuthService {
     this.cachedSessionRaw = null;
     if (typeof window === 'undefined') return;
     localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem('amendesk_terminal_is_locked');
+    localStorage.removeItem('amendesk_terminal_lock_reason');
+    localStorage.removeItem('amendesk_terminal_locked_at');
     window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    window.dispatchEvent(new Event('amendesk-idle-lock-change'));
   }
 
   public getSession(): AuthSession | null {
