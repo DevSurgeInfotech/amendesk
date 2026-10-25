@@ -164,11 +164,11 @@ const erpModules: ModuleItem[] = [
     href: '/desk/hr',
     icon: Briefcase,
     submodules: [
-      { label: 'Salaried Staff', href: '/desk/hr' },
+      { label: 'Staff Directory', href: '/desk/hr' },
       { label: 'Monthly Payroll', href: '/desk/hr?tab=payroll' },
-      { label: 'Attendance', href: '/desk/hr?tab=attendance' },
-      { label: 'Leave Register', href: '/desk/hr?tab=leave' },
+      { label: 'Leave Requests', href: '/desk/hr?tab=leave' },
       { label: 'GRA & SSNIT', href: '/desk/hr?tab=reports' },
+      { label: 'Attendance', href: '/desk/hr?tab=attendance', badge: 'Not Set' },
     ],
   },
   {

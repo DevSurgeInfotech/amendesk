@@ -478,7 +478,6 @@ export function GlassCard({
   value,
   icon,
   iconName,
-  badge,
   trend,
   href,
   onClick,
@@ -519,19 +518,14 @@ export function GlassCard({
       {(title || value || resolvedIcon) && (
         <div className="relative z-10 flex flex-col justify-between h-full min-w-0 w-full">
           {/* Header Row: Title & Circular/Glassmorphic Icon Badge */}
-          <div className="flex items-center justify-between gap-2.5 min-w-0">
-            <div className="space-y-1 min-w-0 pr-1 flex-1">
+          <div className="flex items-start justify-between gap-2.5 min-w-0">
+            <div className="min-w-0 pr-1 flex-1">
               {title && (
                 <span
-                  className={`block text-[11px] font-bold uppercase tracking-wider leading-snug truncate ${cfg.titleText}`}
+                  className={`block text-[11px] font-bold uppercase tracking-wide leading-snug wrap-break-word ${cfg.titleText}`}
                   title={typeof title === 'string' ? title : undefined}
                 >
                   {title}
-                </span>
-              )}
-              {badge && (
-                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.badge}`}>
-                  {badge}
                 </span>
               )}
             </div>

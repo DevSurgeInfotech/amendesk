@@ -217,6 +217,34 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (HR & Payroll Audit, KPI Card Remediation & Workflow Simplification)
+- **Goal**: Audit the HR & Payroll module (`/desk/hr`) and KPI cards (`GlassCard.tsx`) to eliminate truncated card titles, remove all middle badge pills (`3 Cashiers`, `Fixed Salaries`, `SSNIT Tier 1`, `5 Duty Logs`), expand Staff Directory row actions beyond just `Edit`, mark Attendance as `Not Configured`, and simplify the entire HR workflow for Amen Mart.
+- **Accomplishments**:
+  - **KPI Card Title Rendering & Middle Section Removal (`GlassCard.tsx`, `src/app/(erp)/desk/hr/page.tsx`)**:
+    - Removed `truncate` and tightened letter-spacing on KPI card titles in [`src/components/ui/GlassCard.tsx`](file:///d:/amendesk/src/components/ui/GlassCard.tsx) so titles (`Salaried Workforce`, `Monthly Gross Payroll`, `Employer SSNIT (13%)`, `Leave Requests`) render in full with zero hidden or clipped characters.
+    - Removed the middle `badge` pill section from [`src/components/ui/GlassCard.tsx`](file:///d:/amendesk/src/components/ui/GlassCard.tsx) and [`src/app/(erp)/desk/hr/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/hr/page.tsx), eliminating `3 Cashiers` and all middle badge pills across the 4 KPI cards.
+  - **Expanded Staff Directory Actions (`src/app/(erp)/desk/hr/page.tsx`)**:
+    - Replaced the single `Edit` action button in the Staff Directory with a comprehensive action bar per staff member:
+      1. `View` (opens a Staff Profile Modal with full statutory IDs, salary breakdown, and payout account)
+      2. `Payslip` (opens A4 / 80mm thermal payslip viewer immediately for any staff member)
+      3. `Edit` (opens the streamlined `EmployeeModal`)
+      4. `Leave` (opens the Leave Request modal pre-selected for that staff member)
+      5. `Suspend / Activate` status toggle (`UserX` / `UserCheck`)
+      6. `Remove` (deletes a staff record with confirmation modal)
+  - **Attendance Marked Not Configured (`src/app/(erp)/desk/hr/page.tsx`, `src/components/erp/Sidebar.tsx`, `src/lib/db/seed.ts`)**:
+    - Marked `Attendance` as `Not Configured` on the HR navigation tab and Sidebar (`Not Set` badge), cleared fake attendance seed logs in [`src/lib/db/seed.ts`](file:///d:/amendesk/src/lib/db/seed.ts), and replaced the Attendance view with a clean `Staff Attendance Tracking is Not Configured` status panel.
+  - **Overall HR & Payroll Simplification for Amen Mart (`EmployeeModal.tsx`, `src/app/(erp)/desk/hr/page.tsx`)**:
+    - Streamlined [`src/components/erp/hr/EmployeeModal.tsx`](file:///d:/amendesk/src/components/erp/hr/EmployeeModal.tsx) by removing unnecessary fields (Till Cashier checkbox, Corporate Email, Next of Kin, Gender, Tax Relief, Tier 3 Voluntary %) into 4 clean sections with live monthly net pay preview.
+    - Simplified the Monthly Payroll summary bar and enabled instant CSV exports (`GRA PAYE DT 0107`, `SSNIT Tier 1`, `Tier 2 Pension`) in the `GRA & SSNIT Filings` tab for any selected month.
+  - Verified mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/components/ui/GlassCard.tsx`
+  - `src/app/(erp)/desk/hr/page.tsx`
+  - `src/components/erp/hr/EmployeeModal.tsx`
+  - `src/components/erp/Sidebar.tsx`
+  - `src/lib/db/seed.ts`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (HR & Payroll Module Full Implementation — Salaried Staff, GRA PAYE, SSNIT & Hubtel API)
 - **Goal**: Curate the master implementation plan and execute all 5 sprints to build the offline-first HR & Payroll module (`/desk/hr`) for salaried staff management, Ghanaian statutory compliance, and automated Hubtel API MoMo disbursement.
 - **Accomplishments**:

@@ -8,10 +8,8 @@ import { syncEngine } from '@/lib/sync/syncEngine';
 import { calculateEmployeePayslip } from '@/lib/hr/payrollEngine';
 import { formatGHS } from '@/lib/utils/currency';
 import {
-  EMPLOYMENT_TYPE_LABELS,
   HR_DEPARTMENT_LABELS,
   type Employee,
-  type EmploymentType,
   type HrDepartment,
   type SalaryPaymentMethod,
 } from '@/lib/types';
@@ -38,7 +36,6 @@ export function EmployeeModal({
 
   const [fullName, setFullName] = useState(existingEmployee?.fullName || '');
   const [phone, setPhone] = useState(existingEmployee?.phone || '');
-  const [email, setEmail] = useState(existingEmployee?.email || '');
   const [ghanaCardNumber, setGhanaCardNumber] = useState(
     existingEmployee?.ghanaCardNumber || 'GHA-'
   );
@@ -46,31 +43,15 @@ export function EmployeeModal({
     existingEmployee?.ssnitNumber || ''
   );
   const [tinNumber, setTinNumber] = useState(existingEmployee?.tinNumber || '');
-  const [gender, setGender] = useState<'MALE' | 'FEMALE'>(
-    existingEmployee?.gender || 'MALE'
-  );
-  const [address, setAddress] = useState(existingEmployee?.address || '');
-  const [nextOfKinName, setNextOfKinName] = useState(
-    existingEmployee?.nextOfKinName || ''
-  );
-  const [nextOfKinPhone, setNextOfKinPhone] = useState(
-    existingEmployee?.nextOfKinPhone || ''
-  );
   const [department, setDepartment] = useState<HrDepartment>(
     existingEmployee?.department || 'AUCTION_OPERATIONS'
   );
   const [jobTitle, setJobTitle] = useState(existingEmployee?.jobTitle || '');
-  const [employmentType, setEmploymentType] = useState<EmploymentType>(
-    existingEmployee?.employmentType || 'FULL_TIME_SALARIED'
+  const [status, setStatus] = useState<Employee['status']>(
+    existingEmployee?.status || 'ACTIVE'
   );
   const [dateHired, setDateHired] = useState(
     existingEmployee?.dateHired || '2026-10-01'
-  );
-  const [locationId, setLocationId] = useState(
-    existingEmployee?.locationId || 'loc-gbawe'
-  );
-  const [isCashier, setIsCashier] = useState(
-    existingEmployee?.isCashier ?? false
   );
 
   // Salaried Remuneration
@@ -83,20 +64,11 @@ export function EmployeeModal({
   const [housingAllowanceGhs, setHousingAllowanceGhs] = useState(
     String(existingEmployee?.housingAllowanceGhs ?? 500)
   );
-  const [lunchAllowanceGhs, setLunchAllowanceGhs] = useState(
-    String(existingEmployee?.lunchAllowanceGhs ?? 300)
-  );
-  const [communicationAllowanceGhs, setCommunicationAllowanceGhs] = useState(
-    String(existingEmployee?.communicationAllowanceGhs ?? 200)
-  );
-  const [personalTaxReliefGhs, setPersonalTaxReliefGhs] = useState(
-    String(existingEmployee?.personalTaxReliefGhs ?? 0)
-  );
-  const [hasSsnitContribution, setHasSsnitContribution] = useState(
-    existingEmployee?.hasSsnitContribution ?? true
-  );
-  const [tier3VoluntaryPct, setTier3VoluntaryPct] = useState(
-    String(existingEmployee?.tier3VoluntaryPct ?? 0)
+  const [otherAllowanceGhs, setOtherAllowanceGhs] = useState(
+    String(
+      (existingEmployee?.lunchAllowanceGhs ?? 300) +
+        (existingEmployee?.communicationAllowanceGhs ?? 200)
+    )
   );
 
   // Payout Endpoint
@@ -109,14 +81,8 @@ export function EmployeeModal({
   const [momoPhoneNumber, setMomoPhoneNumber] = useState(
     existingEmployee?.momoPhoneNumber || ''
   );
-  const [momoAccountName, setMomoAccountName] = useState(
-    existingEmployee?.momoAccountName || ''
-  );
   const [bankName, setBankName] = useState(
     existingEmployee?.bankName || 'GCB Bank PLC'
-  );
-  const [bankBranch, setBankBranch] = useState(
-    existingEmployee?.bankBranch || 'High Street Main, Accra'
   );
   const [bankAccountNumber, setBankAccountNumber] = useState(
     existingEmployee?.bankAccountNumber || ''
@@ -129,34 +95,35 @@ export function EmployeeModal({
     employeeCode: defaultCode,
     fullName: fullName || 'Staff Member',
     phone,
+    email: existingEmployee?.email || '',
     ghanaCardNumber,
     ssnitNumber,
     tinNumber,
-    gender,
-    address,
-    nextOfKinName,
-    nextOfKinPhone,
+    gender: existingEmployee?.gender || 'MALE',
+    address: existingEmployee?.address || 'Accra',
+    nextOfKinName: existingEmployee?.nextOfKinName || '',
+    nextOfKinPhone: existingEmployee?.nextOfKinPhone || '',
     department,
-    jobTitle: jobTitle || 'Salaried Officer',
-    employmentType,
+    jobTitle: jobTitle || 'Staff Officer',
+    employmentType: existingEmployee?.employmentType || 'FULL_TIME_SALARIED',
     dateHired,
-    locationId,
-    status: existingEmployee?.status || 'ACTIVE',
-    isCashier,
+    locationId: existingEmployee?.locationId || 'loc-gbawe',
+    status,
+    isCashier: false,
     basicSalaryGhs: Number(basicSalaryGhs) || 0,
     transportAllowanceGhs: Number(transportAllowanceGhs) || 0,
     housingAllowanceGhs: Number(housingAllowanceGhs) || 0,
-    lunchAllowanceGhs: Number(lunchAllowanceGhs) || 0,
-    communicationAllowanceGhs: Number(communicationAllowanceGhs) || 0,
-    personalTaxReliefGhs: Number(personalTaxReliefGhs) || 0,
-    hasSsnitContribution,
-    tier3VoluntaryPct: Number(tier3VoluntaryPct) || 0,
+    lunchAllowanceGhs: Number(otherAllowanceGhs) || 0,
+    communicationAllowanceGhs: 0,
+    personalTaxReliefGhs: existingEmployee?.personalTaxReliefGhs || 0,
+    hasSsnitContribution: true,
+    tier3VoluntaryPct: existingEmployee?.tier3VoluntaryPct || 0,
     paymentMethod,
     momoNetwork,
     momoPhoneNumber,
-    momoAccountName: momoAccountName || fullName,
+    momoAccountName: fullName,
     bankName,
-    bankBranch,
+    bankBranch: existingEmployee?.bankBranch || 'High Street Main, Accra',
     bankAccountNumber,
     createdAt: existingEmployee?.createdAt || new Date().toISOString(),
   };
@@ -199,7 +166,7 @@ export function EmployeeModal({
   const inputClass =
     'w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500';
   const labelClass =
-    'block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1';
+    'block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1';
 
   return (
     <Modal
@@ -207,16 +174,16 @@ export function EmployeeModal({
       onClose={onClose}
       title={
         existingEmployee
-          ? `Edit Salaried Staff — ${existingEmployee.fullName}`
-          : `Enroll Salaried Staff (${defaultCode})`
+          ? `Edit Staff — ${existingEmployee.fullName}`
+          : `Add Staff Member (${defaultCode})`
       }
-      maxWidth="4xl"
+      maxWidth="2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Section 1: Identity & Statutory Numbers */}
+        {/* Section 1: Staff Details */}
         <div className="space-y-3">
-          <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            1. Personal &amp; Statutory Identification
+          <h4 className="text-xs font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+            1. Staff Details &amp; Role
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
@@ -242,15 +209,65 @@ export function EmployeeModal({
               />
             </div>
             <div>
-              <label className={labelClass}>Corporate Email</label>
+              <label className={labelClass}>Job Title *</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@amenmart.com"
+                type="text"
+                required
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Auction Coordinator"
                 className={inputClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>Department *</label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value as HrDepartment)}
+                className={inputClass}
+              >
+                {(Object.keys(HR_DEPARTMENT_LABELS) as HrDepartment[]).map(
+                  (dept) => (
+                    <option key={dept} value={dept}>
+                      {HR_DEPARTMENT_LABELS[dept]}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Status</label>
+              <select
+                value={status}
+                onChange={(e) =>
+                  setStatus(e.target.value as Employee['status'])
+                }
+                className={inputClass}
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="ON_LEAVE">On Leave</option>
+                <option value="SUSPENDED">Suspended</option>
+                <option value="TERMINATED">Terminated</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Date Hired</label>
+              <input
+                type="date"
+                value={dateHired}
+                onChange={(e) => setDateHired(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Statutory Numbers */}
+        <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+          <h4 className="text-xs font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+            2. Statutory Identification
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className={labelClass}>Ghana Card Number *</label>
               <input
@@ -263,7 +280,7 @@ export function EmployeeModal({
               />
             </div>
             <div>
-              <label className={labelClass}>SSNIT Number (13-Digit)</label>
+              <label className={labelClass}>SSNIT Number</label>
               <input
                 type="text"
                 value={ssnitNumber}
@@ -283,151 +300,11 @@ export function EmployeeModal({
               />
             </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <div>
-              <label className={labelClass}>Gender</label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value as 'MALE' | 'FEMALE')}
-                className={inputClass}
-              >
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Residential Address</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Gbawe, Accra"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Next of Kin Name</label>
-              <input
-                type="text"
-                value={nextOfKinName}
-                onChange={(e) => setNextOfKinName(e.target.value)}
-                placeholder="Full Name"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Next of Kin Phone</label>
-              <input
-                type="text"
-                value={nextOfKinPhone}
-                onChange={(e) => setNextOfKinPhone(e.target.value)}
-                placeholder="+233 24 000 0000"
-                className={inputClass}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Role & Department */}
-        <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
-          <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            2. Department &amp; Role Assignment
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <div>
-              <label className={labelClass}>Department *</label>
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value as HrDepartment)}
-                className={inputClass}
-              >
-                {(Object.keys(HR_DEPARTMENT_LABELS) as HrDepartment[]).map(
-                  (dept) => (
-                    <option key={dept} value={dept}>
-                      {HR_DEPARTMENT_LABELS[dept]}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Job Title *</label>
-              <input
-                type="text"
-                required
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-                placeholder="e.g. Auction Coordinator"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Salaried Category</label>
-              <select
-                value={employmentType}
-                onChange={(e) =>
-                  setEmploymentType(e.target.value as EmploymentType)
-                }
-                className={inputClass}
-              >
-                {(
-                  Object.keys(EMPLOYMENT_TYPE_LABELS) as EmploymentType[]
-                ).map((t) => (
-                  <option key={t} value={t}>
-                    {EMPLOYMENT_TYPE_LABELS[t]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Facility Location</label>
-              <select
-                value={locationId}
-                onChange={(e) => setLocationId(e.target.value)}
-                className={inputClass}
-              >
-                <option value="loc-gbawe">Gbawe Main Auction Grounds</option>
-                <option value="loc-showroom">Amen Mart Vehicle Showroom</option>
-                <option value="loc-hq">Accra Corporate Head Office</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-6 pt-1">
-            <div>
-              <label className={labelClass}>Date Hired</label>
-              <input
-                type="date"
-                value={dateHired}
-                onChange={(e) => setDateHired(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 mt-4 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isCashier}
-                onChange={(e) => setIsCashier(e.target.checked)}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              Authorized Front-Desk Cashier (Can Open/Close Cash Till Shifts)
-            </label>
-            <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 mt-4 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hasSsnitContribution}
-                onChange={(e) => setHasSsnitContribution(e.target.checked)}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              Enrolled in SSNIT Mandatory Tier 1 &amp; Tier 2 (Act 766)
-            </label>
-          </div>
         </div>
 
         {/* Section 3: Monthly Salaried Structure */}
         <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
-          <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+          <h4 className="text-xs font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
             3. Monthly Salary &amp; Allowances (GH₵)
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -466,47 +343,13 @@ export function EmployeeModal({
               />
             </div>
             <div>
-              <label className={labelClass}>Lunch Allowance</label>
+              <label className={labelClass}>Other Allowances</label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
-                value={lunchAllowanceGhs}
-                onChange={(e) => setLunchAllowanceGhs(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Communication Allowance</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={communicationAllowanceGhs}
-                onChange={(e) => setCommunicationAllowanceGhs(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>GRA Tax Relief (GH₵)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={personalTaxReliefGhs}
-                onChange={(e) => setPersonalTaxReliefGhs(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Tier 3 Voluntary (%)</label>
-              <input
-                type="number"
-                min="0"
-                max="16.5"
-                step="0.5"
-                value={tier3VoluntaryPct}
-                onChange={(e) => setTier3VoluntaryPct(e.target.value)}
+                value={otherAllowanceGhs}
+                onChange={(e) => setOtherAllowanceGhs(e.target.value)}
                 className={inputClass}
               />
             </div>
@@ -517,7 +360,7 @@ export function EmployeeModal({
             <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
               <Calculator className="w-4 h-4 text-indigo-600 shrink-0" />
               <span className="font-bold text-slate-700 dark:text-slate-300">
-                Live GRA/SSNIT Preview
+                Monthly Preview
               </span>
             </div>
             <div>
@@ -530,7 +373,7 @@ export function EmployeeModal({
             </div>
             <div>
               <span className="text-[10px] uppercase text-slate-400 block">
-                SSNIT Emp (5.5%)
+                SSNIT (5.5%)
               </span>
               <span className="font-mono font-semibold text-amber-600">
                 {formatGHS(liveSlipPreview.ssnitEmployeeGhs)}
@@ -555,14 +398,14 @@ export function EmployeeModal({
           </div>
         </div>
 
-        {/* Section 4: Payout Endpoint (Hubtel MoMo API vs Bank) */}
+        {/* Section 4: Payout Endpoint (MoMo vs Bank) */}
         <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
-          <h4 className="text-xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            4. Automated Disbursement Endpoint
+          <h4 className="text-xs font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+            4. Salary Payment Mode
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className={labelClass}>Disbursement Mode</label>
+              <label className={labelClass}>Payment Mode</label>
               <select
                 value={paymentMethod}
                 onChange={(e) =>
@@ -571,11 +414,9 @@ export function EmployeeModal({
                 className={inputClass}
               >
                 <option value="HUBTEL_MOMO_API">
-                  Hubtel Automated MoMo API
+                  Mobile Money (Hubtel)
                 </option>
-                <option value="BANK_TRANSFER">
-                  Commercial Bank Wire Transfer
-                </option>
+                <option value="BANK_TRANSFER">Bank Transfer</option>
               </select>
             </div>
 
@@ -608,16 +449,6 @@ export function EmployeeModal({
                     className={inputClass}
                   />
                 </div>
-                <div>
-                  <label className={labelClass}>Registered Wallet Name</label>
-                  <input
-                    type="text"
-                    value={momoAccountName}
-                    onChange={(e) => setMomoAccountName(e.target.value)}
-                    placeholder={fullName || 'Account Holder'}
-                    className={inputClass}
-                  />
-                </div>
               </>
             ) : (
               <>
@@ -628,16 +459,6 @@ export function EmployeeModal({
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     placeholder="GCB Bank / Stanbic"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Branch</label>
-                  <input
-                    type="text"
-                    value={bankBranch}
-                    onChange={(e) => setBankBranch(e.target.value)}
-                    placeholder="High Street Main"
                     className={inputClass}
                   />
                 </div>
@@ -663,7 +484,7 @@ export function EmployeeModal({
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting}>
             <UserPlus className="w-4 h-4 mr-1.5" />
-            {existingEmployee ? 'Save Staff Profile' : 'Enroll Salaried Staff'}
+            {existingEmployee ? 'Save Changes' : 'Add Staff'}
           </Button>
         </div>
       </form>
