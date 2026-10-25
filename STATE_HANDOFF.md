@@ -225,6 +225,26 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (UI Modal Title & String Prop Remediation — Literal `&bull;` Entity Resolution)
+- **Goal**: Resolve literal `&bull;` text rendering in modal headers and JS string props across AmenDesk ERP and administrative consoles.
+- **Root Cause Identified**:
+  - React decodes standard HTML entities (`&bull;`, `&amp;`) only when they are rendered inside direct JSX text nodes.
+  - When HTML entities are placed inside JavaScript string literals or expressions passed as component props (such as `<Modal title={`... &bull; ...`} />` or `subtitle={`... &bull; ...`}`), React treats them as raw string characters and automatically escapes them upon rendering to prevent XSS, resulting in literal `&bull;` visible on screen.
+- **Accomplishments**:
+  - **Communication Hub (`src/app/(erp)/desk/communication/page.tsx`)**:
+    - Replaced `&bull;` with authentic Unicode bullet `•` (`\u2022`) in Email Reply modal title (`Reply via Email (Resend API) • ${selectedMessage?.customerName}`).
+    - Replaced `&bull;` with authentic Unicode bullet `•` in WhatsApp modal title (`WhatsApp (wa.me) • ${selectedMessage?.customerName}`).
+  - **CRM Inbound Leads (`src/app/(erp)/desk/crm/page.tsx`)**:
+    - Replaced `&bull;` with authentic Unicode bullet `•` in `ManageLeadModal` subtitle (`Source: ${getLeadSourceLabel(lead)} • Received ...`).
+  - **Platform Management Fleet Console (`src/app/platform/page.tsx`)**:
+    - Replaced `&bull;` with authentic Unicode bullet `•` in `lastDeployed` string descriptors for production and staging websites.
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
+- **Changed Files**:
+  - `src/app/(erp)/desk/communication/page.tsx`
+  - `src/app/(erp)/desk/crm/page.tsx`
+  - `src/app/platform/page.tsx`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (WhatsApp UI Remediation — Dedicated Official WhatsApp Symbol & Green Theme)
 - **Goal**: Remediate WhatsApp (`wa.me`) action buttons across the Communication Hub and CRM module to use authentic WhatsApp brand green (`#25D366`) and the official WhatsApp speech-bubble/handset symbol, completely eliminating any indigo button styling or generic Lucide message icons.
 - **Accomplishments**:

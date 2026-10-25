@@ -1410,7 +1410,7 @@ function CommunicationHubContent() {
         <Modal
           isOpen
           onClose={() => setIsEmailModalOpen(false)}
-          title={`Reply via Email (Resend API) &bull; ${selectedMessage?.customerName}`}
+          title={`Reply via Email (Resend API) • ${selectedMessage?.customerName}`}
           subtitle="Dispatches an official Amen Mart branded letterhead with statutory trust badges."
           maxWidth="lg"
         >
@@ -1513,7 +1513,7 @@ function CommunicationHubContent() {
         <Modal
           isOpen
           onClose={() => setIsWaModalOpen(false)}
-          title={`WhatsApp (wa.me) &bull; ${selectedMessage?.customerName}`}
+          title={`WhatsApp (wa.me) • ${selectedMessage?.customerName}`}
           subtitle="Direct click-to-chat with pre-filled Ghanaian business template."
           maxWidth="md"
         >

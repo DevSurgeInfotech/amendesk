@@ -115,7 +115,7 @@ const MANAGED_WEBSITES: ManagedWebsite[] = [
     status: 'ONLINE',
     connectedTenant: 'amen-mart-live (Amen Mart Ghana)',
     framework: 'Next.js 16 App Router (Tailwind v4)',
-    lastDeployed: '24 Oct 2026 &bull; Production v1.2.4',
+    lastDeployed: '24 Oct 2026 • Production v1.2.4',
     sslStatus: 'Cloudflare Edge SSL (Active)',
   },
   {
@@ -126,7 +126,7 @@ const MANAGED_WEBSITES: ManagedWebsite[] = [
     status: 'ONLINE',
     connectedTenant: 'amen-mart-sandbox (Demo Yard)',
     framework: 'Next.js 16 App Router (Staging)',
-    lastDeployed: '24 Oct 2026 &bull; Staging Build',
+    lastDeployed: '24 Oct 2026 • Staging Build',
     sslStatus: 'Cloudflare Edge SSL (Active)',
   },
 ];

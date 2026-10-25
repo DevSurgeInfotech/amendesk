@@ -90,7 +90,7 @@ function ManageLeadModal({ lead, onClose, onUpdateStatus, onConvert }: ManageLea
       isOpen
       onClose={onClose}
       title={`Inbound Request: ${lead.fullName}`}
-      subtitle={`Source: ${getLeadSourceLabel(lead)} &bull; Received ${
+      subtitle={`Source: ${getLeadSourceLabel(lead)} • Received ${
         lead.createdAt
           ? new Date(lead.createdAt).toLocaleString('en-US', {
               month: 'short',
