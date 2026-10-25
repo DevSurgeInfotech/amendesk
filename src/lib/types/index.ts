@@ -194,6 +194,17 @@ export interface SaleTransferDoc {
   syncStatus: 'SYNCED' | 'PENDING' | 'OFFLINE';
 }
 
+export type LeadSource =
+  | 'CONTACT_PAGE'
+  | 'SHOWROOM'
+  | 'AUCTIONS'
+  | 'LAND'
+  | 'PROPERTY'
+  | 'PORTAL'
+  | 'DIRECT';
+
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'RESOLVED' | 'CONVERTED';
+
 export interface Customer {
   id: string;
   fullName: string;
@@ -206,6 +217,13 @@ export interface Customer {
   kycDocumentUrl?: string;
   notes?: string;
   createdAt: string;
+
+  // Inbound Leads & Website Inquiries
+  leadSource?: LeadSource;
+  leadStatus?: LeadStatus;
+  inquiryType?: string;
+  inquirySubject?: string;
+  inquiryMessage?: string;
 }
 
 export interface DealershipVehicle {

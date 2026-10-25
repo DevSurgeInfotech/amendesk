@@ -91,6 +91,9 @@ export default function DeskDashboardPage() {
   const rawProperties = useLiveQuery(() => db.propertyUnits.toArray(), []);
   const properties = useMemo(() => rawProperties || [], [rawProperties]);
 
+  const rawCustomers = useLiveQuery(() => db.customers.toArray(), []);
+  const customers = useMemo(() => rawCustomers || [], [rawCustomers]);
+
   // Modal States
   const [selectedLotForPayment, setSelectedLotForPayment] = useState<AuctionLot | null>(null);
   const [isGeneralPaymentOpen, setIsGeneralPaymentOpen] = useState(false);
@@ -533,6 +536,7 @@ export default function DeskDashboardPage() {
       <OperationalAlerts
         lots={lots}
         receipts={receipts}
+        customers={customers}
         onSelectLotForExtension={(lot) => setSelectedLotForExtension(lot)}
         onSelectLotForWaybill={(lot) => setSelectedLotForWaybill(lot)}
       />

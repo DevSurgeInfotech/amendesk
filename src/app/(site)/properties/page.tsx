@@ -57,20 +57,27 @@ export default function PublicPropertiesPage() {
       const customerId = `cust-${Date.now()}`;
       await db.customers.add({
         id: customerId,
-        fullName: name,
-        phone,
-        email: email || 'realty-lead@domain.gh',
+        fullName: name.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
         ghanaCardNumber: 'PROPERTY_INQUIRY_LEAD',
-        address: 'Web Inquiry',
+        address: 'Property Desk Web Inquiry',
         customerType: 'INDIVIDUAL',
         kycVerified: false,
+        leadSource: 'PROPERTY',
+        leadStatus: 'NEW',
+        inquiryType: 'PROPERTY_AUCTION',
+        inquirySubject: `Property ${selectedProp.unitRef}: ${selectedProp.title}`,
+        inquiryMessage: `Inquiry on Property ${selectedProp.unitRef}: ${selectedProp.title} (${selectedProp.location})`,
         notes: `Inquiry on Property ${selectedProp.unitRef}: ${selectedProp.title}`,
         createdAt: new Date().toISOString(),
       });
 
       await syncEngine.queueMutation('customers', customerId, 'CREATE', {
-        fullName: name,
-        phone,
+        fullName: name.trim(),
+        phone: phone.trim(),
+        leadSource: 'PROPERTY',
+        leadStatus: 'NEW',
         notes: `Property Inquiry: ${selectedProp.unitRef}`,
       });
 

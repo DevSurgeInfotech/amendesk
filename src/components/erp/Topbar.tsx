@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, type ChangeEvent } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { formatGHS } from '@/lib/utils/currency';
+import { isCustomerInboundLead, getLeadSourceLabel, extractInquiryDetails } from '@/lib/crm/leads';
 import { useTerminal } from '@/context/TerminalContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useSidebar } from '@/context/SidebarContext';
@@ -178,8 +179,46 @@ export function Topbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [dismissedNotifIds, setDismissedNotifIds] = useState<string[]>([]);
+  const [dismissedNotifIds, setDismissedNotifIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(`amendesk_dismissed_notifs_${activeTenant.id}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
   const [staffMenuOpen, setStaffMenuOpen] = useState(false);
+
+  const handleDismissNotif = useCallback(
+    (id: string) => {
+      setDismissedNotifIds((prev) => {
+        const next = Array.from(new Set([...prev, id]));
+        try {
+          localStorage.setItem(`amendesk_dismissed_notifs_${activeTenant.id}`, JSON.stringify(next));
+        } catch (err) {
+          console.error('Failed to save dismissed notification:', err);
+        }
+        return next;
+      });
+    },
+    [activeTenant.id]
+  );
+
+  const handleDismissAll = useCallback(
+    (ids: string[]) => {
+      setDismissedNotifIds((prev) => {
+        const next = Array.from(new Set([...prev, ...ids]));
+        try {
+          localStorage.setItem(`amendesk_dismissed_notifs_${activeTenant.id}`, JSON.stringify(next));
+        } catch (err) {
+          console.error('Failed to save dismissed notifications:', err);
+        }
+        return next;
+      });
+    },
+    [activeTenant.id]
+  );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -406,6 +445,7 @@ export function Topbar() {
   const notifications = useMemo(() => {
     const safeLots = lots ?? [];
     const safeReceipts = receipts ?? [];
+    const safeCustomers = customers ?? [];
     const list: Array<{
       id: string;
       type: 'CRITICAL' | 'WARNING' | 'INFO' | 'SUCCESS';
@@ -415,7 +455,24 @@ export function Topbar() {
       href: string;
     }> = [];
 
-    // Overdue 14-day lots
+    // 1. Inbound Website Inquiries & Contact Requests (New & Awaiting Contact)
+    const inboundLeads = safeCustomers
+      .filter((c) => isCustomerInboundLead(c) && (c.leadStatus === 'NEW' || !c.leadStatus))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    for (const lead of inboundLeads.slice(0, 4)) {
+      const details = extractInquiryDetails(lead);
+      list.push({
+        id: `notif-lead-${lead.id}`,
+        type: 'WARNING',
+        title: `New Inbound Inquiry: ${lead.fullName}`,
+        description: `${lead.phone} • [${details.typeLabel}] ${details.messageText}`,
+        timeLabel: getLeadSourceLabel(lead),
+        href: `/desk/crm?filter=INQUIRIES&leadId=${lead.id}`,
+      });
+    }
+
+    // 2. Overdue 14-day lots
     const overdueLots = safeLots.filter((l) => l.status === 'OVERDUE');
     for (const lot of overdueLots) {
       list.push({
@@ -428,7 +485,7 @@ export function Topbar() {
       });
     }
 
-    // Awaiting balance lots
+    // 3. Awaiting balance lots
     const awaitingLots = safeLots.filter((l) => l.status === 'AWAITING_BALANCE');
     for (const lot of awaitingLots.slice(0, 3)) {
       list.push({
@@ -441,7 +498,25 @@ export function Topbar() {
       });
     }
 
-    // Pending sync items
+    // 4. Ready for Release Movable Lots (Fully Settled, Missing Gate Waybill)
+    const readyLots = safeLots.filter(
+      (l) =>
+        l.assetType === 'MOVABLE' &&
+        (l.status === 'FULLY_PAID' || (l.balanceDueGhs === 0 && l.hammerPriceGhs && l.hammerPriceGhs > 0)) &&
+        !l.waybillId
+    );
+    for (const lot of readyLots.slice(0, 2)) {
+      list.push({
+        id: `notif-waybill-${lot.id}`,
+        type: 'INFO',
+        title: `Ready for Release: ${lot.lotNumber}`,
+        description: `${lot.title} is fully settled. Issue A5 gate release waybill.`,
+        timeLabel: 'Dispatch Desk',
+        href: '/desk/auctions',
+      });
+    }
+
+    // 5. Pending sync items
     if (pendingSyncCount > 0) {
       list.push({
         id: 'notif-sync-pending',
@@ -453,7 +528,7 @@ export function Topbar() {
       });
     }
 
-    // Recent receipts
+    // 6. Recent receipts
     for (const rcp of safeReceipts.slice(-2).reverse()) {
       list.push({
         id: `notif-rcp-${rcp.id}`,
@@ -466,7 +541,11 @@ export function Topbar() {
     }
 
     return list.filter((item) => !dismissedNotifIds.includes(item.id));
-  }, [lots, receipts, pendingSyncCount, dismissedNotifIds]);
+  }, [lots, receipts, customers, pendingSyncCount, dismissedNotifIds]);
+
+  const pendingInboundCount = useMemo(() => {
+    return (customers ?? []).filter((c) => isCustomerInboundLead(c) && (c.leadStatus === 'NEW' || !c.leadStatus)).length;
+  }, [customers]);
 
   // Parse Staff Identity for Avatar & Dropdown
   const staffProfile = useMemo(() => {
@@ -752,12 +831,7 @@ export function Topbar() {
                   {notifications.length > 0 && (
                     <button
                       type="button"
-                      onClick={() =>
-                        setDismissedNotifIds((prev) => [
-                          ...prev,
-                          ...notifications.map((n) => n.id),
-                        ])
-                      }
+                      onClick={() => handleDismissAll(notifications.map((n) => n.id))}
                       className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                     >
                       Mark all read
@@ -811,9 +885,7 @@ export function Topbar() {
                             </span>
                             <button
                               type="button"
-                              onClick={() =>
-                                setDismissedNotifIds((prev) => [...prev, item.id])
-                              }
+                              onClick={() => handleDismissNotif(item.id)}
                               className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                               aria-label="Dismiss notification"
                             >
@@ -838,21 +910,29 @@ export function Topbar() {
                   )}
                 </div>
 
-                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs gap-2">
                   <Link
                     href="/desk/payment-plans"
                     onClick={() => setNotificationsOpen(false)}
-                    className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 shrink-0"
                   >
-                    <span>14-Day Settlement Watchlist</span>
-                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    <span>14-Day Watchlist</span>
+                    <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                  <Link
+                    href="/desk/crm?filter=INQUIRIES"
+                    onClick={() => setNotificationsOpen(false)}
+                    className="font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 shrink-0"
+                  >
+                    <span>Inquiries ({pendingInboundCount})</span>
+                    <ArrowUpRight className="h-3 w-3" />
                   </Link>
                   <Link
                     href="/desk/accounts?tab=RECEIPTS"
                     onClick={() => setNotificationsOpen(false)}
-                    className="font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    className="font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shrink-0"
                   >
-                    Receipts Ledger
+                    Receipts
                   </Link>
                 </div>
               </div>

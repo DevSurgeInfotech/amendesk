@@ -217,6 +217,53 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (ERP Operational Notifications & Inbound Contact Page Inquiry Pipeline Remediation)
+- **Goal**:
+  1. Audit and remediate the ERP Topbar notifications system to verify operational alert triggers, persist dismissed notifications in `localStorage` across page reloads, and surface unhandled inbound website inquiries.
+  2. Remediate where contact page and website showroom inquiries fall in AmenDesk by establishing a first-class Inbound Leads & Inquiries workflow in CRM (`/desk/crm?filter=INQUIRIES`), adding direct Call/WhatsApp/Email action channels, and providing a seamless lead-to-KYC-customer conversion pathway.
+- **Accomplishments**:
+  - **Notification Configuration & Dismissal Persistence (`src/components/erp/Topbar.tsx`)**:
+    - Identified that `dismissedNotifIds` was stored only in component memory (`useState`), causing all 4 operational alerts to re-appear on every page reload or navigation.
+    - Implemented tenant-scoped persistence (`amendesk_dismissed_notifs_${activeTenant.id}`) in `localStorage` so "Mark all read" and individual dismiss buttons (`X`) permanently persist across refreshes.
+    - Added real-time operational notifications for new inbound website inquiries (`notif-lead-...`) with client name, phone number, and area of interest, linking directly to `/desk/crm?filter=INQUIRIES`.
+    - Added notifications for fully-paid movable lots awaiting A5 gate release waybills (`notif-waybill-...`).
+    - Added direct quick links in the notifications popover footer (`14-Day Watchlist`, `Inquiries (N)`, `Receipts Ledger`).
+  - **Inbound Lead Data Architecture (`src/lib/types/index.ts`, `src/lib/crm/leads.ts`)**:
+    - Created [`src/lib/crm/leads.ts`](file:///d:/amendesk/src/lib/crm/leads.ts) with `isCustomerInboundLead`, `getLeadStatus`, `getLeadSourceLabel`, `formatInquiryType`, and `extractInquiryDetails`.
+    - Extended `Customer` type in [`src/lib/types/index.ts`](file:///d:/amendesk/src/lib/types/index.ts) with optional lead attributes: `leadSource`, `leadStatus`, `inquiryType`, `inquirySubject`, and `inquiryMessage`.
+  - **Website Inbound Forms Remediation**:
+    - Remediated Contact Page ([`src/app/(site)/contact/page.tsx`](file:///d:/amendesk/src/app/(site)/contact/page.tsx)): removed corporate email fallback that polluted customer records, and added structured lead metadata (`leadSource: 'CONTACT_PAGE'`, `leadStatus: 'NEW'`, `inquiryMessage`).
+    - Aligned all website inquiry forms ([`/showroom`](file:///d:/amendesk/src/app/(site)/showroom/page.tsx), [`/land`](file:///d:/amendesk/src/app/(site)/land/page.tsx), [`/properties`](file:///d:/amendesk/src/app/(site)/properties/page.tsx), [`/auctions`](file:///d:/amendesk/src/app/(site)/auctions/page.tsx), and [`/`](file:///d:/amendesk/src/app/(site)/page.tsx)) to record origin `leadSource` and `leadStatus: 'NEW'`.
+  - **CRM Inbound Leads & Customer Desk Remediation (`src/app/(erp)/desk/crm/page.tsx`)**:
+    - Added dedicated `Inquiries` filter tab (`All Clients`, `Inbound Inquiries`, `KYC Verified`, `Pending KYC`) synchronized with URL parameter `?filter=INQUIRIES`.
+    - Added summary KPI metric cards at the top of CRM tracking total clients, inbound inquiries (with live pulsing "New" badge), verified accounts, and pending KYC.
+    - Designed specialized Inbound Inquiry cards featuring:
+      - Origin badge (`Contact Page`, `Showroom Vehicle`, `Land Desk`, `Property Desk`, `Auction Desk`)
+      - Lead status badge (`NEW`, `CONTACTED`, `RESOLVED`, `CONVERTED`)
+      - Prominently styled customer inquiry quotation box
+      - Direct Communication Hub: one-click **Call** (`tel:`), **WhatsApp** (`wa.me` with pre-filled greeting referencing the client's asset of interest), and **Email** (`mailto:`)
+      - Dedicated **Manage Lead Modal** allowing staff to update follow-up notes, toggle response status, and convert the lead into a verified customer with Ghana Card PIN.
+  - **Sidebar & Operations Dashboard Sync (`src/components/erp/Sidebar.tsx`, `OperationalAlerts.tsx`, `src/app/(erp)/desk/page.tsx`)**:
+    - Registered `Inbound Inquiries` (`/desk/crm?filter=INQUIRIES`) under the Customers menu in [`Sidebar.tsx`](file:///d:/amendesk/src/components/erp/Sidebar.tsx).
+    - Updated [`OperationalAlerts.tsx`](file:///d:/amendesk/src/components/erp/dashboard/OperationalAlerts.tsx) to surface uncontacted website inquiries on the main executive operations dashboard.
+  - **Verified Quality Gates**: `npm run check` passed 100% (0 TypeScript errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/lib/types/index.ts`
+  - `src/lib/crm/leads.ts`
+  - `src/app/(site)/contact/page.tsx`
+  - `src/app/(site)/showroom/page.tsx`
+  - `src/app/(site)/land/page.tsx`
+  - `src/app/(site)/properties/page.tsx`
+  - `src/app/(site)/auctions/page.tsx`
+  - `src/app/(site)/page.tsx`
+  - `src/components/erp/Topbar.tsx`
+  - `src/components/erp/Sidebar.tsx`
+  - `src/components/erp/dashboard/OperationalAlerts.tsx`
+  - `src/app/(erp)/desk/page.tsx`
+  - `src/app/(erp)/desk/crm/page.tsx`
+  - `src/lib/db/seed.ts`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (HR & Payroll Audit, KPI Card Remediation & Workflow Simplification)
 - **Goal**: Audit the HR & Payroll module (`/desk/hr`) and KPI cards (`GlassCard.tsx`) to eliminate truncated card titles, remove all middle badge pills (`3 Cashiers`, `Fixed Salaries`, `SSNIT Tier 1`, `5 Duty Logs`), expand Staff Directory row actions beyond just `Edit`, mark Attendance as `Not Configured`, and simplify the entire HR workflow for Amen Mart.
 - **Accomplishments**:

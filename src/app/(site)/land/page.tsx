@@ -57,20 +57,27 @@ export default function PublicLandPage() {
       const customerId = `cust-${Date.now()}`;
       await db.customers.add({
         id: customerId,
-        fullName: name,
-        phone,
-        email: email || 'land-lead@domain.gh',
+        fullName: name.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
         ghanaCardNumber: 'LAND_INQUIRY_LEAD',
-        address: 'Web Inquiry',
+        address: 'Land Desk Web Inquiry',
         customerType: 'INDIVIDUAL',
         kycVerified: false,
+        leadSource: 'LAND',
+        leadStatus: 'NEW',
+        inquiryType: 'LAND_PURCHASE',
+        inquirySubject: `Land ${selectedParcel.siteRef}: ${selectedParcel.title}`,
+        inquiryMessage: `Inquiry on Land ${selectedParcel.siteRef}: ${selectedParcel.title} (${selectedParcel.location})`,
         notes: `Inquiry on Land ${selectedParcel.siteRef}: ${selectedParcel.title}`,
         createdAt: new Date().toISOString(),
       });
 
       await syncEngine.queueMutation('customers', customerId, 'CREATE', {
-        fullName: name,
-        phone,
+        fullName: name.trim(),
+        phone: phone.trim(),
+        leadSource: 'LAND',
+        leadStatus: 'NEW',
         notes: `Land Inquiry: ${selectedParcel.siteRef}`,
       });
 

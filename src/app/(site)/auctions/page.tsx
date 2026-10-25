@@ -66,20 +66,27 @@ function PublicAuctionsCatalog() {
       const customerId = `cust-${Date.now()}`;
       await db.customers.add({
         id: customerId,
-        fullName: bidderName,
-        phone: bidderPhone,
-        email: bidderEmail || 'bidder@domain.gh',
+        fullName: bidderName.trim(),
+        phone: bidderPhone.trim(),
+        email: bidderEmail.trim(),
         ghanaCardNumber: 'PENDING_REGISTRATION_DESK',
         address: 'Online Bidder Registration',
         customerType: 'INDIVIDUAL',
         kycVerified: false,
+        leadSource: 'AUCTIONS',
+        leadStatus: 'NEW',
+        inquiryType: 'AUCTION_INQUIRY',
+        inquirySubject: `Bidder Registration for ${inquiryLot.lotNumber}: ${inquiryLot.title}`,
+        inquiryMessage: `Online bidder registration request for ${inquiryLot.lotNumber}: ${inquiryLot.title}`,
         notes: `Online Bidder Registration for ${inquiryLot.lotNumber}: ${inquiryLot.title}`,
         createdAt: new Date().toISOString(),
       });
 
       await syncEngine.queueMutation('customers', customerId, 'CREATE', {
-        fullName: bidderName,
-        phone: bidderPhone,
+        fullName: bidderName.trim(),
+        phone: bidderPhone.trim(),
+        leadSource: 'AUCTIONS',
+        leadStatus: 'NEW',
         notes: `Registered for ${inquiryLot.lotNumber}`,
       });
 

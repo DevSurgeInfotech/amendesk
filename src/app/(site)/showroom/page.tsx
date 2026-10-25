@@ -87,13 +87,18 @@ export default function ShowroomPage() {
       const customerId = `cust-${Date.now()}`;
       const customer = {
         id: customerId,
-        fullName: buyerName,
-        phone: buyerPhone,
-        email: buyerEmail || 'customer@paystack.gh',
+        fullName: buyerName.trim(),
+        phone: buyerPhone.trim(),
+        email: buyerEmail.trim(),
         ghanaCardNumber: 'ONLINE_PAYSTACK_HOLD',
         address: 'Online Showroom Reservation',
         customerType: 'INDIVIDUAL' as const,
         kycVerified: false,
+        leadSource: 'SHOWROOM' as const,
+        leadStatus: 'NEW' as const,
+        inquiryType: 'SHOWROOM_VEHICLE',
+        inquirySubject: `Reservation: ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model}`,
+        inquiryMessage: `Online reservation deposit for ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model} (VIN: ${selectedVehicleForDeposit.vin})`,
         notes: `Online reservation deposit for ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model}`,
         createdAt: nowIso,
       };

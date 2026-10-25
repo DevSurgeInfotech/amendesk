@@ -154,6 +154,7 @@ const erpModules: ModuleItem[] = [
     icon: Users,
     submodules: [
       { label: 'All Customers', href: '/desk/crm' },
+      { label: 'Inbound Inquiries', href: '/desk/crm?filter=INQUIRIES' },
       { label: 'KYC Verified', href: '/desk/crm?filter=VERIFIED' },
     ],
   },

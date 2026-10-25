@@ -76,6 +76,43 @@ export const initialCustomers: Customer[] = [
     notes: 'Interested in showroom imported SUV inventory',
     createdAt: '2026-10-02T16:00:00Z',
   },
+  {
+    id: 'cust-inq-1',
+    fullName: 'Kofi Asare-Bediako',
+    phone: '+233 24 555 9012',
+    email: 'kofi.asare@fintechgh.com',
+    ghanaCardNumber: 'WEB_GENERAL_CONTACT',
+    address: 'Contact Page Web Inbound',
+    customerType: 'INDIVIDUAL',
+    kycVerified: false,
+    leadSource: 'CONTACT_PAGE',
+    leadStatus: 'NEW',
+    inquiryType: 'AUCTION_INQUIRY',
+    inquiryMessage:
+      'Interested in registering for the upcoming Judicial vehicle auction. Need details on inspection schedule at Accra Yard.',
+    notes:
+      'Contact Inbound (AUCTION_INQUIRY): Interested in registering for the upcoming Judicial vehicle auction. Need details on inspection schedule at Accra Yard.',
+    createdAt: '2026-10-24T09:15:00Z',
+  },
+  {
+    id: 'cust-inq-2',
+    fullName: 'Abena Osei-Tutu',
+    phone: '+233 20 441 8832',
+    email: 'abena.osei@gmail.com',
+    ghanaCardNumber: 'LAND_INQUIRY_LEAD',
+    address: 'Land Desk Web Inquiry',
+    customerType: 'INDIVIDUAL',
+    kycVerified: false,
+    leadSource: 'LAND',
+    leadStatus: 'CONTACTED',
+    inquiryType: 'LAND_PURCHASE',
+    inquirySubject: 'Land PAR-GBA-001: 2 Serviced Commercial/Residential Beachfront Plots',
+    inquiryMessage:
+      'Inquiry on Land PAR-GBA-001: 2 Serviced Commercial/Residential Beachfront Plots (Private Treaty)',
+    notes:
+      'Inquiry on Land PAR-GBA-001: 2 Serviced Commercial/Residential Beachfront Plots (Private Treaty)',
+    createdAt: '2026-10-23T14:30:00Z',
+  },
 ];
 
 export const initialLots: AuctionLot[] = [

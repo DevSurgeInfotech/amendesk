@@ -22,24 +22,37 @@ export default function ContactPage() {
     setIsSubmitting(true);
     try {
       const customerId = `cust-${Date.now()}`;
+      const nowIso = new Date().toISOString();
+      const cleanName = name.trim();
+      const cleanPhone = phone.trim();
+      const cleanEmail = email.trim();
+      const cleanMessage = message.trim();
+
       await db.customers.add({
         id: customerId,
-        fullName: name,
-        phone,
-        email: email || 'amenmart2291@gmail.com',
+        fullName: cleanName,
+        phone: cleanPhone,
+        email: cleanEmail,
         ghanaCardNumber: 'WEB_GENERAL_CONTACT',
-        address: 'Direct Contact Inbound',
+        address: 'Contact Page Web Inbound',
         customerType: 'INDIVIDUAL',
         kycVerified: false,
-        notes: `Contact Inbound (${inquiryType}): ${message}`,
-        createdAt: new Date().toISOString(),
+        leadSource: 'CONTACT_PAGE',
+        leadStatus: 'NEW',
+        inquiryType,
+        inquiryMessage: cleanMessage,
+        notes: `Contact Inbound (${inquiryType}): ${cleanMessage || 'General inquiry requested via website contact form.'}`,
+        createdAt: nowIso,
       });
 
       await syncEngine.queueMutation('customers', customerId, 'CREATE', {
-        fullName: name,
-        phone,
+        fullName: cleanName,
+        phone: cleanPhone,
+        email: cleanEmail,
+        leadSource: 'CONTACT_PAGE',
+        leadStatus: 'NEW',
         inquiryType,
-        message,
+        inquiryMessage: cleanMessage,
       });
 
       setIsSuccess(true);

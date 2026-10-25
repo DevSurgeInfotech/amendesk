@@ -72,13 +72,17 @@ export default function HomePage() {
         const customerId = `cust-${Date.now()}`;
         const customer = {
           id: customerId,
-          fullName: inquiryName,
-          phone: inquiryPhone,
-          email: inquiryEmail || 'amenmart2291@gmail.com',
+          fullName: inquiryName.trim(),
+          phone: inquiryPhone.trim(),
+          email: inquiryEmail.trim(),
           ghanaCardNumber: 'PENDING_ONLINE_KYC',
           address: 'Website Online Inquiry',
           customerType: 'INDIVIDUAL' as const,
           kycVerified: false,
+          leadSource: 'PORTAL' as const,
+          leadStatus: 'NEW' as const,
+          inquirySubject: inquiryModalItem ? `${inquiryModalItem.type}: ${inquiryModalItem.title}` : 'General Portal Inquiry',
+          inquiryMessage: noteText,
           notes: noteText,
           createdAt: new Date().toISOString(),
         };
