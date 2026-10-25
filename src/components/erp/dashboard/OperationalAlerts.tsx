@@ -98,10 +98,10 @@ export function OperationalAlerts({
           </div>
 
           <Link
-            href="/desk/crm?filter=INQUIRIES"
+            href="/desk/communication"
             className="font-bold text-xs text-amber-800 dark:text-amber-300 hover:underline flex items-center gap-1 shrink-0"
           >
-            <span>Review</span>
+            <span>Reply</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

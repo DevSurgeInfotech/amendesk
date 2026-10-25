@@ -27,6 +27,7 @@ import type {
   StockMovement,
   SyncOutboxItem,
   Waybill,
+  CommunicationRecord,
 } from '@/lib/types';
 import {
   initialAccountingClasses,
@@ -55,6 +56,7 @@ import {
   initialSaleTransferDocs,
   initialStaffAttendance,
   initialCashShifts,
+  initialCommunications,
 } from './seed';
 import {
   LIVE_DB_NAME,
@@ -104,6 +106,9 @@ export class AmenDeskDB extends Dexie {
   payrollSlips!: Table<PayrollSlip, string>;
   staffAttendance!: Table<StaffAttendance, string>;
   leaveRequests!: Table<LeaveRequest, string>;
+
+  // Communication Hub
+  communications!: Table<CommunicationRecord, string>;
 
   constructor(databaseName = getActiveDbName(), mode = getActiveEnvironmentMode()) {
     super(databaseName);
@@ -156,6 +161,10 @@ export class AmenDeskDB extends Dexie {
       payrollSlips: 'id, slipNumber, runId, period, employeeId, grossSalaryGhs, netPayGhs, paymentMethod, hubtelTransactionId, status, disbursedAt',
       staffAttendance: 'id, employeeId, date, status, shiftType, linkedShiftId',
       leaveRequests: 'id, employeeId, leaveType, startDate, endDate, status, approvedBy',
+    });
+
+    this.version(6).stores({
+      communications: 'id, customerId, direction, channel, status, createdAt, businessLine',
     });
   }
 
@@ -214,6 +223,11 @@ export class AmenDeskDB extends Dexie {
         await this.payrollSlips.bulkAdd(initialPayrollSlips);
         await this.staffAttendance.bulkAdd(initialStaffAttendance);
         await this.leaveRequests.bulkAdd(initialLeaveRequests);
+      }
+
+      const commCount = await this.communications.count();
+      if (commCount === 0) {
+        await this.communications.bulkAdd(initialCommunications);
       }
     } else {
       // LIVE PRODUCTION: Ensure Live Database is a 100% pristine clean slate for client handover
@@ -443,6 +457,13 @@ export class AmenDeskDB extends Dexie {
       if (seedCustsToDelete.length > 0) {
         await this.customers.bulkDelete(seedCustsToDelete.map((c) => c.id));
       }
+
+      // 15. Purge seed communications while preserving genuine inbound customer interactions
+      const comms = await this.communications.toArray();
+      const seedCommsToDelete = comms.filter((c) => c.id.startsWith('comm-seed-'));
+      if (seedCommsToDelete.length > 0) {
+        await this.communications.bulkDelete(seedCommsToDelete.map((c) => c.id));
+      }
     } catch (err) {
       console.error('Failed to ensure live clean slate:', err);
     }
@@ -480,6 +501,7 @@ export class AmenDeskDB extends Dexie {
     await this.payrollSlips.clear();
     await this.staffAttendance.clear();
     await this.leaveRequests.clear();
+    await this.communications.clear();
 
     // Reset all account balances to 0
     const accounts = await this.accounts.toArray();

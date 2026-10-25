@@ -24,6 +24,7 @@ import type {
   StaffAttendance,
   StockMovement,
   Waybill,
+  CommunicationRecord,
 } from '@/lib/types';
 import { buildMonthlyPayrollRun } from '@/lib/hr/payrollEngine';
 
@@ -326,6 +327,7 @@ export const initialLots: AuctionLot[] = [
   },
 ];
 
+
 export const initialPaymentPlans: PaymentPlan[] = [
   {
     id: 'pp-001',
@@ -491,6 +493,7 @@ export const initialReceipts: Receipt[] = [
   },
 ];
 
+
 export const initialWaybills: Waybill[] = [
   {
     id: 'wb-001',
@@ -514,6 +517,7 @@ export const initialWaybills: Waybill[] = [
   },
 ];
 
+
 export const initialSaleTransferDocs: SaleTransferDoc[] = [
   {
     id: 'trf-001',
@@ -534,6 +538,7 @@ export const initialSaleTransferDocs: SaleTransferDoc[] = [
     syncStatus: 'SYNCED',
   },
 ];
+
 
 export const initialVehicles: DealershipVehicle[] = [
   {
@@ -1625,6 +1630,7 @@ export const initialJournalEntries: JournalEntry[] = [
   },
 ];
 
+
 export const initialExpenses: Expense[] = [
   {
     id: 'exp-001',
@@ -1726,6 +1732,7 @@ export const initialExpenses: Expense[] = [
     syncStatus: 'SYNCED',
   },
 ];
+
 
 export const initialInvoices: Invoice[] = [
   {
@@ -1852,6 +1859,7 @@ export const initialInvoices: Invoice[] = [
     syncStatus: 'SYNCED',
   },
 ];
+
 
 export const initialCashShifts: CashShift[] = [
   {
@@ -2379,6 +2387,78 @@ export const initialPayrollRuns: PayrollRun[] = [
   },
 ];
 
+
+export const initialCommunications: CommunicationRecord[] = [
+  {
+    id: 'comm-seed-1',
+    customerId: 'cust-1',
+    customerName: 'Nana Kwesi Boateng',
+    customerPhone: '+233 24 912 3456',
+    customerEmail: 'nk.boateng@nanaenterprises.gh',
+    direction: 'INBOUND',
+    channel: 'WEB_INBOUND',
+    status: 'RECEIVED',
+    subject: 'Bidder Registration & Viewing Inquiry: Judicial Fleet Lots',
+    message: 'Good day Amen Mart team, I would like to confirm the exact inspection hours for the Judicial fleet Toyota Land Cruisers scheduled for this month.',
+    businessLine: 'AUCTION',
+    assetReference: 'Judicial Lot AUC-2026-004',
+    createdAt: '2026-10-24T14:30:00Z',
+    syncStatus: 'SYNCED',
+  },
+  {
+    id: 'comm-seed-2',
+    customerId: 'cust-1',
+    customerName: 'Nana Kwesi Boateng',
+    customerPhone: '+233 24 912 3456',
+    customerEmail: 'nk.boateng@nanaenterprises.gh',
+    direction: 'OUTBOUND',
+    channel: 'EMAIL',
+    status: 'SENT',
+    subject: 'Amen Mart — Auction Information & Inspection Notice for Judicial Lot AUC-2026-004',
+    message: 'Dear Nana Kwesi Boateng, Thank you for contacting Amen Mart Auctioning Services. Inspection days are Monday – Friday, 8:30 AM – 4:30 PM at the Accra Main Yard.',
+    resendMessageId: 're_seed_90214812',
+    templateId: 'tmpl-auction-bidder',
+    businessLine: 'AUCTION',
+    assetReference: 'Judicial Lot AUC-2026-004',
+    operatorName: 'Dr. Francis Kwaku Yeboah',
+    isSimulated: false,
+    createdAt: '2026-10-24T15:10:00Z',
+    syncStatus: 'SYNCED',
+  },
+  {
+    id: 'comm-seed-3',
+    customerId: 'cust-2',
+    customerName: 'Dr. Esi Mensah-Bonsu',
+    customerPhone: '+233 20 890 3341',
+    customerEmail: 'esi.bonsu@consultgh.com',
+    direction: 'OUTBOUND',
+    channel: 'WHATSAPP',
+    status: 'SENT',
+    subject: 'East Legon Hills Titled Land Cadastral Site Plan Verification',
+    message: 'Hello Dr. Esi Mensah-Bonsu, regarding your inquiry on the East Legon Hills parcel: our land officer is on site every Tuesday and Saturday at 10:00 AM. Indenture barcode verified clean.',
+    businessLine: 'LAND',
+    assetReference: 'Parcel ELH-BLK-04',
+    operatorName: 'Akosua Pokuaa Mensah',
+    createdAt: '2026-10-25T09:40:00Z',
+    syncStatus: 'SYNCED',
+  },
+  {
+    id: 'comm-seed-4',
+    customerName: 'Kojo Antwi-Boasiako',
+    customerPhone: '0548517277',
+    customerEmail: 'kojo.antwi@gmail.com',
+    direction: 'INBOUND',
+    channel: 'WEB_INBOUND',
+    status: 'READ',
+    subject: 'Showroom Inquiry: 2021 Toyota RAV4 AWD',
+    message: 'Inquiring if the 2021 RAV4 in the showroom has full customs landed documentation and duty paid.',
+    businessLine: 'DEALERSHIP',
+    assetReference: 'VIN: JT3DFREV8MD194821',
+    createdAt: '2026-10-25T11:20:00Z',
+    syncStatus: 'SYNCED',
+  },
+];
+
 export const initialPayrollSlips: PayrollSlip[] = seededSeptPayroll.slips.map(
   (slip, index) => ({
     ...slip,
@@ -2437,6 +2517,7 @@ export const initialLeaveRequests: LeaveRequest[] = [
     syncStatus: 'SYNCED',
   },
 ];
+
 
 
 

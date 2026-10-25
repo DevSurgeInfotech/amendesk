@@ -144,6 +144,14 @@ const QUICK_MODULES: SearchResultItem[] = [
     href: '/desk/crm',
   },
   {
+    id: 'mod-communication',
+    category: 'MODULE',
+    title: 'Communication Hub (Resend & WhatsApp)',
+    subtitle: 'Reply to inbound messages, send Resend emails, and wa.me chats',
+    badge: 'Messages',
+    href: '/desk/communication',
+  },
+  {
     id: 'mod-migration',
     category: 'MODULE',
     title: 'Data Sync & Local Backup',
@@ -467,7 +475,7 @@ export function Topbar() {
         title: `New Inbound Inquiry: ${lead.fullName}`,
         description: `${lead.phone} • [${details.typeLabel}] ${details.messageText}`,
         timeLabel: getLeadSourceLabel(lead),
-        href: `/desk/crm?filter=INQUIRIES&leadId=${lead.id}`,
+        href: `/desk/communication?leadId=${lead.id}`,
       });
     }
 
@@ -919,7 +927,7 @@ export function Topbar() {
                     <ArrowUpRight className="h-3 w-3" />
                   </Link>
                   <Link
-                    href="/desk/crm?filter=INQUIRIES"
+                    href="/desk/communication"
                     onClick={() => setNotificationsOpen(false)}
                     className="font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 shrink-0"
                   >

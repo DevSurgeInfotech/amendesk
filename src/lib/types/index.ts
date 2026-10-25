@@ -569,5 +569,6 @@ export interface LinkedTxn {
 }
 
 export * from './hr';
+export * from './communication';
 
 

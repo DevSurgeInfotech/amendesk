@@ -1,4 +1,4 @@
-import type { Customer } from '@/lib/types';
+import type { Customer, CommunicationRecord, CommunicationBusinessLine } from '@/lib/types';
 import { db, AmenDeskDB, LIVE_DB_NAME, SANDBOX_DB_NAME } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
 
@@ -219,20 +219,58 @@ export async function recordInboundLead(data: InboundLeadInput): Promise<Custome
     createdAt: nowIso,
   };
 
+  const businessLine: CommunicationBusinessLine =
+    leadSource === 'SHOWROOM'
+      ? 'DEALERSHIP'
+      : leadSource === 'AUCTIONS'
+      ? 'AUCTION'
+      : leadSource === 'LAND'
+      ? 'LAND'
+      : leadSource === 'PROPERTY'
+      ? 'PROPERTY'
+      : 'GENERAL';
+
+  const commRecord: CommunicationRecord = {
+    id: `comm-inbound-${customerId}`,
+    customerId,
+    customerName: cleanName,
+    customerPhone: cleanPhone,
+    customerEmail: cleanEmail || undefined,
+    direction: 'INBOUND',
+    channel: 'WEB_INBOUND',
+    status: 'RECEIVED',
+    subject: data.inquirySubject || `Inbound: ${formatInquiryType(inquiryType)}`,
+    message: cleanMessage || notes,
+    businessLine,
+    assetReference: data.inquirySubject || undefined,
+    createdAt: nowIso,
+    syncStatus: 'SYNCED',
+  };
+
   // 1. Post to Server API (persists for cross-browser, mobile, and remote staff terminals)
   try {
-    await fetch('/api/inquiries', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(customerRecord),
-    });
+    await Promise.allSettled([
+      fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customerRecord),
+      }),
+      fetch('/api/communication/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commRecord),
+      }),
+    ]);
   } catch (err) {
     console.warn('Inbound inquiry could not reach server API (operating offline):', err);
   }
 
   // 2. Direct write to default active Dexie database
   try {
-    await db.customers.put(customerRecord);
+    await Promise.allSettled([
+      db.customers.put(customerRecord),
+      db.communications.put(commRecord),
+    ]);
   } catch (err) {
     console.error('Failed to write inquiry to active Dexie database:', err);
   }
@@ -243,7 +281,9 @@ export async function recordInboundLead(data: InboundLeadInput): Promise<Custome
     const sandboxDb = new AmenDeskDB(SANDBOX_DB_NAME, 'SANDBOX');
     await Promise.allSettled([
       liveDb.customers.put(customerRecord),
+      liveDb.communications.put(commRecord),
       sandboxDb.customers.put(customerRecord),
+      sandboxDb.communications.put(commRecord),
     ]);
   } catch (err) {
     console.warn('Dual-tenant local write fallback:', err);
@@ -251,7 +291,10 @@ export async function recordInboundLead(data: InboundLeadInput): Promise<Custome
 
   // 4. Queue in offline background sync engine
   try {
-    await syncEngine.queueMutation('customers', customerId, 'CREATE', customerRecord);
+    await Promise.allSettled([
+      syncEngine.queueMutation('customers', customerId, 'CREATE', customerRecord),
+      syncEngine.queueMutation('communications', commRecord.id, 'CREATE', commRecord),
+    ]);
   } catch (err) {
     console.warn('Sync outbox queue warning:', err);
   }
@@ -260,7 +303,7 @@ export async function recordInboundLead(data: InboundLeadInput): Promise<Custome
   try {
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       const channel = new BroadcastChannel('amendesk_leads_sync');
-      channel.postMessage({ type: 'NEW_LEAD', customer: customerRecord });
+      channel.postMessage({ type: 'NEW_LEAD', customer: customerRecord, communication: commRecord });
       channel.close();
     }
   } catch {

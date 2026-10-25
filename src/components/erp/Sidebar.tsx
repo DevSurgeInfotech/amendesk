@@ -15,6 +15,7 @@ import {
   Building2,
   Warehouse,
   Users,
+  MessageSquare,
   Briefcase,
   Database,
   ChevronDown,
@@ -156,6 +157,18 @@ const erpModules: ModuleItem[] = [
       { label: 'All Customers', href: '/desk/crm' },
       { label: 'Inbound Inquiries', href: '/desk/crm?filter=INQUIRIES' },
       { label: 'KYC Verified', href: '/desk/crm?filter=VERIFIED' },
+    ],
+  },
+  {
+    id: 'communication',
+    label: 'Communication Hub',
+    href: '/desk/communication',
+    icon: MessageSquare,
+    submodules: [
+      { label: 'Inbox & Inbound', href: '/desk/communication' },
+      { label: 'Compose & Dispatch', href: '/desk/communication?tab=compose' },
+      { label: 'Official Templates', href: '/desk/communication?tab=templates' },
+      { label: 'Delivery Logs', href: '/desk/communication?tab=logs' },
     ],
   },
   {

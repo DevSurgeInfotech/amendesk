@@ -159,6 +159,17 @@ function ManageLeadModal({ lead, onClose, onUpdateStatus, onConvert }: ManageLea
           )}
         </div>
 
+        {/* Jump directly to Communication Hub with Resend Email & WhatsApp Templates */}
+        <div>
+          <Link
+            href={`/desk/communication?leadId=${lead.id}`}
+            className="w-full py-2.5 px-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-xs font-bold text-center flex items-center justify-center gap-2 transition-colors"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Open in Communication Hub (Resend Email &amp; WhatsApp Templates)</span>
+          </Link>
+        </div>
+
         {/* Lead Status Workflow Bar */}
         <div className="space-y-1.5">
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -473,9 +484,19 @@ function CrmContent() {
           </p>
         </div>
 
-        <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
-          Register Customer
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/desk/communication"
+            className="px-3 py-1.5 text-xs font-bold rounded-lg border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-1.5 transition-colors"
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>Communication Hub</span>
+          </Link>
+
+          <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
+            Register Customer
+          </Button>
+        </div>
       </div>
 
       {/* KPI Metrics Strip */}

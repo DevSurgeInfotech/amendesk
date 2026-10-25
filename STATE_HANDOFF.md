@@ -187,6 +187,7 @@ flowchart TD
 | `/desk/land` | Land Desk | Parcel records, site plans, buyer checklists | ✅ Active |
 | `/desk/property` | Property Desk | Unit listings, sales/leases, document attachments | ✅ Active |
 | `/desk/crm` | Customer Relations | Unified profiles, KYC Ghana Card verification, Inbound Inquiries Pipeline | ✅ Active |
+| `/desk/communication` | Communication Hub | Unified inbound inbox, Resend API email engine & WhatsApp wa.me quick dispatch | ✅ Active |
 | `/desk/hr` | Staff & Payroll | Salaried staff directory, GRA PAYE & SSNIT payroll, Hubtel API | ✅ Active |
 | `/desk/accounts` | Accounts & Finance | QuickBooks ledger, P&L, balance sheet, cash shifts | ✅ Active |
 | `/desk/payment-plans` | Payment Plans | 14-day instalment engine, balance due dates, extensions | ✅ Active |
@@ -194,6 +195,8 @@ flowchart TD
 | `/desk/settings` | Workspace Settings | Margin defaults, deposit %, staff invitations, permissions | ✅ Active |
 | `/desk/migration` | Data Hub | CSV data ingestion, backup export/import portability | ✅ Active |
 | `/api/inquiries` | Inbound Inquiries API | Server-side persistence & cross-device sync bridge for website leads | ✅ Active |
+| `/api/communication/send-email` | Resend Email API | Server endpoint for branded HTML emails with live & offline simulation | ✅ Active |
+| `/api/communication/messages` | Communication Ledger API | Server persistence for inbound and outbound communication history | ✅ Active |
 
 ---
 
@@ -221,6 +224,58 @@ flowchart TD
 ---
 
 ## 6. Execution History & Session Changelog
+
+### Session: 2026-10-25 (Amen Mart Communication Hub — Inbound Messages, Resend API Email Engine & WhatsApp wa.me Dispatch)
+- **Goal**: Curate a dedicated communication hub for Amen Mart so staff can manage and reply to inbound website messages, dispatch official branded emails via the Resend API, and trigger WhatsApp consultations via `wa.me` links with Ghanaian commercial templates.
+- **Root Cause / Architecture Need**:
+  - Inbound inquiries from the Contact Page, Showroom Vehicles, Titled Land, Properties, and Auctions previously were stored as CRM customer records with no dedicated multi-channel inbox, no centralized communication ledger, and no direct outbound emailing or WhatsApp dispatch pipeline.
+  - Staff needed a unified communication center to review incoming client messages, reply using official branded Ghanaian email templates via Resend API, and trigger formatted WhatsApp conversations (`wa.me`) with automatic customer status updates.
+- **Accomplishments**:
+  - **Dexie.js Schema v6 Evolution & Local-First Storage (`src/lib/db/index.ts`, `src/lib/types/communication.ts`)**:
+    - Created typed interfaces for `CommunicationRecord`, `CommunicationTemplate`, `SendEmailPayload`, and `SendEmailResponse`.
+    - Added `communications` table to `AmenDeskDB` with schema indexing: `'id, customerId, direction, channel, status, createdAt, businessLine'`.
+    - Added clean slate handover protection (`ensureLiveCleanSlate()` purges seed while retaining genuine customer communications; `resetToCleanSlate()` clears the ledger).
+    - Seeded sandbox demo yard with realistic multi-channel communication records.
+  - **Resend API Server Route (`src/app/api/communication/send-email/route.ts`)**:
+    - Integrated `resend` package for live SMTP dispatch when `RESEND_API_KEY` is configured in environment.
+    - Implemented high-fidelity offline/demo simulation mode (`isSimulated: true`) returning synthetic message IDs (`sim_...`) when operating offline or without live credentials, guaranteeing zero crash in field yards.
+    - Automatically marks the recipient lead as `CONTACTED` upon reply and persists records to `data/communication-logs.json`.
+  - **Communication Ledger API (`src/app/api/communication/messages/route.ts`)**:
+    - Server-side persistence for multi-device sync.
+    - Dynamically synthesizes and merges inbound inquiries from `data/inbound-inquiries.json` so all website leads automatically populate the Communication Hub inbox.
+  - **Ghanaian Commercial Templates & WhatsApp wa.me Engine (`src/lib/communication/templates.ts`)**:
+    - Built official Amen Mart letterhead HTML email generator with Ministry of the Interior & GAA authorization badges, head office location, and phone contacts (`0548517277 / 0558314744`).
+    - Curated 7 Ghanaian commercial templates (General Inbound Reply, Auction Inspection Notice, Showroom Vehicle Inspection, Titled Land Site Visit, Property Walkthrough, 14-Day Hammer Settlement Reminder, Gate Waybill Release).
+    - Built Ghana phone number standardizer (`cleanPhoneForWhatsApp`) and `wa.me` URL generator.
+  - **Interactive Communication Hub Page (`src/app/(erp)/desk/communication/page.tsx`)**:
+    - 5-Card KPI metric overview: Inbound Requests, Unread / New (with live pulsing badge), Resend Emails, WhatsApp wa.me, and Response Velocity %.
+    - 4 Operational Views:
+      1. **Unified Inbox**: Split-pane layout with channel, status, and business-line filtering; search; customer KYC badge; quotation view; reply actions; status toggle.
+      2. **Compose & Quick Dispatch**: Dual Resend Email / WhatsApp wa.me composer with live preview and template selector.
+      3. **Official Templates**: Browse, preview, copy, and insert pre-built templates.
+      4. **Outbox & Delivery Logs**: Full audit trail with Resend IDs, timestamps, operators.
+  - **Cross-Module Integration**:
+    - Registered `Communication Hub` in `Sidebar.tsx` with unread badge counter.
+    - Linked `ManageLeadModal` in `src/app/(erp)/desk/crm/page.tsx` directly to Communication Hub.
+    - Linked `OperationalAlerts.tsx` inbound inquiries directly to `/desk/communication`.
+    - Added `Communication Hub` to Topbar global search index and notification click-through.
+    - Universal Inbound Lead Handler (`src/lib/crm/leads.ts`) dual-records inbound communication records.
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
+- **Changed Files**:
+  - `src/lib/types/communication.ts` (New)
+  - `src/lib/types/index.ts` (Exported communication types)
+  - `src/lib/communication/templates.ts` (New templates & Resend HTML generator)
+  - `src/app/api/communication/send-email/route.ts` (New Resend API endpoint)
+  - `src/app/api/communication/messages/route.ts` (New messages ledger API)
+  - `src/lib/db/index.ts` (Dexie Schema v6 evolution with communications table)
+  - `src/lib/db/seed.ts` (Added initialCommunications seed records)
+  - `src/lib/crm/leads.ts` (Dual-dispatch inbound leads to communications table)
+  - `src/app/(erp)/desk/communication/page.tsx` (New Communication Hub UI)
+  - `src/components/erp/Sidebar.tsx` (Added Communication Hub navigation item)
+  - `src/components/erp/Topbar.tsx` (Added Communication Hub to search and notification links)
+  - `src/components/erp/dashboard/OperationalAlerts.tsx` (Updated inbound lead review link)
+  - `src/app/(erp)/desk/crm/page.tsx` (Added Communication Hub button in CRM header and modal)
+  - `STATE_HANDOFF.md` (Updated system status, route index, and session ledger)
 
 ### Session: 2026-10-25 (Settings Hydration Mismatch Resolution & Production RBAC Guard)
 - **Goal**: Resolve React hydration mismatch console error occurring when accessing `/desk/settings?tab=security` on `desk.localhost:3001`.
