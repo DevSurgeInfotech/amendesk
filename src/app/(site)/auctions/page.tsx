@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
-import { syncEngine } from '@/lib/sync/syncEngine';
+import { recordInboundLead } from '@/lib/crm/leads';
 import {
   Gavel,
   ShieldAlert,
@@ -63,31 +63,17 @@ function PublicAuctionsCatalog() {
 
     setIsSubmitting(true);
     try {
-      const customerId = `cust-${Date.now()}`;
-      await db.customers.add({
-        id: customerId,
-        fullName: bidderName.trim(),
-        phone: bidderPhone.trim(),
-        email: bidderEmail.trim(),
-        ghanaCardNumber: 'PENDING_REGISTRATION_DESK',
-        address: 'Online Bidder Registration',
-        customerType: 'INDIVIDUAL',
-        kycVerified: false,
-        leadSource: 'AUCTIONS',
-        leadStatus: 'NEW',
+      await recordInboundLead({
+        fullName: bidderName,
+        phone: bidderPhone,
+        email: bidderEmail,
         inquiryType: 'AUCTION_INQUIRY',
         inquirySubject: `Bidder Registration for ${inquiryLot.lotNumber}: ${inquiryLot.title}`,
         inquiryMessage: `Online bidder registration request for ${inquiryLot.lotNumber}: ${inquiryLot.title}`,
-        notes: `Online Bidder Registration for ${inquiryLot.lotNumber}: ${inquiryLot.title}`,
-        createdAt: new Date().toISOString(),
-      });
-
-      await syncEngine.queueMutation('customers', customerId, 'CREATE', {
-        fullName: bidderName.trim(),
-        phone: bidderPhone.trim(),
         leadSource: 'AUCTIONS',
-        leadStatus: 'NEW',
-        notes: `Registered for ${inquiryLot.lotNumber}`,
+        address: 'Online Bidder Registration',
+        notes: `Online Bidder Registration for ${inquiryLot.lotNumber}: ${inquiryLot.title}`,
+        ghanaCardNumber: 'PENDING_REGISTRATION_DESK',
       });
 
       setIsSuccess(true);

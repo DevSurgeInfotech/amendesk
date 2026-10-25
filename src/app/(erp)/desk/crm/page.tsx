@@ -263,6 +263,11 @@ function CrmContent() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(leadIdParam || null);
+  const [prevLeadIdParam, setPrevLeadIdParam] = useState(leadIdParam);
+  if (leadIdParam !== prevLeadIdParam) {
+    setPrevLeadIdParam(leadIdParam);
+    setSelectedLeadId(leadIdParam || null);
+  }
 
   const managingLead = useMemo(() => {
     if (!selectedLeadId) return null;

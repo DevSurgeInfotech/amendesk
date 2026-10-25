@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { db } from '@/lib/db';
-import { syncEngine } from '@/lib/sync/syncEngine';
+import { recordInboundLead } from '@/lib/crm/leads';
 import { Button } from '@/components/ui/Button';
-import { MapPin, Phone, Mail, Clock, CheckCircle2, Send, ShieldCheck } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, CheckCircle2, Send, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function ContactPage() {
   const [name, setName] = useState('');
@@ -14,45 +13,22 @@ export default function ContactPage() {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone) return;
+    if (!name.trim() || !phone.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitError('');
     try {
-      const customerId = `cust-${Date.now()}`;
-      const nowIso = new Date().toISOString();
-      const cleanName = name.trim();
-      const cleanPhone = phone.trim();
-      const cleanEmail = email.trim();
-      const cleanMessage = message.trim();
-
-      await db.customers.add({
-        id: customerId,
-        fullName: cleanName,
-        phone: cleanPhone,
-        email: cleanEmail,
-        ghanaCardNumber: 'WEB_GENERAL_CONTACT',
-        address: 'Contact Page Web Inbound',
-        customerType: 'INDIVIDUAL',
-        kycVerified: false,
-        leadSource: 'CONTACT_PAGE',
-        leadStatus: 'NEW',
+      await recordInboundLead({
+        fullName: name,
+        phone,
+        email,
         inquiryType,
-        inquiryMessage: cleanMessage,
-        notes: `Contact Inbound (${inquiryType}): ${cleanMessage || 'General inquiry requested via website contact form.'}`,
-        createdAt: nowIso,
-      });
-
-      await syncEngine.queueMutation('customers', customerId, 'CREATE', {
-        fullName: cleanName,
-        phone: cleanPhone,
-        email: cleanEmail,
+        inquiryMessage: message,
         leadSource: 'CONTACT_PAGE',
-        leadStatus: 'NEW',
-        inquiryType,
-        inquiryMessage: cleanMessage,
       });
 
       setIsSuccess(true);
@@ -62,6 +38,7 @@ export default function ContactPage() {
       setMessage('');
     } catch (err) {
       console.error('Failed to log contact form:', err);
+      setSubmitError('Failed to record inquiry. Please verify your internet connection or call our hotlines directly.');
     } finally {
       setIsSubmitting(false);
     }
@@ -187,6 +164,12 @@ export default function ContactPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {submitError && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                  <span>{submitError}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold mb-1">Your Full Name *</label>
                 <input

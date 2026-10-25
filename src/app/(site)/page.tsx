@@ -9,7 +9,7 @@ import { formatGHS } from '@/lib/utils/currency';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { syncEngine } from '@/lib/sync/syncEngine';
+import { recordInboundLead } from '@/lib/crm/leads';
 import { HeroKpis } from '@/components/site/HeroKpis';
 import {
   Gavel,
@@ -47,49 +47,20 @@ export default function HomePage() {
     if (!inquiryName || !inquiryPhone) return;
 
     try {
-      // Deduplicate Customer: check if client already exists by phone or email
-      const existingCustomer = await db.customers
-        .filter(
-          (c) =>
-            c.phone.trim() === inquiryPhone.trim() ||
-            (Boolean(inquiryEmail) && c.email.toLowerCase() === inquiryEmail.toLowerCase())
-        )
-        .first();
-
       const noteText = `Inquiry on ${inquiryModalItem?.title} (${inquiryModalItem?.type}): ${inquiryNotes || 'No notes'}`;
 
-      if (existingCustomer) {
-        const updatedNotes = existingCustomer.notes
-          ? `${existingCustomer.notes}\n---\n${noteText}`
-          : noteText;
-        await db.customers.update(existingCustomer.id, {
-          notes: updatedNotes,
-        });
-        await syncEngine.queueMutation('customers', existingCustomer.id, 'UPDATE', {
-          notes: updatedNotes,
-        });
-      } else {
-        const customerId = `cust-${Date.now()}`;
-        const customer = {
-          id: customerId,
-          fullName: inquiryName.trim(),
-          phone: inquiryPhone.trim(),
-          email: inquiryEmail.trim(),
-          ghanaCardNumber: 'PENDING_ONLINE_KYC',
-          address: 'Website Online Inquiry',
-          customerType: 'INDIVIDUAL' as const,
-          kycVerified: false,
-          leadSource: 'PORTAL' as const,
-          leadStatus: 'NEW' as const,
-          inquirySubject: inquiryModalItem ? `${inquiryModalItem.type}: ${inquiryModalItem.title}` : 'General Portal Inquiry',
-          inquiryMessage: noteText,
-          notes: noteText,
-          createdAt: new Date().toISOString(),
-        };
-
-        await db.customers.add(customer);
-        await syncEngine.queueMutation('customers', customerId, 'CREATE', customer);
-      }
+      await recordInboundLead({
+        fullName: inquiryName,
+        phone: inquiryPhone,
+        email: inquiryEmail,
+        inquiryType: inquiryModalItem?.type || 'PORTAL',
+        inquirySubject: inquiryModalItem ? `${inquiryModalItem.type}: ${inquiryModalItem.title}` : 'General Portal Inquiry',
+        inquiryMessage: inquiryNotes || `Inquiry on ${inquiryModalItem?.title}`,
+        leadSource: 'PORTAL',
+        notes: noteText,
+        address: 'Website Online Inquiry',
+        ghanaCardNumber: 'PENDING_ONLINE_KYC',
+      });
 
       setIsInquirySubmitted(true);
       setTimeout(() => {

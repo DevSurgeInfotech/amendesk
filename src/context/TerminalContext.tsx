@@ -275,8 +275,54 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // 3. Real-time Inbound Inquiry BroadcastChannel Listener
+    let leadsChannel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        leadsChannel = new BroadcastChannel('amendesk_leads_sync');
+        leadsChannel.onmessage = async (event) => {
+          if (event.data?.type === 'NEW_LEAD' && event.data?.customer) {
+            try {
+              await db.customers.put(event.data.customer);
+            } catch (err) {
+              console.error('Failed to put broadcasted lead into db:', err);
+            }
+          }
+        };
+      } catch {
+        // BroadcastChannel not available in this environment
+      }
+    }
+
+    // 4. Background Server Inquiry Poller (fetches inquiries created from other devices or browsers)
+    const syncInquiriesFromServer = async () => {
+      try {
+        const res = await fetch('/api/inquiries', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.inquiries) && data.inquiries.length > 0) {
+            for (const inq of data.inquiries) {
+              const existing = await db.customers.get(inq.id);
+              if (!existing) {
+                await db.customers.put(inq);
+              }
+            }
+          }
+        }
+      } catch {
+        // Offline or server not responding
+      }
+    };
+
+    void syncInquiriesFromServer();
+    const inquiriesInterval = setInterval(() => {
+      void syncInquiriesFromServer();
+    }, 4000);
+
     return () => {
       unsubscribe();
+      leadsChannel?.close();
+      clearInterval(inquiriesInterval);
     };
   }, []);
 

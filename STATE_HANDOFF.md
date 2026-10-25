@@ -103,6 +103,8 @@ flowchart TD
   - Asset stock ledger linking auction lots and dealership vehicles.
 - [x] **CRM Module (`/desk/crm`)**:
   - Unified customer profiles across all trading lines (Auction, Dealership, Land, Property).
+  - Dedicated **Inbound Inquiries & Leads Pipeline (`/desk/crm?filter=INQUIRIES`)** with direct Call (`tel:`), WhatsApp (`wa.me`), and Email (`mailto:`) quick actions, lead status management (`NEW`, `CONTACTED`, `RESOLVED`, `CONVERTED`), and Ghana Card KYC conversion modal.
+  - Universal Inbound Lead Handler (`src/lib/crm/leads.ts`) dispatching to Server API Bridge (`/api/inquiries`), dual-tenant IndexedDB write (`AmenDeskDB_live` and `AmenDeskDB_sandbox`), real-time `BroadcastChannel` synchronization, and background polling.
   - KYC document verification and Ghana Card validation.
   - Lead pipeline, interaction tracking, and balance-due reminder workflows.
 
@@ -182,13 +184,14 @@ flowchart TD
 | `/desk/inventory` | Inventory Ledger | Multi-location stock tracking, transfers, auditing | ✅ Active |
 | `/desk/land` | Land Desk | Parcel records, site plans, buyer checklists | ✅ Active |
 | `/desk/property` | Property Desk | Unit listings, sales/leases, document attachments | ✅ Active |
-| `/desk/crm` | Customer Relations | Unified profiles, KYC Ghana Card verification, reminders | ✅ Active |
+| `/desk/crm` | Customer Relations | Unified profiles, KYC Ghana Card verification, Inbound Inquiries Pipeline | ✅ Active |
 | `/desk/hr` | Staff & Payroll | Salaried staff directory, GRA PAYE & SSNIT payroll, Hubtel API | ✅ Active |
 | `/desk/accounts` | Accounts & Finance | QuickBooks ledger, P&L, balance sheet, cash shifts | ✅ Active |
 | `/desk/payment-plans` | Payment Plans | 14-day instalment engine, balance due dates, extensions | ✅ Active |
 | `/desk/payments` | Cash Office | Multi-mode receipting (Cash, MoMo, Bank, Card), thermal receipts | ✅ Active |
 | `/desk/settings` | Workspace Settings | Margin defaults, deposit %, staff invitations, permissions | ✅ Active |
 | `/desk/migration` | Data Hub | CSV data ingestion, backup export/import portability | ✅ Active |
+| `/api/inquiries` | Inbound Inquiries API | Server-side persistence & cross-device sync bridge for website leads | ✅ Active |
 
 ---
 
@@ -470,6 +473,50 @@ flowchart TD
   - `src/lib/types/hr.ts`
   - `src/lib/db/seed.ts`
   - `STATE_HANDOFF.md`
+
+### Session: 2026-10-25 (Website Inbound Inquiries, Real-Time Notification & Cross-Tenant Sync Bridge)
+- **Goal**: Remediate enquiry/request routing from the public website contact and catalog pages, verify ERP notification configuration, and ensure inbound inquiries immediately trigger notifications and land in the Customer / CRM module across all devices, browsers, and tenant environments.
+- **Root Cause Identified**:
+  - The website previously performed a direct client-side write to the active tenant's IndexedDB (`db.customers.add`).
+  - If a user submitted an inquiry while staff was in a different tenant mode (`AmenDeskDB_sandbox` Demo Yard vs `AmenDeskDB_live`), the lead was isolated in the other database.
+  - Furthermore, if inquiries were submitted from external devices, mobile phones, or incognito browser windows, client IndexedDB writes remained completely invisible to staff's ERP browser instance.
+  - Dismissed notifications in Topbar were stored only in ephemeral React state, causing dismissed items to reappear on page refresh.
+- **Accomplishments**:
+  - **Server-Side API Bridge (`src/app/api/inquiries/route.ts`)**:
+    - Created a lightweight Next.js REST endpoint (`GET`, `POST`) backed by persistent JSON storage (`data/inbound-inquiries.json`) and in-memory cache fallback.
+  - **Universal Inbound Lead Handler (`src/lib/crm/leads.ts`)**:
+    - Implemented `recordInboundLead()` which dispatches inquiries to `/api/inquiries` for cross-device synchronization, writes to the active client database, dual-writes to BOTH `AmenDeskDB_live` and `AmenDeskDB_sandbox` to prevent tenant database isolation, queues in `syncEngine`, and broadcasts across tabs using `BroadcastChannel('amendesk_leads_sync')`.
+  - **Real-Time Client Ingestion (`src/context/TerminalContext.tsx`)**:
+    - Added `BroadcastChannel('amendesk_leads_sync')` listener for `<1ms` zero-latency multi-tab inquiry ingestion.
+    - Added background polling every 4 seconds to ingest leads submitted from other computers or mobile phones into the local Dexie database.
+  - **Public Website Inquiries Refactoring**:
+    - Converted all inquiry forms (`/contact`, `/`, `/auctions`, `/land`, `/properties`, `/showroom`) to use `recordInboundLead()`.
+    - Added real-time error banner rendering in `/contact`.
+  - **ERP Topbar & Notification Bell (`src/components/erp/Topbar.tsx`)**:
+    - Configured live warning notifications for new inbound website leads with direct navigation to the CRM lead viewer (`/desk/crm?filter=INQUIRIES&leadId=...`).
+    - Added dismissal persistence per tenant in `localStorage` under `amendesk_dismissed_notifs_${activeTenant.id}`.
+    - Added "Inquiries (N)" quick shortcut in notification popover footer.
+  - **CRM Inbound Pipeline (`src/app/(erp)/desk/crm/page.tsx`, `src/components/erp/Sidebar.tsx`, `src/components/erp/dashboard/OperationalAlerts.tsx`)**:
+    - Added dedicated "Inbound Inquiries" tab (`INQUIRIES`) in `/desk/crm` with pipeline metrics (Total Inbound, Awaiting Contact, Contacted / In Progress, Converted).
+    - Added instant Call (`tel:`), WhatsApp (`wa.me`), and Email (`mailto:`) quick action buttons.
+    - Built interactive `ManageLeadModal` with status tracking (`NEW`, `CONTACTED`, `RESOLVED`, `CONVERTED`), internal staff notes history, and Ghana Card KYC conversion into an active ERP trading client.
+    - Added Inbound Inquiries navigation shortcut in Sidebar and alert card on Dashboard.
+  - **Quality Gates**: Passed `npm run check` with 0 TypeScript compiler errors and 0 ESLint warnings (`--max-warnings 0`).
+- **Changed Files**:
+  - `src/app/api/inquiries/route.ts` (Server API bridge & persistence)
+  - `src/lib/crm/leads.ts` (Universal lead handler, cross-tenant dual-write, broadcast channel)
+  - `src/context/TerminalContext.tsx` (BroadcastChannel listener & background polling)
+  - `src/app/(site)/contact/page.tsx` (Inquiry form migration & error banner)
+  - `src/app/(site)/page.tsx` (Home portal inquiry migration)
+  - `src/app/(site)/auctions/page.tsx` (Auction bidder registration migration)
+  - `src/app/(site)/land/page.tsx` (Land parcel inquiry migration)
+  - `src/app/(site)/properties/page.tsx` (Property unit inquiry migration)
+  - `src/app/(site)/showroom/page.tsx` (Showroom vehicle reservation migration)
+  - `src/components/erp/Topbar.tsx` (Notification dismissal persistence & lead notifications)
+  - `src/components/erp/Sidebar.tsx` (Inbound Inquiries navigation entry)
+  - `src/components/erp/dashboard/OperationalAlerts.tsx` (Dashboard inbound inquiry card)
+  - `src/app/(erp)/desk/crm/page.tsx` (Inquiries tab, lead cards, quick contact, ManageLeadModal)
+  - `STATE_HANDOFF.md` (Updated system status, routes, and session ledger)
 
 ### Session: 2026-10-25 (Amen Mart Brand Asset Rollout: 4K Icon, App Icon, Horizontal Print Logos)
 - **Goal**: Apply official Amen Mart brand identity assets across AmenDesk ERP, public showroom, printable thermal receipts, waybills, login page, and application metadata.

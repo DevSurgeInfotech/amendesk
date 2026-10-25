@@ -1,4 +1,6 @@
 import type { Customer } from '@/lib/types';
+import { db, AmenDeskDB, LIVE_DB_NAME, SANDBOX_DB_NAME } from '@/lib/db';
+import { syncEngine } from '@/lib/sync/syncEngine';
 
 export type LeadSource =
   | 'CONTACT_PAGE'
@@ -160,4 +162,110 @@ export function extractInquiryDetails(cust: Customer): {
     typeLabel: getLeadSourceLabel(cust),
     messageText: rawNotes || 'Inquiry registered through website portal.',
   };
+}
+
+export interface InboundLeadInput {
+  fullName: string;
+  phone: string;
+  email?: string;
+  inquiryType?: string;
+  inquirySubject?: string;
+  inquiryMessage?: string;
+  leadSource?: LeadSource;
+  address?: string;
+  notes?: string;
+  ghanaCardNumber?: string;
+}
+
+/**
+ * Universal Inbound Lead Handler:
+ * 1. Dispatches to Server API for cross-browser, cross-device, and mobile synchronization.
+ * 2. Writes directly to the active client Dexie database.
+ * 3. Writes to BOTH AmenDeskDB_live and AmenDeskDB_sandbox databases so the inquiry appears
+ *    regardless of whether staff is reviewing Demo Yard or Live Production.
+ * 4. Queues in the offline sync engine.
+ * 5. Broadcasts across all active browser tabs in real time via BroadcastChannel.
+ */
+export async function recordInboundLead(data: InboundLeadInput): Promise<Customer> {
+  const customerId = `cust-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const nowIso = new Date().toISOString();
+  const cleanName = data.fullName.trim();
+  const cleanPhone = data.phone.trim();
+  const cleanEmail = (data.email || '').trim();
+  const cleanMessage = (data.inquiryMessage || '').trim();
+  const inquiryType = data.inquiryType || 'AUCTION_INQUIRY';
+  const leadSource = data.leadSource || 'CONTACT_PAGE';
+  const ghanaCardNumber = data.ghanaCardNumber || 'WEB_GENERAL_CONTACT';
+  const address = data.address || 'Contact Page Web Inbound';
+  const notes =
+    data.notes ||
+    `Contact Inbound (${inquiryType}): ${cleanMessage || 'General inquiry requested via website contact form.'}`;
+
+  const customerRecord: Customer = {
+    id: customerId,
+    fullName: cleanName,
+    phone: cleanPhone,
+    email: cleanEmail,
+    ghanaCardNumber,
+    address,
+    customerType: 'INDIVIDUAL',
+    kycVerified: false,
+    leadSource,
+    leadStatus: 'NEW',
+    inquiryType,
+    inquirySubject: data.inquirySubject || '',
+    inquiryMessage: cleanMessage,
+    notes,
+    createdAt: nowIso,
+  };
+
+  // 1. Post to Server API (persists for cross-browser, mobile, and remote staff terminals)
+  try {
+    await fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(customerRecord),
+    });
+  } catch (err) {
+    console.warn('Inbound inquiry could not reach server API (operating offline):', err);
+  }
+
+  // 2. Direct write to default active Dexie database
+  try {
+    await db.customers.put(customerRecord);
+  } catch (err) {
+    console.error('Failed to write inquiry to active Dexie database:', err);
+  }
+
+  // 3. Write to BOTH Live and Sandbox databases so inquiries never get lost between tenant environments
+  try {
+    const liveDb = new AmenDeskDB(LIVE_DB_NAME, 'LIVE');
+    const sandboxDb = new AmenDeskDB(SANDBOX_DB_NAME, 'SANDBOX');
+    await Promise.allSettled([
+      liveDb.customers.put(customerRecord),
+      sandboxDb.customers.put(customerRecord),
+    ]);
+  } catch (err) {
+    console.warn('Dual-tenant local write fallback:', err);
+  }
+
+  // 4. Queue in offline background sync engine
+  try {
+    await syncEngine.queueMutation('customers', customerId, 'CREATE', customerRecord);
+  } catch (err) {
+    console.warn('Sync outbox queue warning:', err);
+  }
+
+  // 5. Broadcast in real time across browser tabs on the same origin
+  try {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const channel = new BroadcastChannel('amendesk_leads_sync');
+      channel.postMessage({ type: 'NEW_LEAD', customer: customerRecord });
+      channel.close();
+    }
+  } catch {
+    // Ignore BroadcastChannel errors in restricted contexts
+  }
+
+  return customerRecord;
 }

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
-import { syncEngine } from '@/lib/sync/syncEngine';
+import { recordInboundLead } from '@/lib/crm/leads';
 import { MapPin, Bed, Bath, CheckCircle2, Images } from 'lucide-react';
 
 export default function PublicPropertiesPage() {
@@ -54,31 +54,17 @@ export default function PublicPropertiesPage() {
 
     setIsSubmitting(true);
     try {
-      const customerId = `cust-${Date.now()}`;
-      await db.customers.add({
-        id: customerId,
-        fullName: name.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
-        ghanaCardNumber: 'PROPERTY_INQUIRY_LEAD',
-        address: 'Property Desk Web Inquiry',
-        customerType: 'INDIVIDUAL',
-        kycVerified: false,
-        leadSource: 'PROPERTY',
-        leadStatus: 'NEW',
+      await recordInboundLead({
+        fullName: name,
+        phone,
+        email,
         inquiryType: 'PROPERTY_AUCTION',
         inquirySubject: `Property ${selectedProp.unitRef}: ${selectedProp.title}`,
         inquiryMessage: `Inquiry on Property ${selectedProp.unitRef}: ${selectedProp.title} (${selectedProp.location})`,
-        notes: `Inquiry on Property ${selectedProp.unitRef}: ${selectedProp.title}`,
-        createdAt: new Date().toISOString(),
-      });
-
-      await syncEngine.queueMutation('customers', customerId, 'CREATE', {
-        fullName: name.trim(),
-        phone: phone.trim(),
         leadSource: 'PROPERTY',
-        leadStatus: 'NEW',
-        notes: `Property Inquiry: ${selectedProp.unitRef}`,
+        address: 'Property Desk Web Inquiry',
+        notes: `Inquiry on Property ${selectedProp.unitRef}: ${selectedProp.title}`,
+        ghanaCardNumber: 'PROPERTY_INQUIRY_LEAD',
       });
 
       setIsSuccess(true);

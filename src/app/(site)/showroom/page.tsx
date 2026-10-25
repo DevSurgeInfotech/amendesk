@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { syncEngine } from '@/lib/sync/syncEngine';
+import { recordInboundLead } from '@/lib/crm/leads';
 import { postPaymentReceiptLedger, postVehicleSaleCOGS } from '@/lib/accounting/ledger';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import {
@@ -83,27 +84,20 @@ export default function ShowroomPage() {
       const balanceRemaining = Math.max(0, selectedVehicleForDeposit.askingPriceGhs - depositAmount);
       const isFullSettlement = balanceRemaining === 0;
 
-      // 1. Create Customer
-      const customerId = `cust-${Date.now()}`;
-      const customer = {
-        id: customerId,
+      // 1. Create Customer Lead via universal inbound sync
+      const customer = await recordInboundLead({
         fullName: buyerName.trim(),
         phone: buyerPhone.trim(),
         email: buyerEmail.trim(),
         ghanaCardNumber: 'ONLINE_PAYSTACK_HOLD',
         address: 'Online Showroom Reservation',
-        customerType: 'INDIVIDUAL' as const,
-        kycVerified: false,
-        leadSource: 'SHOWROOM' as const,
-        leadStatus: 'NEW' as const,
+        leadSource: 'SHOWROOM',
         inquiryType: 'SHOWROOM_VEHICLE',
         inquirySubject: `Reservation: ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model}`,
         inquiryMessage: `Online reservation deposit for ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model} (VIN: ${selectedVehicleForDeposit.vin})`,
         notes: `Online reservation deposit for ${selectedVehicleForDeposit.year} ${selectedVehicleForDeposit.make} ${selectedVehicleForDeposit.model}`,
-        createdAt: nowIso,
-      };
-      await db.customers.add(customer);
-      await syncEngine.queueMutation('customers', customerId, 'CREATE', customer);
+      });
+      const customerId = customer.id;
 
       // 2. Mark Vehicle status
       const updatedVehicleStatus = isFullSettlement ? 'SOLD' : 'RESERVED';
