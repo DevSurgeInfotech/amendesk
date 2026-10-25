@@ -25,6 +25,7 @@ import { recordInboundLead } from '@/lib/crm/leads';
 import { WhatsAppIcon } from '@/components/ui/WhatsAppIcon';
 import {
   generateAmenAiResponse,
+  getProactiveVisitorGreeting,
   AMEN_MART_COMPANY_FACTS,
   type AmenAiResponse,
   type LiveInventorySnapshot,
@@ -135,13 +136,36 @@ function FormattedAiAnswer({ content }: { content: string }) {
   );
 }
 
+function subscribeVisitorSeen() {
+  return () => {};
+}
+
+function getVisitorSeenSnapshot() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem('amenmart_visitor_seen') === '1';
+  } catch {
+    return false;
+  }
+}
+
+function getVisitorSeenServerSnapshot() {
+  return false;
+}
+
 export function AmenAiAssistant() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [showWelcomeHint, setShowWelcomeHint] = useState(true);
+  const [showWelcomeHint, setShowWelcomeHint] = useState(false);
+  const isReturningVisitor = useSyncExternalStore(
+    subscribeVisitorSeen,
+    getVisitorSeenSnapshot,
+    getVisitorSeenServerSnapshot
+  );
+  const [hasUnreadGreeting, setHasUnreadGreeting] = useState(true);
 
   // In-chat lead capture drawer state
   const [showLeadForm, setShowLeadForm] = useState(false);
@@ -242,6 +266,52 @@ export function AmenAiAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const displayedMessages = messages.length === 0 ? [initialGreeting] : messages;
+
+  // Contextual proactive greeting tailored to the visitor's current page and live inventory
+  const proactiveGreeting = useMemo(
+    () => getProactiveVisitorGreeting(pathname, inventorySnapshot, isReturningVisitor),
+    [pathname, inventorySnapshot, isReturningVisitor]
+  );
+
+  // Visitor Detection & Proactive Conversation Initiator
+  useEffect(() => {
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+        let triggered = false;
+    const triggerVisitorEngagement = () => {
+      if (triggered) return;
+      triggered = true;
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('amenmart_visitor_seen', '1');
+        const dismissedInSession =
+          window.sessionStorage.getItem('amenmart_ai_proactive_dismissed') === '1';
+        if (!dismissedInSession) {
+          setShowWelcomeHint(true);
+          setHasUnreadGreeting(true);
+        }
+      }
+    };
+
+    const handleVisitorActivity = () => {
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(triggerVisitorEngagement, 1200);
+    };
+
+    // Detect visitor presence via dwell timer (2.2s) or immediate interaction (mouse, scroll, touch, key)
+    timerId = setTimeout(triggerVisitorEngagement, 2200);
+    window.addEventListener('mousemove', handleVisitorActivity, { once: true, passive: true });
+    window.addEventListener('scroll', handleVisitorActivity, { once: true, passive: true });
+    window.addEventListener('touchstart', handleVisitorActivity, { once: true, passive: true });
+    window.addEventListener('keydown', handleVisitorActivity, { once: true, passive: true });
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+      window.removeEventListener('mousemove', handleVisitorActivity);
+      window.removeEventListener('scroll', handleVisitorActivity);
+      window.removeEventListener('touchstart', handleVisitorActivity);
+      window.removeEventListener('keydown', handleVisitorActivity);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (isOpen) {
@@ -369,38 +439,105 @@ export function AmenAiAssistant() {
   return (
     <>
       {/* Floating Launcher Cluster (Bottom-Right) */}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2.5 print:hidden">
-        {/* Welcome Callout Pill when closed */}
+      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
+        {/* Proactive Visitor Conversation Initiator Card when closed */}
         {!isOpen && showWelcomeHint && (
-          <div className="hidden sm:flex items-center gap-2.5 pl-3.5 pr-2 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-indigo-200/90 dark:border-indigo-800/80 shadow-[0_10px_30px_-5px_rgba(15,23,42,0.16)] text-xs text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
-            <button
-              type="button"
+          <div className="w-[calc(100vw-2.5rem)] sm:w-[360px] rounded-2xl bg-white dark:bg-slate-900 border border-indigo-200/90 dark:border-indigo-800/80 shadow-[0_18px_45px_-10px_rgba(15,23,42,0.24)] p-4 text-xs text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-bottom-3 duration-300 space-y-3">
+            {/* Top Status Row */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 px-2 py-0.5 rounded-full border border-indigo-200/70 dark:border-indigo-800">
+                  {proactiveGreeting.badge}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWelcomeHint(false);
+                  if (typeof window !== 'undefined') {
+                    window.sessionStorage.setItem('amenmart_ai_proactive_dismissed', '1');
+                  }
+                }}
+                aria-label="Dismiss proactive greeting"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Greeting Headline & Message */}
+            <div
               onClick={() => {
                 setIsOpen(true);
                 setShowWelcomeHint(false);
+                setHasUnreadGreeting(false);
               }}
-              className="text-left group cursor-pointer"
+              className="space-y-1 cursor-pointer group"
             >
-              <span className="font-bold text-indigo-700 dark:text-indigo-400 group-hover:underline">
-                Ask Amen AI
+              <h4 className="text-xs sm:text-[13px] font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                {proactiveGreeting.headline}
+              </h4>
+              <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                {proactiveGreeting.message}
+              </p>
+            </div>
+
+            {/* Instant 1-Click Starter Prompts */}
+            <div className="space-y-1.5 pt-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                Click a topic to start chatting:
               </span>
-              <span className="text-slate-500 dark:text-slate-400">
-                {' '}
-                &bull; Auctions, Cars, Land &amp; 14-Day Rules
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowWelcomeHint(false)}
-              aria-label="Dismiss welcome hint"
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+              <div className="flex flex-col gap-1.5">
+                {proactiveGreeting.quickReplies.map((qr, qIdx) => (
+                  <button
+                    key={qIdx}
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(true);
+                      setShowWelcomeHint(false);
+                      setHasUnreadGreeting(false);
+                      void handleSendQuery(qr.prompt);
+                    }}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-indigo-600 hover:text-white border border-slate-200/90 dark:border-slate-700 hover:border-indigo-600 text-left text-[11px] font-semibold text-slate-700 dark:text-slate-200 transition-all cursor-pointer group"
+                  >
+                    <span>{qr.label}</span>
+                    <ArrowRight className="h-3 w-3 text-indigo-500 group-hover:text-white shrink-0 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Action Bar */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(true);
+                  setShowWelcomeHint(false);
+                  setHasUnreadGreeting(false);
+                  setShowLeadForm(true);
+                }}
+                className="text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer"
+              >
+                Request Callback
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(true);
+                  setShowWelcomeHint(false);
+                  setHasUnreadGreeting(false);
+                }}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-2xs transition-colors cursor-pointer"
+              >
+                <span>Ask a Question</span>
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -410,6 +547,7 @@ export function AmenAiAssistant() {
           onClick={() => {
             setIsOpen((prev) => !prev);
             setShowWelcomeHint(false);
+            setHasUnreadGreeting(false);
           }}
           aria-label={isOpen ? 'Close Amen AI Assistant' : 'Open Amen AI Assistant'}
           className="group relative flex items-center gap-3 pl-3.5 pr-4 py-3 rounded-2xl bg-gradient-to-r from-[#0B1F3A] via-indigo-950 to-indigo-700 hover:from-indigo-950 hover:to-indigo-600 text-white shadow-[0_14px_34px_-6px_rgba(30,27,75,0.45)] border border-indigo-400/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
@@ -433,6 +571,11 @@ export function AmenAiAssistant() {
               <span className="text-xs sm:text-sm font-black tracking-tight text-white">
                 Amen AI Assistant
               </span>
+              {!isOpen && hasUnreadGreeting && (
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-[10px] font-black text-white leading-tight">
+                  1
+                </span>
+              )}
             </div>
             <span className="text-[10px] font-semibold text-indigo-200 block">
               {isOpen ? 'Click to minimize' : '24/7 Auction & Showroom Advisor'}

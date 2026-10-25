@@ -94,20 +94,20 @@ export default function DeskLayout({
   return (
     <IdleLockProvider>
       <SidebarProvider>
-        <div className="flex flex-col min-h-screen bg-[var(--background)]">
+        <div className="flex flex-col h-screen h-[100dvh] overflow-hidden bg-[var(--background)]">
           <SandboxModeBanner />
-          <div className="flex flex-1 min-h-0">
-            <div className="no-print">
-              <Suspense fallback={<aside className="w-[264px] shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" />}>
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <div className="no-print h-full shrink-0 flex flex-col">
+              <Suspense fallback={<aside className="w-[264px] h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" />}>
                 <Sidebar />
               </Suspense>
             </div>
-            <div className="flex-1 flex flex-col min-w-0">
-              <div className="no-print">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+              <div className="no-print shrink-0">
                 <Topbar />
                 <Breadcrumbs />
               </div>
-              <main className="flex-1 p-6 overflow-y-auto">
+              <main className="flex-1 p-6 overflow-y-auto min-h-0">
                 <Suspense fallback={<div className="p-6 text-slate-500 text-xs">Loading terminal...</div>}>
                   {children}
                 </Suspense>

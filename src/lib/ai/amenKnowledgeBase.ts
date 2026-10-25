@@ -1113,6 +1113,185 @@ export function generateAmenAiResponse(
   };
 }
 
+export interface ProactiveVisitorGreeting {
+  badge: string;
+  headline: string;
+  message: string;
+  quickReplies: Array<{
+    label: string;
+    prompt: string;
+  }>;
+}
+
+/**
+ * Generates a contextual proactive greeting when a visitor is detected on any website page.
+ */
+export function getProactiveVisitorGreeting(
+  pathname?: string,
+  inventory?: LiveInventorySnapshot,
+  isReturningVisitor?: boolean
+): ProactiveVisitorGreeting {
+  const path = (pathname || '/').toLowerCase();
+  const activeLotsCount = (inventory?.auctionLots || []).filter(
+    (l) => l.status === 'ACTIVE' || l.status === 'UPCOMING'
+  ).length;
+  const showroomCount = (inventory?.dealershipVehicles || []).filter(
+    (v) => v.status === 'AVAILABLE' || v.status === 'RESERVED'
+  ).length;
+  const landCount = (inventory?.landParcels || []).filter(
+    (l) => l.status === 'AVAILABLE' || l.status === 'RESERVED'
+  ).length;
+  const propCount = (inventory?.propertyUnits || []).filter(
+    (p) => p.status === 'AVAILABLE' || p.status === 'RESERVED'
+  ).length;
+
+  const welcomePrefix = isReturningVisitor ? 'Welcome back to Amen Mart!' : 'Akwaaba! Welcome to Amen Mart.';
+
+  if (path.startsWith('/showroom')) {
+    return {
+      badge: 'Car Showroom Concierge',
+      headline: `${welcomePrefix} Looking for a vehicle?`,
+      message:
+        showroomCount > 0
+          ? `We currently have ${showroomCount} verified vehicle(s) in our Gbawe Showroom with 0% auction fee and full GRA/ICUMS customs clearance. How can I help you today?`
+          : 'Every vehicle in our Gbawe Showroom is sold directly with 0% auction fee and verified VIN/Customs clearance. Would you like to check incoming stock or book an inspection?',
+      quickReplies: [
+        {
+          label: 'Show available cars',
+          prompt: 'What vehicles are currently available in the showroom?',
+        },
+        {
+          label: '0% Fee vs. 7% Auction Fee',
+          prompt: 'What is the difference in fees between showroom cars and auction lots?',
+        },
+        {
+          label: 'Mechanic inspection rules',
+          prompt: 'Can I bring my mechanic with an OBD-II scanner to inspect a car at Gbawe?',
+        },
+      ],
+    };
+  }
+
+  if (path.startsWith('/auctions')) {
+    return {
+      badge: 'Auction Desk Advisor',
+      headline: `${welcomePrefix} Interested in bidding?`,
+      message:
+        activeLotsCount > 0
+          ? `We have ${activeLotsCount} active/upcoming auction lot(s) across Judicial, Government & Private categories. Need help with the 25% deposit or 14-day settlement rule?`
+          : 'We conduct licensed Judicial, Government & Private auctions under PNDCL 230. Ask me about our 25% hammer deposit, 14-day balance window, or bidder registration!',
+      quickReplies: [
+        {
+          label: '25% Deposit & 14-Day Rule',
+          prompt: 'How do the 25% hammer deposit and 14-day balance settlement rules work?',
+        },
+        {
+          label: 'Judicial vs. Govt Auctions',
+          prompt: 'Explain the 3 auction categories: Judicial, Government, and Private auctions.',
+        },
+        {
+          label: 'Check active auction lots',
+          prompt: 'What auction lots are currently available or upcoming?',
+        },
+      ],
+    };
+  }
+
+  if (path.startsWith('/land')) {
+    return {
+      badge: 'Titled Land Advisor',
+      headline: `${welcomePrefix} Exploring titled land?`,
+      message:
+        landCount > 0
+          ? `We have ${landCount} litigation-free land parcel(s) verified with the Lands Commission. Would you like to review plot prices or schedule an escorted site visit?`
+          : 'All Amen Mart land parcels undergo tripartite Lands Commission searches and include certified cadastral site plans. How can I assist with your land acquisition?',
+      quickReplies: [
+        {
+          label: 'View available plots',
+          prompt: 'What titled land parcels are currently available for sale?',
+        },
+        {
+          label: 'Lands Commission verification',
+          prompt: 'How do you verify land titles and site plans at the Lands Commission?',
+        },
+        {
+          label: 'Book a site visit',
+          prompt: 'Where is your office and how do I schedule an escorted land site visit?',
+        },
+      ],
+    };
+  }
+
+  if (path.startsWith('/properties')) {
+    return {
+      badge: 'Real Estate Concierge',
+      headline: `${welcomePrefix} Browsing properties?`,
+      message:
+        propCount > 0
+          ? `We have ${propCount} verified residential and commercial property unit(s) listed. Ask me about pricing, Deeds of Conveyance, or booking a property walkthrough.`
+          : 'We offer verified residential homes, townhouses, and commercial units with solicitor-drafted Deeds of Conveyance. How can I help you today?',
+      quickReplies: [
+        {
+          label: 'Available property units',
+          prompt: 'What residential or commercial properties are currently available?',
+        },
+        {
+          label: 'Transfer Deeds & Indentures',
+          prompt: 'What documents do I receive after paying for an immovable property?',
+        },
+        {
+          label: 'Payment modes accepted',
+          prompt: 'What payment methods do you accept for property purchases?',
+        },
+      ],
+    };
+  }
+
+  if (path.startsWith('/contact')) {
+    return {
+      badge: 'Gbawe Front Desk',
+      headline: 'Need instant answers or a callback?',
+      message:
+        'Our Gbawe Flower Junction Yard & Cash Office is open Mon–Fri (8am–5pm) and Sat (9am–2pm). Ask me any question right now or log a priority callback!',
+      quickReplies: [
+        {
+          label: 'Office location & hotlines',
+          prompt: 'Where is your office located and what are your direct phone and WhatsApp numbers?',
+        },
+        {
+          label: 'Consign a car or property',
+          prompt: 'How can I consign a vehicle or property for sale with Dr. Francis Kwaku Yeboah?',
+        },
+        {
+          label: 'How to register as a bidder',
+          prompt: 'What payment methods do you accept and what ID is required for KYC?',
+        },
+      ],
+    };
+  }
+
+  return {
+    badge: 'Online Now • Gbawe Desk',
+    headline: `${welcomePrefix} How may I help you today?`,
+    message:
+      'I am your Amen AI Concierge—trained on Judicial/Govt/Private Auctions, 0%-Fee Showroom Cars, Titled Land, and our 14-Day Settlement Rules.',
+    quickReplies: [
+      {
+        label: 'How auctions & 14-day rule work',
+        prompt: 'How do the 25% hammer deposit and 14-day balance settlement rules work?',
+      },
+      {
+        label: 'Browse Showroom Cars (0% Fee)',
+        prompt: 'What cars are available in the showroom and is there an auction fee on showroom cars?',
+      },
+      {
+        label: 'Location & Contact Numbers',
+        prompt: 'Where is the Amen Mart office and yard located, and what are your viewing hours and phone numbers?',
+      },
+    ],
+  };
+}
+
 /**
  * Full system prompt for optional server-side LLM enrichment (/api/ai/assistant).
  */

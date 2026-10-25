@@ -280,7 +280,7 @@ export function Sidebar() {
       {/* Main Sidebar */}
       <aside
         className={cn(
-          'sidebar fixed lg:relative z-50 inset-y-0 left-0 flex flex-col transition-all duration-300 select-none print:hidden',
+          'sidebar fixed lg:relative z-50 inset-y-0 left-0 flex flex-col h-full transition-all duration-300 select-none print:hidden',
           collapsed ? 'w-[72px]' : 'w-[264px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
@@ -288,6 +288,7 @@ export function Sidebar() {
           width: collapsed ? 72 : 264,
           minWidth: collapsed ? 72 : 264,
           maxWidth: collapsed ? 72 : 264,
+          height: '100%',
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
@@ -381,7 +382,12 @@ export function Sidebar() {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto py-3.5 px-3 space-y-1 pb-16">
+        <nav
+          className={cn(
+            'flex-1 overflow-y-auto scrollbar-thin transition-all',
+            collapsed ? 'py-3 px-2 space-y-1.5' : 'py-3.5 px-3 space-y-1 pb-16'
+          )}
+        >
           {erpModules.map((module, i) => {
             const Icon = module.icon;
             const hasSubmodules = Boolean(module.submodules && module.submodules.length > 0);
@@ -412,44 +418,41 @@ export function Sidebar() {
             return (
               <div key={i} className="mb-0.5">
                 {collapsed ? (
-                  /* Collapsed mode: icon button for module */
-                  <div className="flex flex-col items-center py-1">
-                    {hasSubmodules ? (
-                      <button
-                        type="button"
-                        onClick={() => toggleSection(module.id)}
+                  /* Collapsed mode: premium SVG icon button for module */
+                  <div className="flex flex-col items-center py-0.5">
+                    <Link
+                      href={module.href}
+                      prefetch={true}
+                      onClick={() => {
+                        setMobileOpen(false);
+                        if (pathname !== module.href) {
+                          if (navTimerRef.current) clearTimeout(navTimerRef.current);
+                          navTimerRef.current = setTimeout(() => {
+                            setNavigatingHref(module.href);
+                          }, 120);
+                        }
+                      }}
+                      className={cn(
+                        'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 group relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+                        hasSectionActive
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-2 ring-indigo-400/50 dark:ring-indigo-500/40 border border-indigo-600'
+                          : navigatingHref === module.href
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 ring-2 ring-indigo-400 animate-pulse border border-indigo-200'
+                            : 'bg-slate-100/90 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 dark:hover:bg-indigo-600 dark:hover:text-white hover:shadow-sm hover:shadow-indigo-600/20'
+                      )}
+                      title={module.label}
+                      aria-label={module.label}
+                    >
+                      <Icon
                         className={cn(
-                          'w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative cursor-pointer',
-                          hasSectionActive
-                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 ring-1 ring-indigo-500/40'
-                            : 'bg-indigo-50/80 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-600 hover:text-white hover:border-indigo-600'
+                          'w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110',
+                          hasSectionActive ? 'stroke-[2.2] text-white' : 'stroke-[2]'
                         )}
-                        title={module.label}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        {hasSectionActive && (
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-slate-900" />
-                        )}
-                      </button>
-                    ) : (
-                      <Link
-                        href={module.href}
-                        prefetch={true}
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          'w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative cursor-pointer',
-                          hasSectionActive
-                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 ring-1 ring-indigo-500/40'
-                            : 'bg-indigo-50/80 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-600 hover:text-white hover:border-indigo-600'
-                        )}
-                        title={module.label}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        {hasSectionActive && (
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-slate-900" />
-                        )}
-                      </Link>
-                    )}
+                      />
+                      {hasSectionActive && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-indigo-400 ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+                      )}
+                    </Link>
                   </div>
                 ) : (
                   /* Expanded mode */
@@ -577,34 +580,26 @@ export function Sidebar() {
                   )
                 )}
 
-                {/* Submodules Accordion Reveal */}
-                {hasSubmodules && (
+                {/* Submodules Accordion Reveal — only displayed in expanded mode */}
+                {!collapsed && hasSubmodules && (
                   <div
                     className={cn(
                       'grid transition-all duration-200 ease-in-out',
-                      isExpanded || collapsed
+                      isExpanded
                         ? 'grid-rows-[1fr] opacity-100'
                         : 'grid-rows-[0fr] opacity-0 pointer-events-none'
                     )}
-                    style={!(isExpanded || collapsed) ? { display: 'none' } : undefined}
+                    style={!isExpanded ? { display: 'none' } : undefined}
                   >
                     <div className="overflow-hidden border-none" style={{ border: 'none' }}>
                       <div
                         className={cn(
-                          'space-y-0.5',
-                          !collapsed &&
-                            cn(
-                              'mt-1.5 mb-2 ml-4 pl-2.5 border-l border-t-0 border-r-0 border-b-0',
-                              hasSectionActive
-                                ? 'border-indigo-200 dark:border-indigo-900/60'
-                                : 'border-slate-200/80 dark:border-slate-800'
-                            )
+                          'space-y-0.5 mt-1.5 mb-2 ml-4 pl-2.5 border-l border-t-0 border-r-0 border-b-0',
+                          hasSectionActive
+                            ? 'border-indigo-200 dark:border-indigo-900/60'
+                            : 'border-slate-200/80 dark:border-slate-800'
                         )}
-                        style={
-                          !collapsed
-                            ? { borderTopWidth: 0, borderRightWidth: 0, borderBottomWidth: 0 }
-                            : undefined
-                        }
+                        style={{ borderTopWidth: 0, borderRightWidth: 0, borderBottomWidth: 0 }}
                       >
                         {module.submodules?.map((sub) => {
                           const isDefaultOverview =
@@ -646,10 +641,7 @@ export function Sidebar() {
                                     }),
                               }}
                               className={cn(
-                                'sidebar-item font-sans relative flex items-center justify-between gap-2.5 transition-all group/item overflow-hidden cursor-pointer',
-                                collapsed
-                                  ? 'justify-center px-2 py-2 rounded-xl'
-                                  : 'px-3 py-2 rounded-xl text-[13px] tracking-tight',
+                                'sidebar-item font-sans relative flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl text-[13px] tracking-tight transition-all group/item overflow-hidden cursor-pointer',
                                 isSubActive
                                   ? 'active font-bold !text-white text-white keep-white shadow-sm shadow-indigo-600/30 ring-1 ring-indigo-500/20'
                                   : isNavigating
@@ -657,10 +649,9 @@ export function Sidebar() {
                                     : 'font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-950 dark:hover:text-white hover:bg-slate-100/90 dark:hover:bg-slate-800/70',
                                 Boolean(navigatingHref) && !isNavigating && !isSubActive && 'opacity-70'
                               )}
-                              title={collapsed ? sub.label : undefined}
                             >
                               {/* Illuminated CurveStrip Active Indicator */}
-                              {isSubActive && !collapsed && <CurveStrip />}
+                              {isSubActive && <CurveStrip />}
 
                               <span
                                 className={cn(
@@ -673,7 +664,7 @@ export function Sidebar() {
                                 {sub.label}
                               </span>
 
-                              {sub.badge && !collapsed && (
+                              {sub.badge && (
                                 <span
                                   className={cn(
                                     'ml-auto px-1.5 py-0.5 rounded text-[9px] font-mono font-bold shrink-0',
@@ -701,22 +692,30 @@ export function Sidebar() {
         <div
           className={cn(
             'border-t flex-shrink-0 transition-all bg-slate-50/50 dark:bg-slate-900/50',
-            collapsed ? 'p-2.5 flex justify-center' : 'p-3'
+            collapsed ? 'p-2 flex justify-center' : 'p-3'
           )}
           style={{ borderColor: 'var(--sidebar-divider, #f1f5f9)' }}
         >
           <Link
             href={process.env.NEXT_PUBLIC_SITE_URL || 'https://amenmartgh.com'}
             className={cn(
-              'flex items-center rounded-xl text-xs font-bold transition-all border',
+              'flex items-center rounded-xl text-xs font-bold transition-all border group relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
               collapsed
-                ? 'w-10 h-10 justify-center p-0 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 border-slate-200/80 dark:border-slate-800'
+                ? 'w-11 h-11 justify-center p-0 bg-slate-100/90 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/80 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 dark:hover:bg-indigo-600 dark:hover:text-white hover:shadow-sm hover:shadow-indigo-600/20'
                 : 'justify-between px-3 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 border-slate-200/80 dark:border-slate-800'
             )}
             title={collapsed ? 'View Public Showroom' : undefined}
+            aria-label="View Public Showroom"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <Globe className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <Globe
+                className={cn(
+                  'shrink-0 transition-transform duration-200 group-hover:scale-110',
+                  collapsed
+                    ? 'w-5 h-5 text-indigo-600 dark:text-indigo-400 group-hover:text-white stroke-[2]'
+                    : 'h-4 w-4 text-indigo-600 dark:text-indigo-400'
+                )}
+              />
               {!collapsed && <span className="truncate">Public Showroom</span>}
             </div>
             {!collapsed && (
@@ -725,17 +724,18 @@ export function Sidebar() {
           </Link>
         </div>
 
-        {/* Floating Desktop Collapse Toggle Button (Identical to Encore SMS) */}
+        {/* Floating Desktop Collapse Toggle Button (Vertically Locked to Viewport Middle) */}
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border items-center justify-center transition-colors shadow-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-400 cursor-pointer z-50"
+          className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border items-center justify-center transition-all duration-200 shadow-md bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-400 dark:hover:border-indigo-500 hover:scale-110 active:scale-95 cursor-pointer z-50"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
         >
           {collapsed ? (
-            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
           ) : (
-            <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           )}
         </button>
       </aside>

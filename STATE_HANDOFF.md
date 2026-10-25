@@ -226,6 +226,25 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Website Main Navigation & Megamenu High-Contrast Bold Overhaul)
+- **Goal**: Make the main website navigation / megamenu bold and high contrast across desktop and mobile screens to elevate visual readability and accessibility.
+- **Root Cause & Visual Deficiency**:
+  - The website header navigation links (`Home`, `Auction Notices`, `Properties`, `Land`, `News`, `Blog`, `About Us`, `Contact`) were styled with `font-semibold` and muted inactive text color `text-slate-600 dark:text-slate-400`.
+  - On white/light backgrounds, `text-slate-600` rendered as soft gray with low visual contrast and light weight, and the active `Home` link used soft `text-indigo-600` on subtle `bg-indigo-50`.
+  - On mobile, drawer navigation links also defaulted to `font-medium` and `text-slate-700`.
+- **Accomplishments**:
+  - **Desktop Navigation High-Contrast Bold Refactor (`src/components/site/SiteHeader.tsx`)**:
+    - Upgraded base font weight to `font-bold` for prominent typographic presence.
+    - Upgraded inactive nav links to deep high-contrast `text-slate-900 dark:text-slate-100` (16.5:1 WCAG AAA contrast ratio on white headers), with smooth hover transitions to `hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800`.
+    - Enhanced active nav link to authoritative deep indigo `text-indigo-700 dark:text-indigo-300 font-bold bg-indigo-50 dark:bg-indigo-950/80 ring-1 ring-indigo-500/25 dark:ring-indigo-400/30` providing clean contrast and subtle pill definition.
+  - **Mobile Drawer Menu & Hamburger Toggle Enhancement**:
+    - Updated mobile navigation links to `font-bold`, `text-slate-900 dark:text-slate-100` for inactive items, and `text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500/25` for active items.
+    - Updated mobile hamburger menu button to high-contrast `text-slate-900 dark:text-slate-100`.
+- **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
+- **Changed Files**:
+  - `src/components/site/SiteHeader.tsx`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (Amen AI Assistant — Website AI Concierge, Statutory Knowledge Base & Live Inventory Integration)
 - **Goal**: Plan and build the **Amen AI Assistant (Amen AI Concierge)** across the public website (`/` and all subpages), trained on the complete statutory, operational, financial, and live inventory knowledge of Amen Mart Auctioning Services to answer client inquiries 24/7 and convert high-intent visitors into CRM leads.
 - **Accomplishments**:
@@ -971,6 +990,26 @@ flowchart TD
   - `src/app/(site)/news/page.tsx` (Complete research-backed audit, source citations, auto-slideshow, AI sparkle removal)
   - `public/images/news/*` (Downloaded and organized 8 local news photographs)
   - `STATE_HANDOFF.md` (Updated continuity ledger)
+
+### Session: 2026-10-25 (Sidebar Collapse Premium SVG Icon Unification & Viewport Centered Expand Toggle Remediation)
+- **Goal**: Remediate collapsed sidebar viewing to display only premium SVG icons (eliminating truncated text submodules) and fix the expand/collapse middle toggle button from drifting way down off-screen.
+- **Root Cause Analysis**:
+  - In `Sidebar.tsx`, the submodules accordion was configured with `isExpanded || collapsed`, forcing all 48 submodules across all 14 modules to expand simultaneously into the 72px collapsed rail as truncated plain text (`Ov...`, `Ch...`, `Ge...`, `Fin...`), completely obscuring icons and inflating sidebar height to >2400px.
+  - Because `<aside>` was not constrained to viewport height and the outer `DeskLayout` was configured with `min-h-screen`, `top: 50%` on the collapse toggle button calculated 50% of the inflated 2400px element (~1200px down), pushing the expand button far below the viewport.
+- **Accomplishments**:
+  - **Premium SVG Icon Mode**: In collapsed mode, submodules are completely omitted from inline rendering (`{!collapsed && hasSubmodules && ...}`). Each module item now renders as a centered, high-contrast `w-11 h-11 rounded-xl` container with crisp `w-5 h-5` SVG icons, solid signature indigo active states with pulsing notification dot, frosted card inactive states, and vibrant indigo hover transitions.
+  - **Public Showroom Footer Alignment**: Standardized the public showroom footer link in collapsed mode to match the `w-11 h-11 rounded-xl` module styling with crisp `w-5 h-5` Globe icon and tooltip.
+  - **Rock-Solid Viewport Toggle Button**:
+    - Constrained `DeskLayout` to `h-screen h-[100dvh] overflow-hidden` with flex child `min-h-0 overflow-hidden` and independent `main` content scrolling.
+    - Set `<aside>` to `h-full flex flex-col` inside `<div className="no-print h-full shrink-0 flex flex-col">`.
+    - Centered the floating toggle button (`-right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full shadow-md z-50`) locked permanently to the exact vertical middle of the screen. It never drifts or moves regardless of screen height, open accordion sections, or document length.
+  - **Keyboard Shortcut (`Ctrl+B` / `Cmd+B`)**: Added standard keyboard shortcut in `SidebarContext` to toggle sidebar collapse/expand from anywhere in the terminal.
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict) with 0 compiler errors and 0 warnings.
+- **Changed Files**:
+  - `src/components/erp/Sidebar.tsx` (Premium SVG icon collapsed rendering, viewport-locked middle expand button, removed submodules in collapsed view)
+  - `src/app/(erp)/desk/layout.tsx` (Viewport-constrained `h-screen h-[100dvh] overflow-hidden` layout preventing vertical drift)
+  - `src/context/SidebarContext.tsx` (Added `Ctrl+B` / `Cmd+B` keyboard listener for sidebar toggle)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
 
 ### Session: 2026-10-25 (Featured Article Media Integration: Dr. Francis Yeboah MOGA Award Photos)
 - **Goal**: Integrate the two authentic photos placed in `/public` for the featured news article honoring Dr. Francis Kwaku Yeboah's Modern Gospel Awards (MOGA) Philanthropist of the Year recognition.
