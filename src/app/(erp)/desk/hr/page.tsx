@@ -584,16 +584,21 @@ function HrModuleContent() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  <th className="py-3 px-4">Staff Member</th>
-                  <th className="py-3 px-4">Role &amp; Department</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Statutory IDs</th>
-                  <th className="py-3 px-4 text-right">Basic Salary</th>
-                  <th className="py-3 px-4 text-right">Allowances</th>
-                  <th className="py-3 px-4 text-right">Gross Pay</th>
-                  <th className="py-3 px-4">Payout Account</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  <th className="py-3 px-4 whitespace-nowrap">Staff Member</th>
+                  <th className="py-3 px-4 whitespace-nowrap">
+                    Role &amp; Department
+                  </th>
+                  <th className="py-3 px-4 whitespace-nowrap">Statutory IDs</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">
+                    Monthly Pay
+                  </th>
+                  <th className="py-3 px-4 whitespace-nowrap">
+                    Status &amp; Payout
+                  </th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800">
@@ -609,79 +614,75 @@ function HrModuleContent() {
                       key={emp.id}
                       className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                     >
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-900 dark:text-white">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-bold text-slate-900 dark:text-white whitespace-nowrap">
                           {emp.fullName}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
+                        <div className="flex items-center gap-2 mt-0.5 whitespace-nowrap">
+                          <span className="font-mono text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
                             {emp.employeeCode}
                           </span>
-                          <span className="text-[11px] text-slate-500">
+                          <span className="text-[11px] text-slate-500 whitespace-nowrap">
                             {emp.phone}
                           </span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-slate-800 dark:text-slate-200">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                           {emp.jobTitle}
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
+                        <div className="text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">
                           {HR_DEPARTMENT_LABELS[emp.department]}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getEmployeeStatusBadge(
-                            emp.status
-                          )}`}
-                        >
-                          {getEmployeeStatusLabel(emp.status)}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-[11px]">
-                        <div className="text-slate-800 dark:text-slate-200">
+                      <td className="py-3.5 px-4 font-mono text-[11px] whitespace-nowrap">
+                        <div className="text-slate-800 dark:text-slate-200 whitespace-nowrap">
                           {emp.ghanaCardNumber}
                         </div>
-                        <div className="text-slate-500">
+                        <div className="text-slate-500 whitespace-nowrap">
                           SSNIT: {emp.ssnitNumber || 'Pending'}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
-                        {formatMaskedGhs(emp.basicSalaryGhs)}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="font-mono font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                          {formatMaskedGhs(gross)}
+                        </div>
+                        <div className="font-mono text-[10px] text-slate-500 mt-0.5 whitespace-nowrap">
+                          Basic: {formatMaskedGhs(emp.basicSalaryGhs)} &bull;
+                          Allow: {formatMaskedGhs(allowances)}
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono text-slate-600 dark:text-slate-400">
-                        {formatMaskedGhs(allowances)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-black text-emerald-700 dark:text-emerald-400">
-                        {formatMaskedGhs(gross)}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        {emp.paymentMethod === 'HUBTEL_MOMO_API' ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 text-[11px] font-semibold">
-                            <Smartphone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${getEmployeeStatusBadge(
+                              emp.status
+                            )}`}
+                          >
+                            {getEmployeeStatusLabel(emp.status)}
+                          </span>
+                          {emp.paymentMethod === 'HUBTEL_MOMO_API' ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 text-[11px] font-semibold whitespace-nowrap">
+                              <Smartphone className="w-3 h-3 text-emerald-600 shrink-0" />
                               {emp.momoNetwork} ({emp.momoPhoneNumber})
                             </span>
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-50 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/60 text-[11px] font-semibold">
-                            <Building2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                            <span>
-                              {emp.bankName} ({emp.bankAccountNumber})
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200/60 text-[11px] font-semibold whitespace-nowrap">
+                              <Building2 className="w-3 h-3 text-sky-600 shrink-0" />
+                              {emp.bankName}
                             </span>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="inline-flex items-center justify-end gap-1">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center justify-end gap-1 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => setViewingEmployee(emp)}
                             title="View Staff Profile"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                           >
-                            <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                            <Eye className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                             View
                           </button>
 
@@ -689,9 +690,9 @@ function HrModuleContent() {
                             type="button"
                             onClick={() => handleOpenEmployeePayslip(emp, idx)}
                             title="View & Print Payslip"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                           >
-                            <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                            <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             Payslip
                           </button>
 
@@ -702,9 +703,9 @@ function HrModuleContent() {
                               setIsEmployeeModalOpen(true);
                             }}
                             title="Edit Staff Details"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                           >
-                            <Edit2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
+                            <Edit2 className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" />
                             Edit
                           </button>
 
@@ -715,9 +716,9 @@ function HrModuleContent() {
                               setIsLeaveModalOpen(true);
                             }}
                             title="Record Leave for Staff"
-                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer whitespace-nowrap"
                           >
-                            <CalendarDays className="w-3.5 h-3.5 text-purple-600" />
+                            <CalendarDays className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                             Leave
                           </button>
 
@@ -729,7 +730,7 @@ function HrModuleContent() {
                                 ? 'Suspend Staff'
                                 : 'Activate Staff'
                             }
-                            className={`inline-flex items-center p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                            className={`inline-flex items-center p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${
                               emp.status === 'ACTIVE'
                                 ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300'
                                 : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/50 dark:text-emerald-300'
@@ -746,7 +747,7 @@ function HrModuleContent() {
                             type="button"
                             onClick={() => setDeletingEmployee(emp)}
                             title="Remove Staff Record"
-                            className="inline-flex items-center p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-400 transition-colors cursor-pointer"
+                            className="inline-flex items-center p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-400 transition-colors cursor-pointer shrink-0"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -906,16 +907,34 @@ function HrModuleContent() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                      <th className="py-3 px-4">Staff Member</th>
-                      <th className="py-3 px-4 text-right">Basic</th>
-                      <th className="py-3 px-4 text-right">Allowances</th>
-                      <th className="py-3 px-4 text-right">Gross Pay</th>
-                      <th className="py-3 px-4 text-right">SSNIT (5.5%)</th>
-                      <th className="py-3 px-4 text-right">GRA PAYE</th>
-                      <th className="py-3 px-4 text-right">Net Pay</th>
-                      <th className="py-3 px-4">Payout Status</th>
-                      <th className="py-3 px-4 text-right">Payslip</th>
+                    <tr className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                      <th className="py-3 px-4 whitespace-nowrap">
+                        Staff Member
+                      </th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">
+                        Basic
+                      </th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">
+                        Allowances
+                      </th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">
+                        Gross Pay
+                      </th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">
+                        SSNIT (5.5%)
+                      </th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">
+                        GRA PAYE
+                      </th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">
+                        Net Pay
+                      </th>
+                      <th className="py-3 px-4 whitespace-nowrap">
+                        Payout Status
+                      </th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">
+                        Payslip
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800">
@@ -924,36 +943,36 @@ function HrModuleContent() {
                         key={slip.id}
                         className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                       >
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-slate-900 dark:text-white">
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="font-bold text-slate-900 dark:text-white whitespace-nowrap">
                             {slip.fullName}
                           </div>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="text-[11px] text-slate-500 whitespace-nowrap">
                             {slip.employeeCode} &bull; {slip.jobTitle}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-right font-mono">
+                        <td className="py-3 px-4 text-right font-mono whitespace-nowrap">
                           {formatMaskedGhs(slip.basicSalaryGhs)}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-400">
+                        <td className="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">
                           {formatMaskedGhs(slip.allowancesGhs)}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
                           {formatMaskedGhs(slip.grossSalaryGhs)}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono text-amber-700 dark:text-amber-400">
+                        <td className="py-3 px-4 text-right font-mono text-amber-700 dark:text-amber-400 whitespace-nowrap">
                           {formatMaskedGhs(slip.ssnitEmployeeGhs)}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono text-rose-600 dark:text-rose-400">
+                        <td className="py-3 px-4 text-right font-mono text-rose-600 dark:text-rose-400 whitespace-nowrap">
                           {formatMaskedGhs(slip.payeTaxGhs)}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono font-black text-emerald-700 dark:text-emerald-400">
+                        <td className="py-3 px-4 text-right font-mono font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                           {formatMaskedGhs(slip.netPayGhs)}
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5">
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 whitespace-nowrap">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${
                                 slip.status === 'DISBURSED'
                                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
                                   : 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300'
@@ -961,7 +980,7 @@ function HrModuleContent() {
                             >
                               {slip.status}
                             </span>
-                            <span className="font-mono text-[10px] text-slate-500">
+                            <span className="font-mono text-[10px] text-slate-500 whitespace-nowrap">
                               {slip.paymentReference ||
                                 (slip.paymentMethod === 'HUBTEL_MOMO_API'
                                   ? 'MoMo'
@@ -969,7 +988,7 @@ function HrModuleContent() {
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
                           <Button
                             variant="outline"
                             size="sm"
@@ -1051,14 +1070,16 @@ function HrModuleContent() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                  <th className="py-3 px-4">Staff Member</th>
-                  <th className="py-3 px-4">Leave Type</th>
-                  <th className="py-3 px-4">Dates</th>
-                  <th className="py-3 px-4">Days</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                  <th className="py-3 px-4 whitespace-nowrap">Staff Member</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Leave Type</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Dates</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Days</th>
                   <th className="py-3 px-4">Reason</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/70 dark:divide-slate-800">
@@ -1067,30 +1088,30 @@ function HrModuleContent() {
                     key={lv.id}
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                   >
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900 dark:text-white">
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <div className="font-bold text-slate-900 dark:text-white whitespace-nowrap">
                         {lv.fullName}
                       </div>
-                      <div className="text-[10px] text-slate-500">
+                      <div className="text-[10px] text-slate-500 whitespace-nowrap">
                         {lv.employeeCode} &bull;{' '}
                         {HR_DEPARTMENT_LABELS[lv.department]}
                       </div>
                     </td>
-                    <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                    <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                       {LEAVE_TYPE_LABELS[lv.leaveType]}
                     </td>
-                    <td className="py-3 px-4 font-mono">
+                    <td className="py-3 px-4 font-mono whitespace-nowrap">
                       {lv.startDate} &rarr; {lv.endDate}
                     </td>
-                    <td className="py-3 px-4 font-mono font-bold">
+                    <td className="py-3 px-4 font-mono font-bold whitespace-nowrap">
                       {lv.workingDaysCount} days
                     </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 max-w-xs">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 min-w-[220px]">
                       {lv.reason}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${
                           lv.status === 'APPROVED'
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
                             : lv.status === 'REJECTED'
@@ -1101,8 +1122,8 @@ function HrModuleContent() {
                         {lv.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="inline-flex items-center justify-end gap-1.5">
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {lv.status === 'PENDING' ? (
                           <>
                             <Button

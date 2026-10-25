@@ -233,6 +233,9 @@ flowchart TD
       6. `Remove` (deletes a staff record with confirmation modal)
   - **Attendance Marked Not Configured (`src/app/(erp)/desk/hr/page.tsx`, `src/components/erp/Sidebar.tsx`, `src/lib/db/seed.ts`)**:
     - Marked `Attendance` as `Not Configured` on the HR navigation tab and Sidebar (`Not Set` badge), cleared fake attendance seed logs in [`src/lib/db/seed.ts`](file:///d:/amendesk/src/lib/db/seed.ts), and replaced the Attendance view with a clean `Staff Attendance Tracking is Not Configured` status panel.
+  - **Staff Directory & HR Tables Text-Wrapping Remediation (`src/app/(erp)/desk/hr/page.tsx`)**:
+    - Consolidated the Staff Directory table from 9 cramped columns into 6 clean, well-proportioned columns (`Staff Member`, `Role & Department`, `Statutory IDs`, `Monthly Pay` with Gross + Basic/Allowances subline, `Status & Payout`, and `Actions`).
+    - Applied `whitespace-nowrap` across all table headers and cells in the `Staff Directory`, `Monthly Payroll`, and `Leave Requests` tabs so staff names, employee codes (`AM-EMP-001`), phone numbers, roles, and currency figures never wrap onto multiple vertical lines.
   - **Overall HR & Payroll Simplification for Amen Mart (`EmployeeModal.tsx`, `src/app/(erp)/desk/hr/page.tsx`)**:
     - Streamlined [`src/components/erp/hr/EmployeeModal.tsx`](file:///d:/amendesk/src/components/erp/hr/EmployeeModal.tsx) by removing unnecessary fields (Till Cashier checkbox, Corporate Email, Next of Kin, Gender, Tax Relief, Tier 3 Voluntary %) into 4 clean sections with live monthly net pay preview.
     - Simplified the Monthly Payroll summary bar and enabled instant CSV exports (`GRA PAYE DT 0107`, `SSNIT Tier 1`, `Tier 2 Pension`) in the `GRA & SSNIT Filings` tab for any selected month.
