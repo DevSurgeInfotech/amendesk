@@ -129,6 +129,13 @@ body {
     background: #fff !important;
   }
 
+  .thermal-receipt-container img {
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    display: block !important;
+  }
+
   /* A4 document mode */
   .a4-document-container {
     width: 210mm !important;
@@ -138,6 +145,13 @@ body {
     box-sizing: border-box !important;
     background: #fff !important;
     color: #000 !important;
+  }
+
+  .a5-document-container img,
+  .a4-document-container img {
+    max-width: 100% !important;
+    display: block !important;
+  }
   }
 
   /* A5 document mode (Waybill & Gate Pass: 210mm x 148mm landscape) */

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Image from 'next/image';
 import type { AuctionLot, LandParcel, PropertyUnit, SaleTransferDoc } from '@/lib/types';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
@@ -183,7 +184,17 @@ export function SaleTransferModal({
           <div className="a4-document-container border border-slate-300 dark:border-slate-700 p-8 rounded-xl bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-serif shadow-sm">
             {/* Header */}
             <div className="text-center border-b-2 border-slate-900 dark:border-slate-100 pb-4">
-              <h1 className="text-2xl font-black tracking-widest uppercase text-indigo-900 dark:text-indigo-400">
+              <div className="flex justify-center mb-2">
+                <Image
+                  src="/amenmart-logo-horizontal-4k.png"
+                  alt="Amen Mart Ghana"
+                  width={220}
+                  height={124}
+                  priority
+                  className="h-12 w-auto object-contain"
+                />
+              </div>
+              <h1 className="text-xl font-black tracking-widest uppercase text-indigo-900 dark:text-indigo-400">
                 AMEN MART GHANA
               </h1>
               <p className="text-xs font-sans uppercase font-bold text-slate-600 dark:text-slate-400 mt-1">

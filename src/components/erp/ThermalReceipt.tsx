@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Receipt } from '@/lib/types';
 import { formatGHS } from '@/lib/utils/currency';
 import { formatDateTime, formatDate } from '@/lib/utils/date';
@@ -38,15 +39,25 @@ export function ThermalReceipt({ receipt, onClose }: ThermalReceiptProps) {
       {/* 80mm Thermal Receipt Layout */}
       <div className="thermal-receipt-container bg-white text-black p-4 border border-dashed border-slate-300 rounded shadow-xs w-full max-w-[320px] font-mono text-xs">
         {/* Header */}
-        <div className="text-center pb-3 border-b border-dashed border-black">
-          <h1 className="text-sm font-black tracking-wider uppercase">
+        <div className="text-center pb-3 border-b border-dashed border-black flex flex-col items-center">
+          <div className="w-full flex justify-center mb-2">
+            <Image
+              src="/amenmart-logo-horizontal-4k.png"
+              alt="Amen Mart Auctioning Services"
+              width={260}
+              height={146}
+              priority
+              className="h-11 w-auto object-contain"
+            />
+          </div>
+          <h1 className="text-xs font-black tracking-wider uppercase">
             AMEN MART AUCTIONING SERVICES
           </h1>
-          <p className="text-[9px] font-bold">AUCTIONEERS REGISTRATION BOARD &amp; MIN. OF INTERIOR APPROVED</p>
-          <p className="text-[9px] font-semibold text-slate-800">LEAD: DR. FRANCIS KWAKU YEBOAH &bull; GAA MEMBER</p>
-          <p className="text-[10px]">Location: Gbawe, Flower Junction &bull; P. O. Box DC 1013, Dansoman</p>
-          <p className="text-[10px]">Tel: 0548517277 / 0558314744 &bull; amenmart2291@gmail.com</p>
-          <p className="text-[10px] font-bold mt-1 bg-black text-white py-0.5">OFFICIAL CASH OFFICE RECEIPT</p>
+          <p className="text-[8.5px] font-bold">AUCTIONEERS REGISTRATION BOARD &amp; MIN. OF INTERIOR APPROVED</p>
+          <p className="text-[8.5px] font-semibold text-slate-800">LEAD: DR. FRANCIS KWAKU YEBOAH &bull; GAA MEMBER</p>
+          <p className="text-[9.5px]">Location: Gbawe, Flower Junction &bull; P. O. Box DC 1013, Dansoman</p>
+          <p className="text-[9.5px]">Tel: 0548517277 / 0558314744 &bull; amenmart2291@gmail.com</p>
+          <p className="text-[10px] font-bold mt-1 bg-black text-white py-0.5 w-full">OFFICIAL CASH OFFICE RECEIPT</p>
         </div>
 
         {/* Metadata */}

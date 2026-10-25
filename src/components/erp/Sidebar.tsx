@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -283,8 +284,15 @@ export function Sidebar() {
               className="flex items-center justify-center w-full transition-opacity cursor-pointer hover:opacity-85"
               title="AmenDesk ERP"
             >
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center text-white font-black text-sm shadow-md shadow-indigo-600/30">
-                AM
+              <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-1 flex items-center justify-center shadow-xs">
+                <Image
+                  src="/amenmart-icon-4k.png"
+                  alt="Amen Mart"
+                  width={36}
+                  height={36}
+                  priority
+                  className="w-full h-full object-contain rounded-xl"
+                />
               </div>
             </Link>
           ) : (
@@ -296,8 +304,15 @@ export function Sidebar() {
                 className="flex items-center gap-3 min-w-0 flex-1 transition-opacity cursor-pointer hover:opacity-85"
                 title="AmenDesk ERP"
               >
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center text-white font-black text-base shadow-md shadow-indigo-600/30 shrink-0">
-                  AM
+                <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-1 flex items-center justify-center shadow-xs shrink-0">
+                  <Image
+                    src="/amenmart-icon-4k.png"
+                    alt="Amen Mart"
+                    width={36}
+                    height={36}
+                    priority
+                    className="w-full h-full object-contain rounded-xl"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">

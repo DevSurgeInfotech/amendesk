@@ -307,6 +307,36 @@ flowchart TD
   - `src/app/platform/page.tsx` (Decoupled from SiteHeader, imported from ui/GhanaFlag)
   - `STATE_HANDOFF.md` (Updated session changelog)
 
+### Session: 2026-10-25 (Amen Mart Brand Asset Rollout: 4K Icon, App Icon, Horizontal Print Logos)
+- **Goal**: Apply official Amen Mart brand identity assets across AmenDesk ERP, public showroom, printable thermal receipts, waybills, login page, and application metadata.
+- **Accomplishments**:
+  - **Login Page (`src/app/login/page.tsx`)**: Replaced deprecated legacy SVG with crisp high-resolution [`/amenmart-icon-4k.png`](file:///d:/amendesk/public/amenmart-icon-4k.png), paired with official "AMEN MART" typography and "Auctioning Services" descriptor inside the elevated surface pedestal card.
+  - **Application Icon & PWA Metadata (`src/app/layout.tsx`, `public/manifest.json`, `src/app/icon.png`, `src/app/apple-icon.png`)**: Applied [`/amenmart-app-icon-4k.png`](file:///d:/amendesk/public/amenmart-app-icon-4k.png) to Next.js `metadata.icons` (`icon`, `apple`, `shortcut`), `appleWebApp`, and `manifest.json` (192x192, 512x512, 3840x3840 with `any` and `maskable` purposes). Configured root Next.js icon assets.
+  - **Receipts & Waybills Print Suite**:
+    - **Thermal Receipts (`src/components/erp/ThermalReceipt.tsx`)**: Applied [`/amenmart-logo-horizontal-4k.png`](file:///d:/amendesk/public/amenmart-logo-horizontal-4k.png) in the 80mm cash office receipt header.
+    - **Dispatch Waybills (`src/components/erp/WaybillModal.tsx`)**: Applied [`/amenmart-logo-horizontal-4k.png`](file:///d:/amendesk/public/amenmart-logo-horizontal-4k.png) in the official A5 gate release waybill header.
+    - **Invoices & Transfer Deeds (`src/components/erp/accounting/InvoiceViewerModal.tsx`, `src/components/erp/SaleTransferModal.tsx`)**: Unified commercial tax invoices and A4 land/property transfer deeds with [`/amenmart-logo-horizontal-4k.png`](file:///d:/amendesk/public/amenmart-logo-horizontal-4k.png).
+    - **Print Styling (`src/app/globals.css`)**: Enhanced `@media print` rules for thermal receipts, A5 waybills, and A4 documents to ensure logos render with zero clipping and high fidelity.
+  - **Sidebar & Shell Navigation (`src/components/erp/Sidebar.tsx`, `src/components/erp/Topbar.tsx`)**: Applied [`/amenmart-icon-4k.png`](file:///d:/amendesk/public/amenmart-icon-4k.png) on top of the AmenDesk sidebar in both expanded and collapsed states, as well as on topbar mobile/collapsed header fallback.
+  - **Website Navigation Header & Footer (`src/components/site/SiteHeader.tsx`, `src/components/site/SiteFooter.tsx`)**: Replaced placeholder monogram with crisp [`/amenmart-icon-4k.png`](file:///d:/amendesk/public/amenmart-icon-4k.png).
+  - Passed all mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict) with 0 compiler errors and 0 warnings.
+- **Changed Files**:
+  - `src/app/login/page.tsx`
+  - `src/app/layout.tsx`
+  - `public/manifest.json`
+  - `src/app/icon.png`
+  - `src/app/apple-icon.png`
+  - `src/components/erp/ThermalReceipt.tsx`
+  - `src/components/erp/WaybillModal.tsx`
+  - `src/components/erp/accounting/InvoiceViewerModal.tsx`
+  - `src/components/erp/SaleTransferModal.tsx`
+  - `src/app/globals.css`
+  - `src/components/erp/Sidebar.tsx`
+  - `src/components/erp/Topbar.tsx`
+  - `src/components/site/SiteHeader.tsx`
+  - `src/components/site/SiteFooter.tsx`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-24 (Login Surface Contrast & Streamlined Clean UI)
 - **Goal**: Remediate login surface card blending into surrounding slate canvas and strip non-instructed auxiliary elements (Quick Test Access drawer, footer badges row, and extra top chrome) per user directive.
 - **Accomplishments**:

@@ -20,6 +20,20 @@ export const metadata: Metadata = {
   description:
     'Amen Mart Auctioning Services, led by Dr. Francis Kwaku Yeboah, is a trusted name in Ghana’s auction industry. Affiliated with the Ghana Auctioneers Association for live Accra auctions, property, vehicles, industrial equipment, and real-time online auctions.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/amenmart-app-icon-4k.png', sizes: '3840x3840', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/amenmart-app-icon-4k.png', sizes: '3840x3840', type: 'image/png' },
+    ],
+    shortcut: '/amenmart-app-icon-4k.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'AmenDesk',
+  },
 };
 
 export default function RootLayout({

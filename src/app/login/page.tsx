@@ -150,15 +150,27 @@ export default function LoginPage() {
 
             {/* Brand Header Row */}
             <div className="flex items-center justify-between gap-4 mb-7 pt-1">
-              <Image
-                src="/amenmart-logo.svg"
-                alt="Amen Mart Auctioning Services"
-                width={200}
-                height={62}
-                priority
-                className="h-10 sm:h-11 w-auto object-contain"
-              />
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+              <div className="flex items-center gap-3">
+                <div className="relative h-12 w-12 rounded-2xl overflow-hidden shadow-xs border border-slate-200/90 bg-white shrink-0 p-1 flex items-center justify-center">
+                  <Image
+                    src="/amenmart-icon-4k.png"
+                    alt="Amen Mart"
+                    width={48}
+                    height={48}
+                    priority
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div>
+                  <div className="font-sans font-black text-lg leading-tight tracking-tight text-slate-900">
+                    AMEN MART
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">
+                    Auctioning Services
+                  </div>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-600 shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 AmenDesk
               </span>

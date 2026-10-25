@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Image from 'next/image';
 import type { AuctionLot, Waybill } from '@/lib/types';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
@@ -121,25 +122,35 @@ export function WaybillModal({ isOpen, onClose, lot, onSuccess }: WaybillModalPr
           {/* Printable A5 Landscape Waybill */}
           <div className="a5-document-container border border-slate-300 dark:border-slate-700 p-4 rounded-xl bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans shadow-sm text-[11px] leading-tight">
             {/* Header */}
-            <div className="flex justify-between items-start border-b-2 border-slate-900 dark:border-slate-100 pb-2 mb-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-black tracking-tight text-indigo-700 dark:text-indigo-400">
-                    AMEN MART LIMITED
-                  </h1>
-                  <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
-                    A5 Dispatch Pass
-                  </span>
+            <div className="flex justify-between items-center border-b-2 border-slate-900 dark:border-slate-100 pb-2.5 mb-3 gap-3">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/amenmart-logo-horizontal-4k.png"
+                  alt="Amen Mart"
+                  width={200}
+                  height={112}
+                  priority
+                  className="h-11 w-auto object-contain shrink-0"
+                />
+                <div className="border-l border-slate-300 dark:border-slate-700 pl-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-black tracking-tight text-slate-900 dark:text-white">
+                      AMEN MART LIMITED
+                    </span>
+                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                      A5 Dispatch Pass
+                    </span>
+                  </div>
+                  <p className="text-[9.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    Licensed Auctioneers &bull; Government, Judicial &amp; Private Liquidators
+                  </p>
+                  <p className="text-[8.5px] text-slate-500">
+                    Location: Gbawe, Flower Junction &bull; P. O. Box DC 1013, Dansoman &bull; Tel: 0548517277 / 0558314744
+                  </p>
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  Licensed Auctioneers &bull; Government, Judicial &amp; Private Liquidators
-                </p>
-                <p className="text-[9px] text-slate-500">
-                  Location: Gbawe, Flower Junction &bull; P. O. Box DC 1013, Dansoman &bull; Tel: 0548517277 / 0558314744
-                </p>
               </div>
 
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <span className="inline-block px-2.5 py-0.5 bg-indigo-700 text-white text-[10px] font-black uppercase tracking-wider rounded">
                   WAYBILL &amp; GATE PASS
                 </span>

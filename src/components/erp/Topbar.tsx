@@ -551,8 +551,15 @@ export function Topbar() {
             }`}
             title="AmenDesk ERP"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center text-white font-black text-xs shadow-sm shadow-indigo-600/30">
-              AM
+            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-0.5 flex items-center justify-center shadow-xs shrink-0">
+              <Image
+                src="/amenmart-icon-4k.png"
+                alt="Amen Mart"
+                width={32}
+                height={32}
+                priority
+                className="w-full h-full object-contain rounded-lg"
+              />
             </div>
             <div className="hidden sm:block">
               <div className="flex items-center gap-1">

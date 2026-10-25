@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShieldCheck, MapPin, Phone, Mail, Gavel, Car, Building2, Newspaper, BookOpen } from 'lucide-react';
 
 export function SiteFooter() {
@@ -10,8 +11,14 @@ export function SiteFooter() {
         {/* Col 1 */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-xs">
-              AM
+            <div className="h-9 w-9 rounded-xl bg-white border border-slate-200/90 p-0.5 flex items-center justify-center shadow-xs shrink-0">
+              <Image
+                src="/amenmart-icon-4k.png"
+                alt="Amen Mart"
+                width={32}
+                height={32}
+                className="w-full h-full object-contain rounded-lg"
+              />
             </div>
             <div>
               <span className="text-base font-black text-slate-900 tracking-tight block">AMEN MART</span>

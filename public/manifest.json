@@ -8,6 +8,18 @@
   "theme_color": "#4f46e5",
   "icons": [
     {
+      "src": "/amenmart-app-icon-4k.png",
+      "sizes": "192x192 512x512 3840x3840",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/amenmart-app-icon-4k.png",
+      "sizes": "192x192 512x512 3840x3840",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"

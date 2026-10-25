@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Invoice } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -41,11 +42,16 @@ export function InvoiceViewerModal({
           {/* Header */}
           <div className="flex justify-between items-start border-b border-slate-200 pb-4">
             <div>
-              <div className="flex items-center gap-2">
-                <div className="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-sm">
-                  AM
-                </div>
-                <div>
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/amenmart-logo-horizontal-4k.png"
+                  alt="Amen Mart Ghana"
+                  width={180}
+                  height={101}
+                  priority
+                  className="h-10 w-auto object-contain shrink-0"
+                />
+                <div className="border-l border-slate-200 pl-3">
                   <h2 className="font-black text-lg text-slate-900 tracking-tight">AMEN MART GHANA</h2>
                   <p className="text-[11px] text-slate-500 font-medium">Auctions &bull; Dealership &bull; Land &bull; Property</p>
                 </div>
