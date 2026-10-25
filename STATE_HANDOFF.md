@@ -225,6 +225,34 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Stylish Breadcrumb Navigation System Rollout & Implementation Plan)
+- **Goal**: Resolve absence of breadcrumb navigation across AmenDesk pages that left yard, showroom, and cash office staff trapped in deeply nested routes without an immediate visual hierarchy or 1-click return to the primary Operations Dashboard.
+- **Root Cause & Design Strategy**:
+  - Staff navigating into complex submodules (e.g., `/desk/auctions/intake`, `/desk/hr?tab=payroll`, `/desk/crm?filter=INQUIRIES`, `/desk/payments?tab=receipts`) had no visual path indication or instant return mechanism, especially since the Topbar brand logo is hidden on desktop when the sidebar is expanded.
+  - Required a sticky, high-contrast, responsive breadcrumb navigation bar integrated into the ERP shell, with dynamic search parameter resolution, keyboard shortcuts (`Alt+D`), and a prominent 1-click return CTA.
+- **Accomplishments**:
+  - **Comprehensive Implementation Plan Artifact**: Authored detailed architectural artifact at `C:/Users/KIS/.gemini/antigravity/brain/e3e70e91-892b-4292-9821-455e13070a18/amendesk-breadcrumb-navigation-plan.md` mapping all 15 AmenDesk ERP modules, sub-tab parameters, visual design rules, and verification matrix.
+  - **ERP Breadcrumbs Component (`src/components/erp/Breadcrumbs.tsx`)**:
+    - Created responsive, glassmorphic (`bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border-b`) breadcrumb component.
+    - Integrated dynamic module registry mapping all 15 modules (`payments`, `accounts`, `auctions`, `payment-plans`, `dealership`, `land`, `property`, `inventory`, `crm`, `communication`, `hr`, `settings`, `migration`) to semantic Lucide icons and titles.
+    - Dynamic sub-tab resolution: parses query parameters (`?tab=`, `?cat=`, `?filter=`, `?status=`, `?titleType=`, `?propertyType=`, `?location=`) and renders styled context badges (e.g. `Monthly Payroll`, `Inbound Inquiries`, `Receipts Ledger`).
+    - Multi-level nested support: properly renders intermediate parent links (e.g. `Dashboard > Auctions Registry > Lot Intake Wizard`).
+    - 1-Click Quick Return CTA: renders a prominent `← Dashboard` pill button with `Alt+D` badge on the right flank when on any subpage.
+    - Global Keyboard Accelerator: registered global `Alt + D` hotkey listener to instantly route back to `/desk`.
+    - Fully accessible W3C WAI-ARIA breadcrumb markup (`<nav aria-label="Breadcrumb">`, `<ol>`, `<li>`, `aria-current="page"`).
+    - Wrapped in `Suspense` boundary for full Next.js 16 App Router `useSearchParams()` compliance.
+  - **ERP Shell Integration (`src/app/(erp)/desk/layout.tsx`)**:
+    - Integrated `<Breadcrumbs />` persistently directly below `<Topbar />` and before `<main>` so all current and future ERP pages automatically inherit breadcrumb navigation.
+  - **Public Showroom Subpages Navigation (`src/components/site/SiteBreadcrumbs.tsx`, `src/app/(site)/layout.tsx`)**:
+    - Created lightweight public breadcrumb navigation for showroom subpages (`/showroom`, `/auctions`, `/land`, `/properties`, `/news`, `/blog`, `/about`, `/contact`) with `Home > [Page]` and `← Back to Home` links.
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/components/erp/Breadcrumbs.tsx` (New)
+  - `src/app/(erp)/desk/layout.tsx` (Integrated Breadcrumbs)
+  - `src/components/site/SiteBreadcrumbs.tsx` (New)
+  - `src/app/(site)/layout.tsx` (Integrated SiteBreadcrumbs)
+  - `STATE_HANDOFF.md` (Updated session changelog)
+
 ### Session: 2026-10-25 (UI Modal Title & String Prop Remediation — Literal `&bull;` Entity Resolution)
 - **Goal**: Resolve literal `&bull;` text rendering in modal headers and JS string props across AmenDesk ERP and administrative consoles.
 - **Root Cause Identified**:

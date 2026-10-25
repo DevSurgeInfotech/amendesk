@@ -4,6 +4,7 @@ import { Suspense, useEffect, useSyncExternalStore, type ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/erp/Sidebar';
 import { Topbar } from '@/components/erp/Topbar';
+import { Breadcrumbs } from '@/components/erp/Breadcrumbs';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { useTerminal } from '@/context/TerminalContext';
 import { authService, SESSION_STORAGE_KEY } from '@/lib/auth/authService';
@@ -101,6 +102,7 @@ export default function DeskLayout({
           <div className="flex-1 flex flex-col min-w-0">
             <div className="no-print">
               <Topbar />
+              <Breadcrumbs />
             </div>
             <main className="flex-1 p-6 overflow-y-auto">
               <Suspense fallback={<div className="p-6 text-slate-500 text-xs">Loading terminal...</div>}>
