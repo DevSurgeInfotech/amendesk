@@ -122,4 +122,7 @@ Every agent working on company projects MUST push changes to GitHub live at the 
   - Land (direct parcel sales)
   - Property (direct unit sales)
 - **Payments**: Multi-mode receipting (Cash, MoMo [MTN/Vodafone/AirtelTigo via Hubtel], Bank Transfer, Card via Paystack)
+- **Multi-Tenant Access Policy (MANDATORY)**:
+  - **Live Production Tenant (`amen-mart-live` / `AmenDeskDB_live`)**: The sole environment for all Amen Mart operational staff, management, yard officers, and cashiers.
+  - **Developer Sandbox (`amen-mart-sandbox` / `AmenDeskDB_sandbox`)**: Exclusively reserved for Dev Surge Infotech developers for staging and feature verification. **Staff of Amen Mart have ZERO access to the sandbox.**
 <!-- END:project-conventions -->

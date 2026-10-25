@@ -34,16 +34,16 @@ export const DEFAULT_TENANTS: TenantRecord[] = [
   },
   {
     id: 'amen-mart-sandbox',
-    code: 'DEMO',
-    name: 'Amen Mart Demo Yard',
-    shortName: 'Amen Mart Demo',
+    code: 'SANDBOX',
+    name: 'Dev Surge Sandbox',
+    shortName: 'Dev Sandbox',
     environment: 'SANDBOX',
     status: 'ACTIVE',
     contactEmail: 'devsurgeinfotech@gmail.com',
     phone: '0548517277',
-    address: 'Dev Surge Sandbox Yard, Accra — Ghana',
+    address: 'Dev Surge Staging Lab, Accra — Ghana',
     createdAt: '2026-01-01T00:00:00Z',
-    description: 'Dev Surge client demonstration & feature testing workspace with seeded Ghanaian dataset.',
+    description: 'Dev Surge developer sandbox & regression testing environment. Amen Mart staff have no access.',
   },
 ];
 
@@ -138,13 +138,13 @@ export const DEFAULT_USERS: UserAccount[] = [
     createdAt: '2026-01-01T00:00:00Z',
   },
 
-  // Demo Yard Provisioned Accounts (Dev Surge client showcase & feature previewing)
+  // Dev Surge Developer Sandbox Accounts (Strictly for Dev Surge developers — Amen Mart staff have no access)
   {
-    id: 'usr-am-demo-account',
+    id: 'usr-devsurge-sandbox-lead',
     tenantId: 'amen-mart-sandbox',
-    username: 'amenmart.demo',
-    email: 'demo@amenmart.com',
-    fullName: 'Amen Mart Demo Account',
+    username: 'devsurge.lead',
+    email: 'lead@devsurge.io',
+    fullName: 'Dev Surge Sandbox Lead',
     role: 'OWNER',
     password: 'demo123',
     isActive: true,
@@ -486,6 +486,21 @@ class AuthService {
       throw new Error(`Workspace "${tenant.name}" is currently suspended. Please contact platform administrators.`);
     }
 
+    // Strict Multi-Tenant Access Policy: Amen Mart staff cannot access Dev Surge Sandbox
+    if (tenant.environment === 'SANDBOX' || tenant.id === 'amen-mart-sandbox') {
+      const isDevSurgeDeveloper =
+        user.email.endsWith('@devsurge.io') ||
+        user.email === 'devsurgeinfotech@gmail.com' ||
+        user.username.startsWith('devsurge.') ||
+        user.username.startsWith('demo.') ||
+        user.username === 'demo';
+      if (!isDevSurgeDeveloper) {
+        throw new Error(
+          'Access Denied: The Sandbox environment is strictly reserved for Dev Surge Infotech developers. Amen Mart staff accounts operate exclusively in Amen Mart Live.'
+        );
+      }
+    }
+
     const isDemoPassword =
       (tenant.environment === 'SANDBOX' || user.tenantId === 'amen-mart-sandbox') &&
       (password === 'demo123' || password === 'amen@2026');
@@ -595,6 +610,21 @@ class AuthService {
 
     if (tenant.status !== 'ACTIVE') {
       throw new Error(`Workspace "${tenant.name}" is currently suspended. Please contact platform administrators.`);
+    }
+
+    // Strict Multi-Tenant Access Policy: Amen Mart staff cannot access Dev Surge Sandbox
+    if (tenant.environment === 'SANDBOX' || tenant.id === 'amen-mart-sandbox') {
+      const isDevSurgeDeveloper =
+        user.email.endsWith('@devsurge.io') ||
+        user.email === 'devsurgeinfotech@gmail.com' ||
+        user.username.startsWith('devsurge.') ||
+        user.username.startsWith('demo.') ||
+        user.username === 'demo';
+      if (!isDevSurgeDeveloper) {
+        throw new Error(
+          'Access Denied: The Sandbox environment is strictly reserved for Dev Surge Infotech developers. Amen Mart staff accounts operate exclusively in Amen Mart Live.'
+        );
+      }
     }
 
     // Update last login timestamp

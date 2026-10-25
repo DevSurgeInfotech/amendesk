@@ -13,12 +13,12 @@ export interface Tenant {
 export const SYSTEM_TENANTS: Record<TenantId, Tenant> = {
   'amen-mart-sandbox': {
     id: 'amen-mart-sandbox',
-    name: 'AmenDesk (Demo Yard)',
-    shortName: 'Demo Yard',
-    code: 'DEMO',
+    name: 'Dev Surge Sandbox',
+    shortName: 'Dev Sandbox',
+    code: 'SANDBOX',
     isSandbox: true,
-    badgeLabel: 'SANDBOX DEMO',
-    description: 'Dev Surge client demonstration & feature testing workspace with seeded Ghanaian dataset.',
+    badgeLabel: 'DEV SURGE SANDBOX',
+    description: 'Dev Surge Infotech internal developer sandbox & regression testing. Amen Mart staff have no access.',
   },
   'amen-mart-live': {
     id: 'amen-mart-live',

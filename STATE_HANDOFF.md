@@ -51,11 +51,11 @@ flowchart LR
 | **Primary Branch** | `main` | Synchronized with `origin/main` |
 | **Current Quality Gate Status** | **100% PASS** (0 TSC errors, 0 ESLint warnings) | Verified via `npm run check` |
 
-### Multi-Tenant Architecture & Database Separation
-AmenDesk implements an **Encore SMS-style multi-tenant architecture**:
-- **Live Production Tenant (`amen-mart-live`)**: Database `AmenDeskDB_live`. Isolated live records for production yard and cash office. Maintained as a pristine **clean slate**: all 50 statutory COA accounts start at `GH₵ 0.00` balance, with 0 demo auction lots, dealership vehicles, land parcels, properties, expenses, invoices, payroll runs, seed employees, or mock customers. Automatically protected by `ensureLiveCleanSlate()` on boot, with one-click Client Handover Clean Slate tools in Settings and Migration.
-- **Sandbox Demo Tenant (`amen-mart-sandbox`)**: Database `AmenDeskDB_sandbox`. Cloaked sandbox environment for staging, testing, and staff training with rich seed demonstration data (`initialSandboxAccounts` with demo balances, sample lots, vehicles, land parcels, and mock transactions).
-- **Platform Console (`/platform`)**: Fleet management console for Dev Surge Infotech administrators to provision workspaces, review deployment builds, manage releases, and toggle client tenant accounts.
+### Multi-Tenant Architecture & Sandbox Access Policy
+AmenDesk implements an **Encore SMS-style multi-tenant architecture** with a strict security access rule:
+- **Live Production Tenant (`amen-mart-live`)**: Database `AmenDeskDB_live`. The sole operating environment for all Amen Mart operational staff, management, yard officers, and front-desk cashiers. Maintained as a pristine **clean slate**: all 50 statutory COA accounts start at `GH₵ 0.00` balance, with 0 demo auction lots, dealership vehicles, land parcels, properties, expenses, invoices, payroll runs, seed employees, or mock customers. Automatically protected by `ensureLiveCleanSlate()` on boot, with one-click Client Handover Clean Slate tools in Settings and Migration.
+- **Developer Sandbox (`amen-mart-sandbox`)**: Database `AmenDeskDB_sandbox`. Cloaked staging, feature testing, and regression verification workspace strictly reserved for Dev Surge Infotech developers (`@devsurge.io` / `devsurgeinfotech@gmail.com`). **Staff of Amen Mart have ZERO access to the sandbox.** Attempting to sign into the sandbox with an Amen Mart staff credential is hard-blocked at the auth layer.
+- **Platform Console (`/platform`)**: Fleet management console for Dev Surge Infotech administrators to provision workspaces, review deployment builds, manage releases, and toggle client tenant accounts. Locked behind the Dev Surge master passcode; Amen Mart staff accounts cannot unlock this console.
 
 ---
 
@@ -848,6 +848,23 @@ flowchart TD
 - **Changed Files**:
   - `src/app/login/page.tsx` (Remediated card surface contrast and elevation, removed Quick Test Access and footer badges, kept clean minimalist interface)
   - `STATE_HANDOFF.md` (Updated session changelog)
+
+### Session: 2026-10-25 (Enforce Strict Sandbox Isolation for Dev Surge Developers Only)
+- **Goal**: Codify and enforce the strict architectural rule that Amen Mart staff do not have access to the sandbox; the sandbox is strictly reserved for Dev Surge developers.
+- **Accomplishments**:
+  - **Auth Layer Sandbox Security Guard**: Implemented hard access controls in [`src/lib/auth/authService.ts`](file:///d:/amendesk/src/lib/auth/authService.ts) (`login` and `loginWithGoogleEmail`):
+    - Any attempt to authenticate into `amen-mart-sandbox` with an Amen Mart staff credential (`@amenmart.com`, `@amenmart.gh`, `amenmart2291@gmail.com`) is rejected with an explicit error: `"Access Denied: The Sandbox environment is strictly reserved for Dev Surge Infotech developers. Amen Mart staff accounts operate exclusively in Amen Mart Live."`
+    - Removed `amenmart.demo` mock account from sandbox; replaced with verified Dev Surge developer identity (`devsurge.lead` / `lead@devsurge.io`).
+  - **Platform Console Lockout**: Updated [`src/app/platform/page.tsx`](file:///d:/amendesk/src/app/platform/page.tsx) so Amen Mart staff accounts (even with `role === 'OWNER'`) cannot automatically unlock the engineering console or launch the sandbox. Console access requires explicit Dev Surge master developer passcodes or a verified `@devsurge.io` session.
+  - **System Documentation & Rules Codification**:
+    - Updated [`AGENTS.md`](file:///d:/amendesk/AGENTS.md) with mandatory multi-tenant access policy.
+    - Updated [`STATE_HANDOFF.md`](file:///d:/amendesk/STATE_HANDOFF.md) multi-tenant overview and system tenants registry in [`src/lib/types/tenant.ts`](file:///d:/amendesk/src/lib/types/tenant.ts).
+- **Changed Files**:
+  - `AGENTS.md` (Added mandatory multi-tenant sandbox restriction rule)
+  - `src/lib/types/tenant.ts` (Updated SYSTEM_TENANTS sandbox description to Dev Surge Sandbox)
+  - `src/lib/auth/authService.ts` (Auth guards blocking staff access to sandbox; replaced amenmart.demo with devsurge.lead)
+  - `src/app/platform/page.tsx` (Enforced master passcode lock; prevented staff OWNER role auto-unlock; updated sandbox launch labels)
+  - `STATE_HANDOFF.md` (Updated multi-tenant policy overview and session changelog)
 
 ### Session: 2026-10-25 (E2E Showroom & Auction Lot Audit & Clean Slate ID Bug Fix)
 - **Goal**: Audit end-to-end data flow for uploading lots/cars on AmenDesk and their visibility in the showroom, and map all website lead submission endpoints ("Register to Bid", "Inquire / Reserve", "Reserve Online").

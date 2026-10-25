@@ -136,7 +136,10 @@ export default function PlatformPage() {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const session = authService.getSession();
-    return session?.user?.role === 'OWNER';
+    const isDevSurgeDeveloper =
+      session?.user?.email?.endsWith('@devsurge.io') ||
+      session?.user?.email === 'devsurgeinfotech@gmail.com';
+    return Boolean(isDevSurgeDeveloper);
   });
   const [masterPasscode, setMasterPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
@@ -186,7 +189,10 @@ export default function PlatformPage() {
       setTenants(authService.getTenants());
       setUsers(authService.getUsers());
       const session = authService.getSession();
-      if (session?.user?.role === 'OWNER') {
+      const isDevSurgeDeveloper =
+        session?.user?.email?.endsWith('@devsurge.io') ||
+        session?.user?.email === 'devsurgeinfotech@gmail.com';
+      if (isDevSurgeDeveloper) {
         setIsUnlocked(true);
       }
     });
@@ -510,10 +516,10 @@ export default function PlatformPage() {
                   type="button"
                   onClick={handleLaunchDemoYard}
                   className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-all cursor-pointer shadow-xs"
-                  title="Switch immediately into the Demo Yard tenant to test features before deploying to production"
+                  title="Dev Surge Developers Only: Launch Developer Sandbox environment for feature and regression testing"
                 >
                   <FlaskConical className="h-3.5 w-3.5" />
-                  <span>Test in Demo Yard</span>
+                  <span>Dev Sandbox (Dev Surge Only)</span>
                 </button>
               </>
             )}
@@ -982,15 +988,16 @@ export default function PlatformPage() {
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                       <span className="text-[11px] text-amber-800 font-bold flex items-center gap-1">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>Provisioned &amp; Ready</span>
+                        <span>Dev Surge Staging Lab</span>
                       </span>
                       <button
                         type="button"
                         onClick={handleLaunchDemoYard}
                         className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                        title="Dev Surge Developers Only"
                       >
                         <FlaskConical className="h-3.5 w-3.5" />
-                        <span>Sign in to Demo →</span>
+                        <span>Launch Dev Sandbox →</span>
                       </button>
                     </div>
                   </div>
