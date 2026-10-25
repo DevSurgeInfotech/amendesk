@@ -11,7 +11,10 @@ import {
 } from 'react';
 import { authService } from '@/lib/auth/authService';
 
+export type LockReason = 'IDLE_TIMEOUT' | 'MANUAL_VOLUNTARY';
+
 export const IDLE_LOCK_STORAGE_KEY = 'amendesk_terminal_is_locked';
+export const IDLE_REASON_STORAGE_KEY = 'amendesk_terminal_lock_reason';
 export const IDLE_TIMEOUT_STORAGE_KEY = 'amendesk_idle_lock_minutes';
 export const IDLE_ENABLED_STORAGE_KEY = 'amendesk_idle_lock_enabled';
 export const LAST_ACTIVITY_STORAGE_KEY = 'amendesk_terminal_last_activity';
@@ -19,7 +22,8 @@ export const DEFAULT_IDLE_LOCK_MINUTES = 15; // Statutory standard: 15 minutes d
 
 export interface IdleLockContextType {
   isLocked: boolean;
-  lockTerminal: () => void;
+  lockReason: LockReason;
+  lockTerminal: (reason?: LockReason) => void;
   unlockTerminal: (password: string) => { success: boolean; error?: string };
   timeoutMinutes: number;
   setTimeoutMinutes: (minutes: number) => void;
@@ -53,6 +57,17 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     } catch {
       return false;
     }
+  });
+
+  const [lockReason, setLockReason] = useState<LockReason>(() => {
+    if (typeof window === 'undefined') return 'IDLE_TIMEOUT';
+    try {
+      const stored = localStorage.getItem(IDLE_REASON_STORAGE_KEY);
+      if (stored === 'MANUAL_VOLUNTARY' || stored === 'IDLE_TIMEOUT') return stored;
+    } catch {
+      // Fallback
+    }
+    return 'IDLE_TIMEOUT';
   });
 
   const [timeoutMinutes, setInternalTimeoutMinutes] = useState<number>(() => {
@@ -95,11 +110,13 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
 
   const [remainingSeconds, setRemainingSeconds] = useState<number>(() => timeoutMinutes * 60);
 
-  const lockTerminal = useCallback(() => {
+  const lockTerminal = useCallback((reason: LockReason = 'MANUAL_VOLUNTARY') => {
     setIsLocked(true);
+    setLockReason(reason);
     setRemainingSeconds(0);
     try {
       localStorage.setItem(IDLE_LOCK_STORAGE_KEY, 'true');
+      localStorage.setItem(IDLE_REASON_STORAGE_KEY, reason);
       window.dispatchEvent(new Event('amendesk-idle-lock-change'));
     } catch {
       // Ignore
@@ -123,12 +140,13 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     const now = Date.now();
     lastActivityRef.current = now;
     setLastActiveTime(now);
-    lastActivityRef.current = now;
     setIsLocked(false);
+    setLockReason('IDLE_TIMEOUT');
     setRemainingSeconds(timeoutMinutes * 60);
 
     try {
       localStorage.removeItem(IDLE_LOCK_STORAGE_KEY);
+      localStorage.removeItem(IDLE_REASON_STORAGE_KEY);
       localStorage.setItem(LAST_ACTIVITY_STORAGE_KEY, String(now));
       window.dispatchEvent(new Event('amendesk-idle-lock-change'));
     } catch {
@@ -207,14 +225,19 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Quick manual lock keyboard shortcut: Ctrl+Alt+L or ⌘+Alt+L or Ctrl+Shift+L
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.altKey || e.shiftKey) &&
-        (e.key === 'l' || e.key === 'L')
-      ) {
+      // Voluntary manual lock keyboard shortcuts:
+      // 1. Alt + L (convenient, instant 1-finger combination without browser address bar collision)
+      // 2. Ctrl + Alt + L / ⌘ + Option + L (enterprise standard)
+      // 3. Ctrl + Shift + L (standard utility shortcut)
+      const isKeyL = e.key === 'l' || e.key === 'L' || e.code === 'KeyL';
+      const isAltL = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && isKeyL;
+      const isCtrlAltL = (e.ctrlKey || e.metaKey) && e.altKey && isKeyL;
+      const isCtrlShiftL = (e.ctrlKey || e.metaKey) && e.shiftKey && isKeyL;
+
+      if (isAltL || isCtrlAltL || isCtrlShiftL) {
         e.preventDefault();
-        lockTerminal();
+        e.stopPropagation();
+        lockTerminal('MANUAL_VOLUNTARY');
         return;
       }
       recordActivity();
@@ -223,6 +246,10 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === IDLE_LOCK_STORAGE_KEY) {
         setIsLocked(e.newValue === 'true');
+      } else if (e.key === IDLE_REASON_STORAGE_KEY && e.newValue) {
+        if (e.newValue === 'MANUAL_VOLUNTARY' || e.newValue === 'IDLE_TIMEOUT') {
+          setLockReason(e.newValue);
+        }
       } else if (e.key === IDLE_TIMEOUT_STORAGE_KEY && e.newValue) {
         const val = parseInt(e.newValue, 10);
         if (!isNaN(val) && val > 0) setInternalTimeoutMinutes(val);
@@ -241,6 +268,10 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
       try {
         const locked = localStorage.getItem(IDLE_LOCK_STORAGE_KEY) === 'true';
         setIsLocked(locked);
+        const reason = localStorage.getItem(IDLE_REASON_STORAGE_KEY);
+        if (reason === 'MANUAL_VOLUNTARY' || reason === 'IDLE_TIMEOUT') {
+          setLockReason(reason);
+        }
       } catch {
         // Ignore
       }
@@ -253,13 +284,14 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
         const last = storedLast ? parseInt(storedLast, 10) : lastActivityRef.current;
         if (!isNaN(last) && last > 0) {
           lastActivityRef.current = last;
+          setLastActiveTime(last);
         }
 
         if (!isLocked && isAutoLockEnabled) {
           const elapsed = (now - lastActivityRef.current) / 1000;
           const totalSec = timeoutMinutes * 60;
           if (elapsed >= totalSec) {
-            lockTerminal();
+            lockTerminal('IDLE_TIMEOUT');
           }
         }
       }
@@ -308,7 +340,7 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
       setRemainingSeconds(remaining);
 
       if (elapsedSeconds >= totalSeconds) {
-        lockTerminal();
+        lockTerminal('IDLE_TIMEOUT');
       }
     }, 1000);
 
@@ -319,6 +351,7 @@ export function IdleLockProvider({ children }: { children: ReactNode }) {
     <IdleLockContext.Provider
       value={{
         isLocked,
+        lockReason,
         lockTerminal,
         unlockTerminal,
         timeoutMinutes,

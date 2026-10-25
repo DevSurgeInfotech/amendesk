@@ -1411,7 +1411,7 @@ function WorkspaceSettingsContent() {
 
               <button
                 type="button"
-                onClick={lockTerminal}
+                onClick={() => lockTerminal('MANUAL_VOLUNTARY')}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
               >
                 <Lock className="h-3.5 w-3.5" />
@@ -1477,7 +1477,7 @@ function WorkspaceSettingsContent() {
                 </div>
 
                 <div className="text-[10.5px] font-mono text-slate-500 pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
-                  <span>Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300 font-bold">Ctrl+Alt+L</kbd></span>
+                  <span>Voluntary Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300 font-bold">Alt+L</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300 font-bold">Ctrl+Alt+L</kbd></span>
                   <span>Offline Preserved: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">100%</strong></span>
                 </div>
               </div>

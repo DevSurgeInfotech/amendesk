@@ -58,6 +58,14 @@ interface SearchResultItem {
 
 const QUICK_MODULES: SearchResultItem[] = [
   {
+    id: 'mod-lock',
+    category: 'MODULE',
+    title: 'Lock Workspace Terminal Screen',
+    subtitle: 'Voluntary terminal lock protection and session security',
+    badge: 'Security',
+    href: '#lock',
+  },
+  {
     id: 'mod-overview',
     category: 'MODULE',
     title: 'Overview & Executive Dashboard',
@@ -579,6 +587,10 @@ export function Topbar() {
   const handleSelectSearchResult = (item: SearchResultItem) => {
     setSearchOpen(false);
     setSearchQuery('');
+    if (item.href === '#lock') {
+      lockTerminal('MANUAL_VOLUNTARY');
+      return;
+    }
     router.push(item.href);
   };
 
@@ -949,12 +961,12 @@ export function Topbar() {
             )}
           </div>
 
-          {/* Quick Terminal Lock Button */}
+          {/* Quick Voluntary Terminal Lock Button */}
           <button
             type="button"
-            onClick={lockTerminal}
+            onClick={() => lockTerminal('MANUAL_VOLUNTARY')}
             className="h-11 w-11 rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 dark:hover:text-amber-400 border border-slate-200/90 dark:border-slate-700/80 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-2xs group"
-            title={`Lock Workspace Screen (Ctrl+Alt+L • ${timeoutMinutes}m idle timeout)`}
+            title={`Lock Workspace Screen (Alt+L • ${timeoutMinutes}m idle timeout)`}
             aria-label="Lock Workspace Terminal Screen"
           >
             <Lock className="h-4 w-4 text-slate-600 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" />
@@ -1177,7 +1189,7 @@ export function Topbar() {
                     type="button"
                     onClick={() => {
                       setStaffMenuOpen(false);
-                      lockTerminal();
+                      lockTerminal('MANUAL_VOLUNTARY');
                     }}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
                   >
@@ -1185,7 +1197,7 @@ export function Topbar() {
                       <Lock className="h-3.5 w-3.5 text-amber-500" />
                       <span>Lock Workspace Terminal</span>
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">{timeoutMinutes}m Idle</span>
+                    <span className="text-[10px] font-mono text-slate-400">Lock</span>
                   </button>
 
                   <button

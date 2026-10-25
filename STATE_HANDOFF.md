@@ -247,7 +247,11 @@ flowchart TD
     - Configurable timeout with statutory default of **15 minutes** (900 seconds) and auto-lock toggle.
     - Multi-tab synchronization via `storage` and custom `amendesk-idle-lock-change` events.
     - Automatic `visibilitychange` listener immediately checking elapsed background time when waking from system sleep or switching browser tabs.
-    - Cross-platform keyboard shortcut for instantaneous manual locking: `Ctrl+Alt+L` / `⌘+Alt+L` / `Ctrl+Shift+L`.
+    - **Voluntary Manual Locking Keyboard Shortcuts**:
+      - Primary 1-finger shortcut: **`Alt + L`** (rapid, ergonomic voluntary lock without browser address bar collision).
+      - Alternate enterprise shortcuts: **`Ctrl + Alt + L`** / **`⌘ + Option + L`** and **`Ctrl + Shift + L`**.
+      - Global Search integration: typing `lock` in the `Ctrl + K` command palette surfaces a dedicated "Lock Workspace Terminal" action.
+    - **Lock Reason Attribution (`LockReason: 'IDLE_TIMEOUT' | 'MANUAL_VOLUNTARY'`)**: Displays custom status badges on the lock screen differentiating between automatic 15-minute idle timeout and voluntary operator lock.
     - Local persistence across browser reloads via `amendesk_terminal_is_locked` so a locked screen remains locked even after refreshing.
   - **Authentication Service Integration (`src/lib/auth/authService.ts`)**:
     - Added `verifyPassword(userIdOrUsername, password)` and `unlockWorkspace(password)` verifying credentials for both live production and sandbox demo accounts without destroying active tokens.
@@ -255,8 +259,9 @@ flowchart TD
     - Extended `WorkspaceSettings` schema with `idleLockMinutes: 15` and `enableIdleLock: true`.
     - In `/desk/settings?tab=SECURITY`, added dedicated "Enterprise Idle Lock & Physical Terminal Protection" card with timeout selector (5m, 10m, 15m [Default], 30m, 60m), auto-lock toggle, and "Test Lock Screen Now" button.
   - **Topbar Quick Action & Dropdown Integration (`src/components/erp/Topbar.tsx`)**:
-    - Added quick-lock button in Topbar header right cluster next to notifications.
-    - Added "Lock Workspace Terminal (Ctrl+Alt+L)" menu action in the staff profile dropdown.
+    - Added clean, minimalist quick-lock square icon button in Topbar header right cluster (matching theme and bell icons with no cluttering text).
+    - Added "Lock Workspace Terminal" menu action in the staff profile dropdown.
+    - Added "Lock Workspace Terminal Screen" to `QUICK_MODULES` accessible instantly via `Ctrl+K`.
   - **Shell Layout Integration (`src/app/(erp)/desk/layout.tsx`)**:
     - Wrapped ERP workspace shell in `<IdleLockProvider>` and mounted `<IdleLockScreen />` at the top layout level.
 - **Changed Files**:

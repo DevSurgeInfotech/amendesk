@@ -24,7 +24,7 @@ import {
 
 function IdleLockModalContent() {
   const router = useRouter();
-  const { unlockTerminal, timeoutMinutes } = useIdleLock();
+  const { unlockTerminal, timeoutMinutes, lockReason } = useIdleLock();
   const {
     session,
     currentUser,
@@ -205,10 +205,17 @@ function IdleLockModalContent() {
       <main className="relative z-10 w-full max-w-lg mx-auto my-auto py-6">
         {/* Digital Time & Date */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/90 text-slate-700 text-xs font-bold mb-3 shadow-xs">
-            <Lock className="h-3.5 w-3.5 text-amber-500" />
-            <span>Terminal Idle Lock &bull; {timeoutMinutes}-Minute Protection</span>
-          </div>
+          {lockReason === 'MANUAL_VOLUNTARY' ? (
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/90 text-slate-700 text-xs font-bold mb-3 shadow-xs">
+              <Lock className="h-3.5 w-3.5 text-amber-500" />
+              <span>Voluntary Terminal Lock &bull; Workspace Protected</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/90 text-slate-700 text-xs font-bold mb-3 shadow-xs">
+              <Lock className="h-3.5 w-3.5 text-amber-500" />
+              <span>Terminal Idle Lock &bull; {timeoutMinutes}-Minute Protection</span>
+            </div>
+          )}
 
           <div className="font-mono text-4xl sm:text-5xl font-black text-slate-950 tracking-tight drop-shadow-xs">
             {formattedTime}
