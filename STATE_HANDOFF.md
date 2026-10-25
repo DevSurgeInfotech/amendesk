@@ -236,8 +236,10 @@ flowchart TD
   - **Sleek Photo Avatar Button Trigger (`src/components/erp/Topbar.tsx`)**:
     - Replaced the wide staff identity button with a compact, dedicated `h-11 w-11 rounded-2xl` photo avatar button (`p-1 shrink-0`) displaying only the staff photo (or gradient initials fallback) and the online status dot indicator.
     - Added accessible `aria-label` and `title` showing staff name and title on hover.
-  - **Prominent Staff Identity in Avatar Dropdown**:
+  - **Prominent Staff Identity in Avatar Dropdown & Viewport Scrollability Fix**:
     - Relocated and prominently presented the staff full name (`staffProfile.name`), corporate operational title (`staffProfile.title`), role badge (`role`), staff ID (`staffProfile.staffId`), and online terminal status directly inside the avatar dropdown menu header alongside the interactive photo uploader (`Change Photo` / `Upload Photo` / `Remove`).
+    - Fixed dropdown clipping bug on compact laptop screens by bounding the dropdown with `max-h-[calc(100dvh-92px)]`, `overflow-y-auto`, and `overscroll-contain`, enabling seamless internal scrolling down to the "Log Out" button without getting stuck or trapped below the viewport edge.
+    - Optimized internal vertical rhythm and padding (`py-1.5`) across navigation and terminal action links.
   - **Expanded Global Search Bar Real Estate & Overstretch Elimination**:
     - Removed rigid `min-w` declarations and enabled graceful fluid shrinking with `min-w-0` and proportional bounds (`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg`).
     - Configured guaranteed minimum cluster air gaps (`gap-3 sm:gap-4 lg:gap-6` in `<header>`), preventing the search button from physically overstretching or overlapping the live clock and date.

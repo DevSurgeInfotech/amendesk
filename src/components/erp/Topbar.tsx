@@ -1028,22 +1028,22 @@ export function Topbar() {
 
             {/* Staff Dropdown Menu */}
             {staffMenuOpen && (
-              <div className="absolute right-0 mt-2.5 w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2.5 w-80 max-h-[calc(100dvh-92px)] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 overscroll-contain">
                 {/* Staff Identity Header + Interactive Photo Uploader */}
-                <div className="p-4 bg-slate-50/90 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                <div className="p-3.5 bg-slate-50/90 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => avatarInputRef.current?.click()}
                       title="Click to upload or change profile photo"
-                      className="group/avatar relative h-12 w-12 rounded-xl overflow-hidden shrink-0 shadow-sm ring-2 ring-white dark:ring-slate-900 cursor-pointer"
+                      className="group/avatar relative h-11 w-11 rounded-xl overflow-hidden shrink-0 shadow-sm ring-2 ring-white dark:ring-slate-900 cursor-pointer"
                     >
                       {staffAvatarUrl ? (
                         <Image
                           src={staffAvatarUrl}
                           alt={staffProfile.name}
-                          width={48}
-                          height={48}
+                          width={44}
+                          height={44}
                           unoptimized
                           className="h-full w-full object-cover"
                         />
@@ -1053,7 +1053,7 @@ export function Topbar() {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center text-white">
-                        <Camera className="h-4 w-4" />
+                        <Camera className="h-3.5 w-3.5" />
                       </div>
                     </button>
 
@@ -1076,7 +1076,7 @@ export function Topbar() {
                   </div>
 
                   {/* Profile Photo Actions */}
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-2.5 flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => avatarInputRef.current?.click()}
@@ -1100,7 +1100,7 @@ export function Topbar() {
                   </div>
 
                   {/* Terminal Status Bar inside Dropdown */}
-                  <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/70 flex items-center justify-between text-[11px]">
+                  <div className="mt-2.5 pt-2.5 border-t border-slate-200/80 dark:border-slate-700/70 flex items-center justify-between text-[11px]">
                     <span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                       <span
                         className={`h-2 w-2 rounded-full ${
@@ -1116,11 +1116,11 @@ export function Topbar() {
                 </div>
 
                 {/* Quick Navigation Shortcuts */}
-                <div className="p-2 space-y-0.5">
+                <div className="p-1.5 space-y-0.5">
                   <Link
                     href="/desk/payments"
                     onClick={() => setStaffMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                   >
                     <CreditCard className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     <span>Payment Terminal (POS)</span>
@@ -1128,7 +1128,7 @@ export function Topbar() {
                   <Link
                     href="/desk/accounts"
                     onClick={() => setStaffMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                   >
                     <Scale className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     <span>Accounting &amp; General Ledger</span>
@@ -1136,7 +1136,7 @@ export function Topbar() {
                   <Link
                     href="/desk/migration"
                     onClick={() => setStaffMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                   >
                     <Database className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     <span>Data Sync &amp; Local Backup</span>
@@ -1144,7 +1144,7 @@ export function Topbar() {
                   <Link
                     href="/"
                     onClick={() => setStaffMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                   >
                     <Globe className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     <span>Public Website Showroom</span>
@@ -1152,12 +1152,12 @@ export function Topbar() {
                 </div>
 
                 {/* System & Terminal Controls */}
-                <div className="p-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-1">
+                <div className="p-1.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-0.5">
                   {role === 'OWNER' && (
                     <Link
                       href="/desk/settings"
                       onClick={() => setStaffMenuOpen(false)}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                       <span className="flex items-center gap-2">
                         <Settings className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
@@ -1176,7 +1176,7 @@ export function Topbar() {
                       void triggerManualSync();
                       setStaffMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-60"
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-60"
                   >
                     <span className="flex items-center gap-2">
                       <RefreshCw className={`h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -1191,7 +1191,7 @@ export function Topbar() {
                       setStaffMenuOpen(false);
                       lockTerminal('MANUAL_VOLUNTARY');
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
                       <Lock className="h-3.5 w-3.5 text-amber-500" />
@@ -1206,7 +1206,7 @@ export function Topbar() {
                       setStaffMenuOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
                       <LogOut className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
