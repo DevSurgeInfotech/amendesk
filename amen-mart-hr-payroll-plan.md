@@ -1,5 +1,5 @@
 # AmenDesk — HR & Payroll Module Master Implementation Plan
-**Staff Management, Ghanaian Statutory Payroll & Yard Casual Operations**
+**Salaried Staff Management, Ghanaian Statutory Payroll & Automated Hubtel MoMo Disbursement**
 
 **Prepared by:** Dev Surge Infotech Ltd.  
 **Client:** Amen Mart Auctioning Services Ltd.  
@@ -11,36 +11,37 @@
 
 ## 1. Executive Summary & Strategic Scope
 
-Amen Mart operates a high-velocity, multi-line asset liquidation and trading business across Ghana:
-1. **Auctioning Services** across three distinct legal categories (**Private**, **Government**, and **Judicial**) for Movable assets (Vehicles, Earthmoving equipment, Plant & Machinery) and Immovable assets (Titled Land and Commercial/Residential Properties).
-2. **Car Dealership** for direct imported vehicle sales.
-3. **Land & Property Desks** for direct parcel acquisitions, site plan verifications, indentures, and unit leases/sales.
+Amen Mart operates a multi-line asset liquidation and trading business across Ghana:
+1. **Auctioning Services** across three distinct legal categories (**Private**, **Government**, and **Judicial**) for Movable assets (Vehicles, Collectibles, Earthmoving equipment, Plant & Machinery) and Immovable assets (Titled Land and Commercial/Residential Properties) — where a **7% statutory auction fee** is applied per unit sold across all auctions.
+2. **Car Dealership** — Amen Mart's own direct-sale vehicle business (no 7% auction fee; vehicles are sold directly by Amen Mart).
+3. **Land & Property Desks** for direct parcel acquisitions, site plan verifications, indentures, and unit sales.
 4. **Cash Office & Accounting** with multi-mode receipting (Cash, MTN MoMo, Telecel Cash, Bank Transfers, Paystack Cards) and 14-day instalment settlement plans.
 
-To sustain this operation, Amen Mart employs a diverse, hybrid workforce with materially different remuneration structures, operational schedules, and compliance obligations:
-- **Full-Time Permanent Staff**: Executive management (Lead Auctioneer Dr. Francis Kwaku Yeboah, Managing Director), Chief Accountant, Front-Desk Legal Secretaries, Cashiers, and Yard Security Chiefs.
-- **Commission-Based Commercial Agents**: Dealership vehicle sales agents, land and property acquisition officers, and private consignment sourcing brokers.
-- **Yard Casual Handlers & Auction Day Marshals**: Bid spotters, yard drivers, equipment riggers, gate clerks, vehicle detailers, and security marshals mobilized specifically for live auction events or intense delivery periods.
-- **Retained Technical Specialists**: Licensed valuation surveyors, master mechanics, and bailiff liaisons.
+### Workforce & Remuneration Policy
+All operational, administrative, showroom, yard, and auction-day duties at Amen Mart are performed exclusively by **full-time salaried staff**:
+- **No Casual Workers**: There are no daily-wage or casual yard handlers.
+- **No Staff Sales Commissions**: Staff do not earn sales commissions; all employees are remunerated strictly via fixed monthly salaries and standard allowances.
 
 ### Core Objectives of the HR & Payroll Module
-1. **Unified Staff Ledger**: A centralized, offline-first employee directory tracking personal records, Ghana Card verification, SSNIT numbers, GRA TINs, employment contracts, guarantor records, and banking/MoMo payout endpoints.
-2. **Ghanaian Statutory Tax & Pension Compliance**: An automated calculation engine adhering strictly to GRA PAYE graduated tax brackets, SSNIT Tier 1 basic pension contributions (13.5% employer), Tier 2 mandatory occupational pension deductions (5% employee), and Tier 3 voluntary provident funds.
-3. **Auction Day Casuals & Shift Management**: Instant muster-roll check-in for casual yard workers during auction events, with daily wage calculation and direct cash-out reconciliation with front-desk cash shifts (`cashShifts`) or instant MoMo bulk disbursement.
-4. **Sales Commission Pipeline**: Cross-module integration that auto-pulls completed vehicle, land, and property transactions, calculates commission entitlements, deducts 7.5% Withholding Tax (WHT) where applicable, and feeds into monthly payroll runs.
-5. **Seamless Double-Entry Accounting Sync**: Automatic generation of balanced General Journal entries (`journalEntries`) upon payroll approval, debiting payroll expenses (`acc-6080`, `acc-6085`, `acc-6090`) and crediting statutory liabilities (`acc-2150`, `acc-2160`, `acc-2170`) and net pay liabilities (`acc-2180`).
-6. **Dual Slip Generation**: 80mm thermal payslips for rapid field issuance on auction grounds, alongside official A4 PDF/printable payslips with statutory breakdowns.
+1. **Unified Salaried Staff Ledger**: A centralized, offline-first employee directory tracking personal records, Ghana Card verification, SSNIT numbers, GRA TINs, employment contracts, next-of-kin records, and bank/Hubtel MoMo payout endpoints.
+2. **Ghanaian Statutory Tax & Pension Compliance**: An automated calculation engine adhering strictly to GRA PAYE graduated tax brackets, SSNIT Tier 1 basic pension contributions (13.5% employer), and generic Tier 2 mandatory occupational pension deductions (5% employee, with trustee left open/unassigned), plus optional Tier 3 voluntary provident funds.
+3. **Automated Hubtel API Mobile Money Execution**: Direct programmatic monthly salary disbursement via the **Hubtel Bulk Disbursement API** alongside commercial bank transfer exports (GCB / Stanbic).
+4. **Staff Attendance & Leave Management**: Daily attendance tracking, cashier shift linking (`cashShifts`), and statutory annual/sick/maternity leave workflows under the Ghana Labour Act 651.
+5. **Seamless Double-Entry Accounting Sync**: Automatic generation of balanced General Journal entries (`journalEntries`) upon payroll approval, debiting salary and employer pension expenses (`acc-6080`, `acc-6085`) and crediting statutory liabilities (`acc-2150`, `acc-2160`, `acc-2170`) and net salary payables (`acc-2180`).
+6. **Dual Slip Generation**: 80mm thermal payslips for rapid front-desk issuance alongside official A4 PDF/printable payslips with statutory breakdowns.
 
 ---
 
-## 2. Workforce Profile & Compensation Architecture
+## 2. Workforce Profile & Salaried Compensation Architecture
 
-| Staff Cohort | Typical Job Titles | Remuneration Model | Statutory Deductions | Disbursement Channel |
+Every role at Amen Mart is fulfilled by permanent salaried staff:
+
+| Department | Typical Job Titles | Remuneration Model | Statutory Deductions | Disbursement Channel |
 |---|---|---|---|---|
-| **Executive & Salaried** | Managing Director, Chief Accountant, Operations Manager, Legal Secretary | Monthly Basic Salary + Allowances (Transport, Housing, Utility) | GRA PAYE + SSNIT Tier 1 & Tier 2 | Commercial Bank Transfer (GCB High St / Stanbic Airport City) |
-| **Sales & Commercial** | Showroom Sales Executive, Land Acquisition Broker, Property Agent | Base Retainer + Tiered Sales Commission (% of Gross Margin or Flat Fee) | GRA PAYE (on Base) + 7.5% WHT (on Commissions) | Bank Transfer or MTN MoMo |
-| **Auction Day Casuals** | Bid Spotters, Lot Marshals, Yard Drivers, Riggers, Gate Checkers | Daily Wage per Auction Event (GH₵ 150 – GH₵ 350/day) + Lunch Allowance | Casual Labor Tax / WHT (5% flat above statutory threshold) | Cash Till (`acc-1010`) via Cash Shift Payout or Hubtel MoMo |
-| **Retained Specialists** | Valuation Surveyors, Bailiff Liaisons, Master Auto Mechanics | Fee per Assignment / Monthly Retainer | 7.5% Professional Services WHT | Bank Transfer or MoMo |
+| **Executive & Management** | Managing Director, Lead Auctioneer, Chief Accountant, Operations Manager | Monthly Basic Salary + Fixed Allowances (Transport, Housing, Utility) | GRA PAYE + SSNIT Tier 1 & Tier 2 | Commercial Bank Transfer (GCB / Stanbic) or Hubtel API MoMo |
+| **Administrative & Front Desk** | Legal & Indenture Secretary, Front-Desk Cashier, Customer Relations Officer | Monthly Basic Salary + Fixed Allowances | GRA PAYE + SSNIT Tier 1 & Tier 2 | Hubtel API MoMo or Commercial Bank Transfer |
+| **Auction, Showroom & Property Operations** | Auction Coordinator, Showroom Officer, Land & Property Officer, Inventory Officer | Monthly Basic Salary + Fixed Allowances | GRA PAYE + SSNIT Tier 1 & Tier 2 | Hubtel API MoMo or Commercial Bank Transfer |
+| **Yard, Logistics & Security** | Yard Supervisor, Vehicle Inspector, Logistics Officer, Security Personnel | Monthly Basic Salary + Fixed Allowances | GRA PAYE + SSNIT Tier 1 & Tier 2 | Hubtel API MoMo or Commercial Bank Transfer |
 
 ---
 
@@ -71,24 +72,24 @@ Pensions in Ghana follow a 3-tier structure calculated as a percentage of the em
 1. **Tier 1 (Mandatory Basic National Social Security)**:
    - **Employer Contribution**: **13.5%** of Basic Salary.
    - Out of this 13.5%, SSNIT retains **11.0%** for the defined-benefit pension scheme and remits **2.5%** to the National Health Insurance Scheme (NHIS).
-2. **Tier 2 (Mandatory Private Occupational Pension)**:
+2. **Tier 2 (Mandatory Occupational Pension — Generic/Unassigned Trustee)**:
    - **Employee Deduction**: **5.0%** of Basic Salary.
-   - Remitted monthly to an approved private pension trustee (e.g., Enterprise Trustees, Petra Trust, Axis Pensions).
+   - Tracked in a dedicated Tier 2 liability account (`acc-2170`) with generic export schedules (trustee details left open/optional).
 3. **Statutory Contribution Summary**:
    - Total mandatory pension = **18.5%** (5.5% employee deducted, 13% employer contributed).
    - Employee's 5.5% deduction is tax-exempt and deducted from Gross Salary to determine Taxable Income before applying PAYE tax bands.
 4. **Tier 3 (Voluntary Provident Fund & Personal Pension)**:
    - Optional contributions up to **16.5%** of Basic Salary (tax-exempt).
 
-### 3.3 End-to-End Net Pay Mathematical Formula
-```latex
-Gross Earnings = Basic Salary + Cash Allowances + Overtime + Approved Commissions
-Tax-Exempt Pension = SSNIT Employee Deduction (5.5%) + Tier 3 Voluntary Deduction (up to 16.5%)
-Taxable Chargeable Income = Gross Earnings - Tax-Exempt Pension - Approved Personal Reliefs
+### 3.3 End-to-End Net Salary Mathematical Formula
+```
+Gross Salary = Basic Salary + Fixed Monthly Allowances (Transport, Housing, Lunch, Communication)
+Tax-Exempt Pension = SSNIT Employee Deduction (5.5% of Basic Salary) + Tier 3 Voluntary Deduction
+Taxable Chargeable Income = Gross Salary - Tax-Exempt Pension - Approved Personal Reliefs
 GRA PAYE Tax = CalculateGraduatedPAYE(Taxable Chargeable Income)
-Total Employee Deductions = SSNIT Tier 2 + Tier 3 + GRA PAYE + Staff Loan Repayments
-Net Take-Home Pay = Gross Earnings - Total Employee Deductions
-Employer Burden = Gross Earnings + Employer SSNIT Tier 1 (13%) + Employer Tier 3 Match
+Total Employee Deductions = SSNIT Employee (5.5%) + Tier 3 + GRA PAYE + Staff Loan/Salary Advance Repayments
+Net Take-Home Salary = Gross Salary - Total Employee Deductions
+Total Employer Payroll Cost = Gross Salary + Employer SSNIT Tier 1 (13% of Basic Salary)
 ```
 
 ---
@@ -99,22 +100,21 @@ The HR & Payroll module integrates directly into AmenDesk's double-entry QuickBo
 
 ```mermaid
 flowchart TD
-    subgraph Earnings ["1. Payroll Accrual (Payroll Finalization)"]
-        G["Gross Salaries Expense\n(acc-6080) [DR]"]
+    subgraph Earnings ["1. Monthly Payroll Accrual"]
+        G["Staff Salaries & Allowances\n(acc-6080) [DR]"]
         E["Employer SSNIT Expense\n(acc-6085) [DR]"]
-        C["Sales Commissions Expense\n(acc-6090) [DR]"]
     end
 
     subgraph Liabilities ["2. Statutory & Salary Payables"]
         P["GRA PAYE Payable\n(acc-2150) [CR]"]
         S["SSNIT Tier 1 Payable\n(acc-2160) [CR]"]
-        T["Tier 2 Trustee Payable\n(acc-2170) [CR]"]
+        T["Tier 2 Occupational Pension Payable\n(acc-2170) [CR]"]
         N["Net Salaries Payable\n(acc-2180) [CR]"]
     end
 
-    subgraph Settlement ["3. Disbursement Execution"]
+    subgraph Settlement ["3. Automated Disbursement Execution"]
         N -->|Disburse| DP["Net Salaries Payable\n(acc-2180) [DR]"]
-        DP --> B["Bank Operating Acc (acc-1050)\nMoMo Float (acc-1030)\nCash Till (acc-1010) [CR]"]
+        DP --> B["Hubtel MoMo API Float (acc-1030)\nBank Operating Acc (acc-1050) [CR]"]
     end
 
     G --> N
@@ -122,7 +122,6 @@ flowchart TD
     G --> S
     G --> T
     E --> S
-    C --> N
 ```
 
 ### 4.1 Chart of Accounts Expansion (`accounts`)
@@ -130,35 +129,30 @@ flowchart TD
 | Account Code | Account Name | Account Type | Category | Description |
 |---|---|---|---|---|
 | **2150** | GRA Statutory PAYE Tax Payable | LIABILITY | CURRENT_LIABILITY | Income tax withheld from employee salaries, payable to GRA by the 15th of following month |
-| **2160** | SSNIT Tier 1 Contribution Payable | LIABILITY | CURRENT_LIABILITY | Total mandatory Tier 1 pension (Employee 5.5% + Employer 13%), payable to SSNIT |
-| **2170** | Tier 2 Occupational Pension Trustee Payable | LIABILITY | CURRENT_LIABILITY | 5% mandatory private pension trustee deduction |
-| **2180** | Accrued Net Salaries & Casual Wages Payable | LIABILITY | CURRENT_LIABILITY | Holding liability for net payroll approved but awaiting physical disbursement |
-| **6080** | Staff Payroll & Yard Casual Handlers | EXPENSE | ADMIN_EXPENSE | Basic salaries, yard casual wages, and staff allowances (*Existing in AmenDesk*) |
+| **2160** | SSNIT Tier 1 Contribution Payable | LIABILITY | CURRENT_LIABILITY | Mandatory Tier 1 pension contribution payable to SSNIT |
+| **2170** | Tier 2 Occupational Pension Payable | LIABILITY | CURRENT_LIABILITY | 5% mandatory Tier 2 employee deduction held pending remittance |
+| **2180** | Accrued Net Salaries Payable | LIABILITY | CURRENT_LIABILITY | Holding liability for net monthly payroll approved awaiting Hubtel/Bank payout |
+| **6080** | Staff Salaries & Allowances | EXPENSE | ADMIN_EXPENSE | Monthly basic salaries and fixed allowances for salaried staff (*Existing in AmenDesk*) |
 | **6085** | Employer Pension & SSNIT Contribution Expense | EXPENSE | ADMIN_EXPENSE | Amen Mart statutory 13% employer pension burden |
-| **6090** | Sales Agent Commissions Expense | EXPENSE | OPERATING_EXPENSE | Commissions earned on dealership vehicles, land parcels, and property transactions |
 
 ### 4.2 Automated Journal Entries
 1. **Entry 1: Payroll Approval & Accrual (End of Month / Post-Run)**
-   - **DR** `acc-6080` (Staff Payroll & Yard Casual Handlers) — Total Basic + Allowances
+   - **DR** `acc-6080` (Staff Salaries & Allowances) — Total Basic Salaries + Allowances
    - **DR** `acc-6085` (Employer Pension Contribution) — 13% Employer SSNIT
-   - **DR** `acc-6090` (Sales Agent Commissions) — Gross Commissions
    - **CR** `acc-2150` (GRA Statutory PAYE Payable) — Total PAYE Tax
-   - **CR** `acc-2160` (SSNIT Tier 1 Payable) — Total 13% Employer + Employee Share
-   - **CR** `acc-2170` (Tier 2 Pension Trustee Payable) — Total 5% Employee Tier 2
+   - **CR** `acc-2160` (SSNIT Tier 1 Payable) — Total SSNIT Tier 1 Share
+   - **CR** `acc-2170` (Tier 2 Occupational Pension Payable) — Total 5% Employee Tier 2
    - **CR** `acc-2180` (Accrued Net Salaries Payable) — Total Net Take-Home Pay
-2. **Entry 2: Net Pay Disbursement**
+2. **Entry 2: Automated Hubtel MoMo API & Bank Net Pay Disbursement**
    - **DR** `acc-2180` (Accrued Net Salaries Payable)
-   - **CR** `acc-1050` (GCB Bank Operating Account) for bank wires
-   - **CR** `acc-1030` (MTN MoMo via Hubtel) for mobile money batch
-   - **CR** `acc-1010` (Cash Till - Gbawe Yard) for cash-in-hand / casual worker payouts
-3. **Entry 3: Casual Auction Marshal Same-Day Payout via Till**
-   - Directly linked to active `cashShifts` record: Cashier logs a `CASH_OUT` transaction tagged with `HR_CASUAL_PAYOUT`, debiting `acc-6080` and crediting `acc-1010`.
+   - **CR** `acc-1030` (MTN MoMo / Hubtel Float) for automated Hubtel API mobile money payouts
+   - **CR** `acc-1050` (GCB Bank Operating Account) for commercial bank wire transfers
 
 ---
 
 ## 5. Offline-First Data Architecture & Dexie.js Schema v5
 
-To support field operations where yard marshals work without stable internet, all HR, attendance, and casual wage data is stored locally in Dexie IndexedDB and synced via the existing `syncOutbox` engine.
+All HR, attendance, leave, and payroll records are stored locally in Dexie IndexedDB first and synchronized via `syncOutbox`.
 
 ### 5.1 Dexie Version 5 Table Definitions
 
@@ -166,22 +160,21 @@ To support field operations where yard marshals work without stable internet, al
 // Proposed schema evolution in src/lib/db/index.ts (version 5)
 this.version(5).stores({
   employees: 'id, employeeCode, fullName, phone, ghanaCardNumber, ssnitNumber, tinNumber, department, employmentType, status, isCashier, locationId',
-  payrollRuns: 'id, runNumber, period, runType, status, totalGrossGhs, totalNetGhs, processedAt, journalEntryId',
-  payrollSlips: 'id, slipNumber, runId, employeeId, grossEarningsGhs, netPayGhs, paymentMethod, status, disbursedAt',
-  staffAttendance: 'id, employeeId, date, status, shiftType, isAuctionDay, linkedShiftId',
+  payrollRuns: 'id, runNumber, period, status, totalGrossGhs, totalNetGhs, processedAt, journalEntryId',
+  payrollSlips: 'id, slipNumber, runId, employeeId, grossSalaryGhs, netPayGhs, paymentMethod, hubtelTransactionId, status, disbursedAt',
+  staffAttendance: 'id, employeeId, date, status, shiftType, linkedShiftId',
   leaveRequests: 'id, employeeId, leaveType, startDate, endDate, status, approvedBy',
-  commissionLedger: 'id, agentId, referenceType, referenceId, saleAmountGhs, commissionGhs, status, payrollRunId',
 });
 ```
 
-### 5.2 TypeScript Interfaces
+### 5.2 TypeScript Interfaces (`src/lib/types/hr.ts`)
 
 ```typescript
-export type EmploymentType = 'PERMANENT' | 'PROBATION' | 'COMMISSION_AGENT' | 'CASUAL_HANDLER' | 'CONTRACTOR';
-export type Department = 'AUCTION_YARD' | 'DEALERSHIP' | 'LAND_DESK' | 'PROPERTY_DESK' | 'FINANCE_ACCOUNTS' | 'LEGAL_ADMIN' | 'SECURITY_LOGISTICS';
-export type PaymentMethod = 'BANK_TRANSFER' | 'MOMO_MTN' | 'MOMO_TELECEL' | 'CASH_TILL';
-export type PayrollStatus = 'DRAFT' | 'CALCULATED' | 'APPROVED' | 'POSTED' | 'DISBURSED';
-export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'ON_LEAVE' | 'REST_DAY';
+export type EmploymentType = 'FULL_TIME_SALARIED' | 'PROBATION_SALARIED' | 'EXECUTIVE';
+export type Department = 'AUCTION_OPERATIONS' | 'DEALERSHIP_SHOWROOM' | 'LAND_DESK' | 'PROPERTY_DESK' | 'FINANCE_ACCOUNTS' | 'LEGAL_ADMIN' | 'SECURITY_LOGISTICS';
+export type PaymentMethod = 'HUBTEL_MOMO_API' | 'BANK_TRANSFER';
+export type PayrollStatus = 'DRAFT' | 'CALCULATED' | 'APPROVED' | 'POSTED' | 'DISBURSING' | 'DISBURSED';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'ON_LEAVE' | 'FIELD_AUCTION_DUTY';
 export type LeaveType = 'ANNUAL' | 'SICK' | 'MATERNITY' | 'PATERNITY' | 'COMPASSIONATE' | 'STUDY';
 
 export interface Employee {
@@ -202,22 +195,19 @@ export interface Employee {
   jobTitle: string;
   employmentType: EmploymentType;
   dateHired: string;
-  contractEndDate?: string;
   locationId: string; // references accountingLocations (e.g. loc-gbawe)
   status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED' | 'SUSPENDED';
-  isCashier: boolean; // whether employee can operate cash till
+  isCashier: boolean; // whether employee can open/close front-desk cash till shifts
   
-  // Remuneration Structure
+  // Salaried Remuneration Structure
   basicSalaryGhs: number;
   transportAllowanceGhs: number;
   housingAllowanceGhs: number;
   lunchAllowanceGhs: number;
   communicationAllowanceGhs: number;
-  dailyRateGhs?: number; // for casual yard handlers
-  defaultCommissionRatePct?: number; // for sales agents
   
-  // Statutory & Banking
-  hasSsnitTier1Tier2: boolean;
+  // Statutory & Payout Endpoints
+  hasSsnitContribution: boolean;
   tier3VoluntaryPct?: number;
   paymentMethod: PaymentMethod;
   bankName?: string;
@@ -235,19 +225,19 @@ export interface PayrollRun {
   id: string;
   runNumber: string; // e.g. PR-2026-10
   period: string; // YYYY-MM
-  runType: 'MONTHLY_REGULAR' | 'AUCTION_CASUAL_EVENT' | 'COMMISSION_OFFCYCLE';
-  auctionEventId?: string; // if linked to specific auction event
   status: PayrollStatus;
   totalEmployees: number;
+  totalBasicGhs: number;
+  totalAllowancesGhs: number;
   totalGrossGhs: number;
   totalTaxableGhs: number;
   totalPayeGhs: number;
   totalSsnitTier1EmployerGhs: number;
   totalSsnitTier2EmployeeGhs: number;
   totalTier3Ghs: number;
-  totalCommissionsGhs: number;
   totalNetGhs: number;
   journalEntryId?: string; // references journalEntries
+  hubtelBatchId?: string; // Hubtel automated API batch reference
   processedBy: string;
   approvedBy?: string;
   createdAt: string;
@@ -266,16 +256,13 @@ export interface PayrollSlip {
   jobTitle: string;
   department: Department;
   
-  // Earnings
+  // Salaried Earnings
   basicSalaryGhs: number;
   allowancesGhs: number;
-  overtimeHours: number;
-  overtimePayGhs: number;
-  commissionsGhs: number;
-  grossEarningsGhs: number;
+  grossSalaryGhs: number;
   
   // Deductions
-  ssnitTier2Ghs: number; // 5% employee
+  ssnitEmployeeGhs: number; // 5.5% mandatory employee deduction (incl. 5% Tier 2)
   tier3VoluntaryGhs: number;
   taxableIncomeGhs: number;
   payeTaxGhs: number;
@@ -285,12 +272,14 @@ export interface PayrollSlip {
   
   // Net & Employer Cost
   netPayGhs: number;
-  ssnitTier1EmployerGhs: number; // 13.5% employer
+  ssnitEmployerGhs: number; // 13% employer contribution
   employerTotalCostGhs: number;
   
   paymentMethod: PaymentMethod;
+  hubtelTransactionId?: string;
+  hubtelResponseMessage?: string;
   paymentReference?: string;
-  status: 'PENDING' | 'DISBURSED' | 'FAILED';
+  status: 'PENDING' | 'PROCESSING' | 'DISBURSED' | 'FAILED';
   disbursedAt?: string;
   syncStatus: 'LOCAL' | 'PENDING' | 'SYNCED';
 }
@@ -302,13 +291,9 @@ export interface StaffAttendance {
   timeIn?: string;
   timeOut?: string;
   status: AttendanceStatus;
-  shiftType: 'STANDARD_DAY' | 'AUCTION_EVENT' | 'WEEKEND_DUTY' | 'NIGHT_WATCH';
-  isAuctionDay: boolean;
-  auctionEventId?: string;
+  shiftType: 'STANDARD_DAY' | 'AUCTION_EVENT_DUTY' | 'WEEKEND_DUTY';
   hoursWorked: number;
-  overtimeHours: number;
-  dailyWageGhs?: number; // for casual workers
-  linkedShiftId?: string; // if tied to a cash till shift
+  linkedShiftId?: string; // if tied to a front-desk cash till shift
   recordedBy: string;
   notes?: string;
   syncStatus: 'LOCAL' | 'PENDING' | 'SYNCED';
@@ -329,27 +314,6 @@ export interface LeaveRequest {
   createdAt: string;
   syncStatus: 'LOCAL' | 'PENDING' | 'SYNCED';
 }
-
-export interface CommissionEntry {
-  id: string;
-  agentId: string;
-  referenceType: 'DEALERSHIP_VEHICLE' | 'LAND_PARCEL' | 'PROPERTY_UNIT' | 'AUCTION_CONSIGNMENT';
-  referenceId: string;
-  referenceLabel: string; // e.g. "2021 Toyota Prado (GW 8941-21)"
-  customerId: string;
-  saleAmountGhs: number;
-  grossMarginGhs: number;
-  commissionRatePct: number;
-  commissionAmountGhs: number;
-  whtRatePct: number; // typically 7.5%
-  whtAmountGhs: number;
-  netCommissionGhs: number;
-  status: 'ACCRUED' | 'APPROVED' | 'PAID' | 'FORFEITED';
-  payrollRunId?: string;
-  createdAt: string;
-  approvedAt?: string;
-  syncStatus: 'LOCAL' | 'PENDING' | 'SYNCED';
-}
 ```
 
 ---
@@ -362,162 +326,97 @@ The HR & Payroll module will be established at `/desk/hr`, with submodules regis
 
 ```
 /desk/hr
- ├── ?tab=staff          -> Staff Directory & Personnel Profiles (Default)
- ├── ?tab=payroll        -> Monthly & Off-Cycle Payroll Run Processing Wizard
- ├── ?tab=casuals        -> Auction Day Casual Muster Roll & Instant Till Cash-Outs
- ├── ?tab=attendance     -> Daily Attendance Register, Shift Clock-In & Overtime
+ ├── ?tab=staff          -> Salaried Staff Directory & Personnel Profiles (Default)
+ ├── ?tab=payroll        -> Monthly Payroll Wizard & Automated Hubtel API Execution
+ ├── ?tab=attendance     -> Staff Attendance Register & Cashier Till Shift Link
  ├── ?tab=leave          -> Staff Leave Calendar, Entitlement Tracking & Approvals
- ├── ?tab=commissions    -> Dealership, Land & Property Sales Commission Ledger
- └── ?tab=reports        -> Statutory Exports (GRA Form DT 0107, SSNIT Tier 1, Bank/MoMo Disburse CSVs)
+ └── ?tab=reports        -> Statutory Exports (GRA Form DT 0107, SSNIT Tier 1, Generic Tier 2)
 ```
 
 ### 6.2 Key Screen Designs & Features
 
-#### Screen 1: Staff Directory (`/desk/hr?tab=staff`)
+#### Screen 1: Salaried Staff Directory (`/desk/hr?tab=staff`)
 - **4-Card Top Summary**:
-  - Total Active Headcount (Permanent vs Casual vs Commission Agents).
-  - Monthly Gross Payroll Commitment (GH₵).
-  - Pending Leave Requests.
-  - Active Cashiers on Duty.
+  - Total Salaried Headcount (across Departments).
+  - Monthly Gross Salary Commitment (GH₵).
+  - Monthly Statutory Employer SSNIT & PAYE Obligation (GH₵).
+  - Staff on Approved Leave / Active Cashiers on Shift.
 - **Filterable Employee Table**:
-  - Filters: Department, Employment Type, Payment Channel, Verification Status (Ghana Card verified).
+  - Filters: Department, Payout Channel (Hubtel MoMo API vs Bank Transfer), Ghana Card Verification Status.
   - Fast search by Name, Phone, Employee Code, or Ghana Card.
 - **Add / Edit Employee Modal**:
   - Tab 1: Personal & Bio Data (Ghana Card, Photo upload, Next of Kin).
-  - Tab 2: Employment & Department (Role, Location, Cashier permissions).
-  - Tab 3: Remuneration & Deductions (Basic, Allowances, Daily Rate, Tier 3 %).
-  - Tab 4: Banking & Mobile Money (GCB/Stanbic details or MTN/Telecel MoMo).
+  - Tab 2: Department & Role (Location, Cashier Till permission toggle).
+  - Tab 3: Salaried Remuneration (Basic Salary, Transport/Housing/Lunch/Communication Allowances, Tier 3 %).
+  - Tab 4: Automated Hubtel MoMo Endpoint & Bank Details (MTN/Telecel/AirtelTigo wallet verification or GCB/Stanbic account).
 
-#### Screen 2: Auction Day Casual Muster Roll (`/desk/hr?tab=casuals`)
-- Tailored for auction day field logistics at Gbawe Yard.
-- Rapid check-in checklist: Supervisor selects 15–30 yard marshals, spotters, and forklift drivers.
-- Auto-applies standard auction daily rate (e.g. GH₵ 200/day + GH₵ 30 lunch).
-- **One-Click Instant Till Payout**: Generates a bulk cash voucher directly credited from `acc-1010` (Cash Till) with thermal signature slips printed immediately.
-
-#### Screen 3: Monthly Payroll Wizard (`/desk/hr?tab=payroll`)
-- **Step 1: Select Period & Inclusions**:
-  - Pulls active employees.
-  - Checks approved leave and attendance deductions.
-  - Auto-imports approved sales commissions from `commissionLedger`.
+#### Screen 2: Monthly Payroll Wizard & Hubtel API Disbursement (`/desk/hr?tab=payroll`)
+- **Step 1: Select Period & Review Staff Roster**:
+  - Pulls all active salaried employees for the selected month (`YYYY-MM`).
+  - Checks approved unpaid leave or salary advance deductions.
 - **Step 2: Automated Calculation Preview**:
-  - Real-time tabular preview showing Gross, SSNIT 5.5%, Chargeable Income, GRA PAYE, Loans, Net Pay, Employer 13%.
-  - Highlighted alerts for tax anomalies or missing MoMo/bank accounts.
-- **Step 3: Management Approval**:
+  - Real-time tabular preview showing Basic Salary, Fixed Allowances, Gross Salary, SSNIT 5.5%, Chargeable Income, GRA PAYE, Net Salary, and Employer 13% SSNIT.
+- **Step 3: Management Approval & Ledger Posting**:
   - MD / Lead Auctioneer approval button with audit timestamp.
-- **Step 4: Ledger Posting & Disbursement**:
-  - Automated generation of balanced General Journal Entry (`JE-YYYY-XXXX`).
-  - Generates downloadable Bank Transfer CSV (GCB/Stanbic format) and Hubtel MoMo bulk payout file.
+  - Automatically posts balanced General Journal Entry (`JE-YYYY-XXXX`) to the QuickBooks ledger.
+- **Step 4: Automated Hubtel API Execution**:
+  - Single-click **"Execute Hubtel MoMo Payout"** triggers programmatic API disbursement (`/api/payroll/hubtel-disburse`) to each staff member's registered Mobile Money wallet with real-time transaction status tracking (`PENDING` -> `DISBURSED`) and receipt references.
+  - Generates downloadable Bank Transfer CSV for staff paid via GCB/Stanbic bank accounts.
 
-#### Screen 4: Dual-Format Payslip Generation
-- **80mm Thermal Slip (Front-Desk / Yard Printer)**:
-  - Header: Amen Mart Gold/Navy Brand Strip.
+#### Screen 3: Dual-Format Payslip Generation
+- **80mm Thermal Slip (Front-Desk Printer)**:
+  - Header: Amen Mart Brand Strip.
   - Employee Code, Name, Role, Period.
-  - Earnings Summary (Basic, Overtime, Commissions, Gross).
-  - Statutory Deductions (PAYE, SSNIT Tier 2).
-  - Net Pay (Large, bold, high-contrast).
-  - Signature lines for Employee and Cashier.
+  - Earnings Summary (Basic Salary, Allowances, Gross Pay).
+  - Statutory Deductions (GRA PAYE, SSNIT 5.5%).
+  - Net Take-Home Pay & Hubtel Transaction Reference.
 - **A4 Executive Payslip**:
-  - Formal corporate format with GAA license credentials, full year-to-date (YTD) cumulative tax and pension contributions, company stamp area, and statutory relief breakdown.
+  - Formal corporate layout with GAA license credentials, full year-to-date (YTD) cumulative tax and SSNIT contributions, and digital authorization stamp.
 
 ---
 
 ## 7. Phased Implementation Roadmap & Sprints
 
-```mermaid
-gantt
-    title AmenDesk HR & Payroll Module Implementation
-    dateFormat  YYYY-MM-DD
-    section Sprint 1: Foundation
-    TypeScript Types & DB Schema v5      :done,    des1, 2026-10-26, 2d
-    Seed Data & Chart of Accounts Setup :done,    des2, after des1, 2d
-    Sidebar Navigation & Shell           :active,  des3, after des2, 1d
-    section Sprint 2: Core HR
-    Staff Directory & Profiles           :         des4, after des3, 3d
-    Employee Modal & Document Vault      :         des5, after des4, 2d
-    section Sprint 3: Casuals & Shifts
-    Daily Attendance Register            :         des6, after des5, 2d
-    Auction Casual Muster Roll           :         des7, after des6, 2d
-    Cash Shift Till Payout Link          :         des8, after des7, 2d
-    section Sprint 4: Payroll & Taxes
-    GRA PAYE & SSNIT Act 766 Engine      :         des9, after des8, 3d
-    Sales Commission Auto-Pull           :         des10, after des9, 2d
-    Monthly Payroll Run Wizard           :         des11, after des10, 3d
-    Dual Thermal & A4 Payslip Generator  :         des12, after des11, 2d
-    section Sprint 5: Ledger & Go-Live
-    Double-Entry Journal Integration     :         des13, after des12, 2d
-    Statutory Exporters (GRA/SSNIT/Bank) :         des14, after des13, 2d
-    Quality Gates & Live Git Push        :         des15, after des14, 1d
-```
-
-### Sprint 1: Foundation & Data Architecture (Week 1)
-- [ ] Define comprehensive TypeScript types in `src/lib/types/hr.ts`.
-- [ ] Upgrade Dexie IndexedDB to Version 5 in `src/lib/db/index.ts` with 6 new tables.
-- [ ] Add statutory payroll liability and expense accounts (`acc-2150`, `acc-2160`, `acc-2170`, `acc-2180`, `acc-6085`, `acc-6090`) to Chart of Accounts in `src/lib/db/seed.ts`.
-- [ ] Create realistic seed dataset for Amen Mart staff (Executives, Auction Marshals, Sales Agents, Technicians).
+### Sprint 1: Foundation & Data Architecture
+- [ ] Define TypeScript types in `src/lib/types/hr.ts` (salaried workforce, payroll runs, slips, attendance, leave, Hubtel API metadata).
+- [ ] Upgrade Dexie IndexedDB to Version 5 in `src/lib/db/index.ts` with the 5 HR & Payroll tables (`employees`, `payrollRuns`, `payrollSlips`, `staffAttendance`, `leaveRequests`).
+- [ ] Add statutory payroll liability and expense accounts (`acc-2150`, `acc-2160`, `acc-2170`, `acc-2180`, `acc-6085`) to Chart of Accounts in `src/lib/db/seed.ts`.
+- [ ] Create realistic seed dataset for Amen Mart salaried staff across Auction Operations, Dealership Showroom, Land/Property, and Finance.
 - [ ] Add `Staff & Payroll` module and submodules into `src/components/erp/Sidebar.tsx`.
 
-### Sprint 2: Staff Directory & Profile Management (Week 1–2)
-- [ ] Build `/desk/hr` route with KPI summary cards (`Total Staff`, `Gross Payroll`, `Casuals Active`, `Pending Leave`).
-- [ ] Implement responsive employee directory table with search, role filters, and status toggles.
-- [ ] Build comprehensive Add/Edit Employee modal with photo compression and Ghana Card validation.
-- [ ] Implement secure document vault for contracts, guarantor forms, and driver's licenses.
+### Sprint 2: Salaried Staff Directory & Profile Management
+- [ ] Build `/desk/hr` route with KPI summary cards (`Salaried Staff`, `Gross Payroll`, `Statutory PAYE & SSNIT`, `On Leave`).
+- [ ] Implement responsive employee directory table with search, department filters, and status toggles.
+- [ ] Build Add/Edit Employee modal with Ghana Card validation, salary & allowance fields, and Hubtel MoMo wallet configuration.
 
-### Sprint 3: Attendance, Shifts & Auction Casuals (Week 2)
-- [ ] Build Daily Attendance Register with clock-in/out timestamps and offline sync outbox support.
-- [ ] Build **Auction Day Casual Muster Roll** for fast bulk-selection of auction spotters and handlers.
-- [ ] Link cashier employees to active `cashShifts` records.
-- [ ] Build one-click cash-out voucher integration for instant till payout on auction grounds.
+### Sprint 3: Staff Attendance & Leave Management
+- [ ] Build Daily Staff Attendance Register with clock-in/out and cashier shift linkage (`cashShifts`).
+- [ ] Build Leave Management module with statutory annual leave balances (Ghana Labour Act 651) and approval workflow.
 
-### Sprint 4: Ghanaian Payroll Engine & Payslips (Week 3)
-- [ ] Implement GRA PAYE graduated tax engine with exact 2026 monthly tax brackets and personal reliefs.
-- [ ] Implement SSNIT Act 766 Tier 1 (13.5% employer) and Tier 2 (5.0% employee) pension algorithms.
-- [ ] Implement Tier 3 voluntary provident fund deductions and tax exemptions.
-- [ ] Build cross-module sales commission listener pulling closed deals from Dealership, Land, and Property.
-- [ ] Build multi-step Monthly Payroll Run wizard (Select -> Preview -> Approve -> Disburse).
+### Sprint 4: Ghanaian Payroll Engine, Hubtel API Execution & Payslips
+- [ ] Implement GRA PAYE graduated tax engine (0% to 35% monthly bands) and SSNIT Act 766 calculations (13.5% Tier 1, generic 5.0% Tier 2, optional Tier 3).
+- [ ] Build multi-step Monthly Payroll Run wizard (Select -> Preview -> Approve & Post Journal -> Execute Hubtel API).
+- [ ] Implement `/api/payroll/hubtel-disburse` endpoint and offline-resilient client service for automated Hubtel Mobile Money payouts.
 - [ ] Implement 80mm thermal payslip generator and formal A4 printable payslip components.
 
-### Sprint 5: General Ledger Automation, Statutory Exports & Hardening (Week 3–4)
+### Sprint 5: General Ledger Automation, Statutory Exports & Hardening
 - [ ] Implement automated balanced double-entry Journal Entry posting upon payroll approval.
-- [ ] Build statutory return exporters:
-  - GRA Monthly PAYE Tax Return (Form DT 0107 / CSV).
-  - SSNIT Tier 1 Electronic Contribution Return.
-  - Tier 2 Private Pension Trustee Monthly Schedule.
-- [ ] Build commercial bank transfer batch file generator (GCB / Stanbic CSV format) and Hubtel MoMo bulk payout exporter.
-- [ ] Conduct end-to-end sandbox verification in `AmenDeskDB_sandbox`.
+- [ ] Build statutory return exporters (GRA Monthly PAYE Form DT 0107, SSNIT Tier 1 schedule, generic Tier 2 deduction schedule).
 - [ ] Execute mandatory quality gates (`npm run check` with 0 TSC errors and 0 ESLint warnings).
-- [ ] Commit with conventional commit messages and push live to GitHub repository.
+- [ ] Update `STATE_HANDOFF.md`, commit, and push live to GitHub repository.
 
 ---
 
 ## 8. Role-Based Access Control (RBAC) & Data Privacy
 
-Payroll and compensation data contains sensitive personal identifiers (PII) and remuneration details. Strict access control rules will be enforced across AmenDesk roles:
-
-| Module Feature / Action | OWNER (MD / Lead Auctioneer) | ACCOUNTANT (Chief Accountant) | SECRETARY (Front Desk) | STAFF (Yard Marshals / Cashiers) |
+| Module Feature / Action | OWNER (MD / Lead Auctioneer) | ACCOUNTANT (Chief Accountant) | SECRETARY (Front Desk) | STAFF (Operations / Showroom) |
 |---|---|---|---|---|
 | **View Staff Directory** | Full Access | Full Access | View Basic Contact | View Own Profile Only |
-| **Add / Edit Employee** | Full Access | Full Access | Limited (Contact Info) | No Access |
-| **View Salary & Compensation** | Full Access | Full Access | No Access (Hidden) | View Own Payslip Only |
-| **Run Monthly Payroll** | Approve & Disburse | Prepare & Calculate | No Access | No Access |
-| **Log Auction Casuals** | Full Access | Full Access | Check-In Marshals | Check-In Marshals |
-| **Disburse Casual Till Cash** | Full Access | Full Access | Authorized Cashiers | No Access |
+| **Add / Edit Salaried Staff** | Full Access | Full Access | Limited (Contact Info) | No Access |
+| **View Salary & Compensation** | Full Access | Full Access | No Access (Masked) | View Own Payslip Only |
+| **Run & Calculate Payroll** | Approve & Execute Hubtel API | Prepare & Calculate | No Access | No Access |
 | **Approve Leave Requests** | Full Access | Full Access | No Access | Submit Request Only |
 | **Export Statutory Reports** | Full Access | Full Access | No Access | No Access |
 
-*Data Privacy Safeguard*: On shared front-desk or yard tablets, salary fields are masked (`••••••`) unless unlocked with an Accountant or Owner PIN/session credential.
-
 ---
-
-## 9. Success Verification Metrics
-
-| KPI | Target Benchmark | Verification Method |
-|---|---|---|
-| **Calculation Accuracy** | **100.00%** compliance with GRA PAYE and SSNIT Act 766 formulas | Unit test suite verifying against GRA official tax tables and manual accountant reconciliation |
-| **Double-Entry Balance** | Total Debits = Total Credits (Net Variance = GH₵ 0.00) | Automated journal balance assertion prior to posting in Dexie DB |
-| **Offline Capability** | 100% attendance logging and casual slip printing without internet | Air-gapped tablet test at Gbawe auction grounds |
-| **Thermal Printing Speed** | `< 2 seconds` per casual wage slip | 80mm POS thermal printer hardware benchmark |
-| **Payroll Processing Time** | Reduced from 2 days (manual spreadsheets) to `< 15 minutes` | End-to-end sandbox payroll run simulation |
-| **Zero Code Debt** | 0 TypeScript errors (`tsc --noEmit`), 0 ESLint warnings (`--max-warnings 0`) | Mandatory `npm run check` quality gate |
-
----
-*Master Plan Approved for Implementation by Dev Surge Infotech Ltd. for Amen Mart Auctioning Services.*
+*Master Plan Updated & Approved for Implementation by Dev Surge Infotech Ltd. for Amen Mart Auctioning Services.*
