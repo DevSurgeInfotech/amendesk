@@ -226,6 +226,30 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Topbar Arrangement for Global Search Real Estate & Photo Avatar Optimization)
+- **Goal**: Re-architect ERP Topbar layout to provide generous horizontal real estate space for Global Search (`Ctrl+K`) by reducing the staff profile button to a sleek photo avatar and displaying the staff member's name and role on the avatar dropdown menu.
+- **Root Cause Identified**:
+  - The right cluster in `Topbar.tsx` previously contained a wide staff profile button (photo avatar + staff full name + corporate title + chevron icon) taking ~210px, alongside a wide live clock with full date (~170px), dev sandbox badge (~160px), and other controls.
+  - The right cluster was marked `shrink-0` with total width >920px. On standard laptop viewports (1280px–1440px) with the 264px sidebar open, available inner width was only ~968px, leaving the global search bar crushed down to ~45px.
+  - This squeezed the search input placeholder completely out of view and caused the `Ctrl K` pill to overlap the search icon.
+- **Accomplishments**:
+  - **Sleek Photo Avatar Button Trigger (`src/components/erp/Topbar.tsx`)**:
+    - Replaced the wide staff identity button with a compact, dedicated `h-11 w-11 rounded-2xl` photo avatar button (`p-1 shrink-0`) displaying only the staff photo (or gradient initials fallback) and the online status dot indicator.
+    - Added accessible `aria-label` and `title` showing staff name and title on hover.
+  - **Prominent Staff Identity in Avatar Dropdown**:
+    - Relocated and prominently presented the staff full name (`staffProfile.name`), corporate operational title (`staffProfile.title`), role badge (`role`), staff ID (`staffProfile.staffId`), and online terminal status directly inside the avatar dropdown menu header alongside the interactive photo uploader (`Change Photo` / `Upload Photo` / `Remove`).
+  - **Expanded Global Search Bar Real Estate & Overstretch Elimination**:
+    - Removed rigid `min-w` declarations and enabled graceful fluid shrinking with `min-w-0` and proportional bounds (`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg`).
+    - Configured guaranteed minimum cluster air gaps (`gap-3 sm:gap-4 lg:gap-6` in `<header>`), preventing the search button from physically overstretching or overlapping the live clock and date.
+    - Updated search placeholder text to `"Search lots, clients, vehicles..."` with `truncate` and clean internal padding.
+  - **Right Cluster Spacing & Responsive Live Clock Optimization**:
+    - Tightened cluster spacing (`gap-2 sm:gap-2.5 md:gap-3`) and live clock padding.
+    - Added responsive date formatting (`hidden 2xl:inline` for full weekday date string, `inline 2xl:hidden` for concise `Sun, Oct 25` date format), saving ~70px of header width on standard 1280px–1440px laptop displays.
+  - **Quality Gates Passed**: Ran mandatory `npm run check` (`tsc --noEmit` + `eslint "src/**/*.{ts,tsx}" --max-warnings 0`) with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/components/erp/Topbar.tsx` (Photo avatar button, expanded search width, responsive clock, dropdown identity header)
+  - `STATE_HANDOFF.md` (Updated session changelog and continuity ledger)
+
 ### Session: 2026-10-25 (Communication Hub Action Toolbar Layout & Resend Button Overflow Remediation)
 - **Goal**: Resolve UI clipping and horizontal overflow where the "Resend Email" button overflowed past the right border of the conversation and action card in `/desk/communication`.
 - **Root Cause Identified**:

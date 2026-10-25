@@ -8,7 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { formatGHS } from '@/lib/utils/currency';
 import { isCustomerInboundLead, getLeadSourceLabel, extractInquiryDetails } from '@/lib/crm/leads';
-import { useTerminal } from '@/context/TerminalContext';
+import { useTerminal, ROLE_STAFF_NAMES, type UserRole } from '@/context/TerminalContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useSidebar } from '@/context/SidebarContext';
 import { useIdleLock } from '@/context/IdleLockContext';
@@ -24,7 +24,6 @@ import {
   Menu,
   Search,
   Bell,
-  ChevronDown,
   Gavel,
   Users,
   Receipt,
@@ -185,6 +184,7 @@ export function Topbar() {
     activeTenant,
     logout,
     role,
+    currentUser,
   } = useTerminal();
   const { theme, setTheme } = useTheme();
   const { lockTerminal, timeoutMinutes, isLocked } = useIdleLock();
@@ -315,6 +315,7 @@ export function Topbar() {
         ampm: '--',
         seconds: '00',
         dateStr: 'Loading terminal clock...',
+        shortDateStr: 'Loading...',
       };
     }
     const rawHours = now.getHours();
@@ -328,7 +329,12 @@ export function Topbar() {
       day: 'numeric',
       year: 'numeric',
     });
-    return { hoursMinutes, ampm, seconds, dateStr };
+    const shortDateStr = now.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+    return { hoursMinutes, ampm, seconds, dateStr, shortDateStr };
   }, [now]);
 
   // Compute Global Search Results across ERP entities
@@ -568,9 +574,10 @@ export function Topbar() {
 
   // Parse Staff Identity for Avatar & Dropdown
   const staffProfile = useMemo(() => {
-    const match = currentStaffName.match(/^([^(]+)\s*(?:\(([^)]+)\))?/);
-    const name = match ? match[1].trim() : currentStaffName;
-    const title = match && match[2] ? match[2].trim() : 'Executive Operations';
+    const rawName = currentUser?.fullName || currentStaffName;
+    const match = rawName.match(/^([^(]+)\s*(?:\(([^)]+)\))?/);
+    const name = match ? match[1].trim() : rawName;
+    const title = match && match[2] ? match[2].trim() : (ROLE_STAFF_NAMES[role as UserRole] || 'Executive Operations');
     const parts = name.split(' ').filter(Boolean);
     const initials =
       parts.length >= 2
@@ -580,10 +587,10 @@ export function Topbar() {
       name,
       title,
       initials,
-      email: 'k.boateng@amenmart.gh',
-      staffId: 'AM-EXEC-001',
+      email: currentUser?.email || 'k.boateng@amenmart.gh',
+      staffId: currentUser?.id || 'AM-EXEC-001',
     };
-  }, [currentStaffName]);
+  }, [currentUser, currentStaffName, role]);
 
   const handleSelectSearchResult = (item: SearchResultItem) => {
     setSearchOpen(false);
@@ -632,9 +639,9 @@ export function Topbar() {
 
   return (
     <>
-      <header className="h-[76px] shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between gap-4 z-30 select-none">
+      <header className="h-[76px] shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-4 lg:gap-6 z-30 select-none">
         {/* Left Cluster: Mobile Menu + Compact Brand (when sidebar collapsed/mobile) + Global Search (Ctrl+K) */}
-        <div className="flex items-center gap-3 flex-1 min-w-0 max-w-xl">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {/* Mobile menu toggle */}
           <button
             type="button"
@@ -675,7 +682,7 @@ export function Topbar() {
             </div>
           </Link>
 
-          {/* 1. Global Search Bar (Ctrl+K) */}
+          {/* 1. Global Search Bar (Ctrl+K) — Well-Proportioned Without Overstretching */}
           <button
             type="button"
             onClick={() => {
@@ -683,40 +690,41 @@ export function Topbar() {
               setNotificationsOpen(false);
               setStaffMenuOpen(false);
             }}
-            className="group relative flex items-center justify-between w-full max-w-md h-11 px-3.5 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500/70 transition-all cursor-pointer shadow-2xs"
+            className="group relative flex items-center justify-between w-full h-11 px-3 sm:px-3.5 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500/70 transition-all cursor-pointer shadow-2xs min-w-0"
             aria-label="Global ERP Search (Ctrl+K)"
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <Search className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 group-hover:scale-105 transition-transform" />
-              <span className="text-[13px] font-semibold text-slate-600 dark:text-slate-300 truncate">
-                Search lots, clients, receipts, vehicles...
+              <span className="text-[13px] font-semibold text-slate-600 dark:text-slate-300 truncate text-left">
+                Search lots, clients, vehicles...
               </span>
             </div>
 
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-mono font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-300/80 dark:border-slate-700 shadow-2xs shrink-0 ml-2">
+            <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-300/80 dark:border-slate-700 shadow-2xs shrink-0 ml-1.5">
               Ctrl K
             </kbd>
           </button>
         </div>
 
         {/* Right Cluster: High-Contrast Clock & Date + Theme + Notification Bell + Staff Avatar */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 shrink-0">
           {/* 2. High-Contrast Live Clock & Date */}
-          <div className="hidden md:flex items-center gap-4 px-4 py-1.5 border-l border-r border-slate-200 dark:border-slate-800">
+          <div className="hidden md:flex items-center px-2.5 sm:px-3 py-1 border-l border-r border-slate-200 dark:border-slate-800">
             <div className="text-center">
               <div className="flex items-baseline justify-center gap-1 leading-none">
-                <span className="text-[19px] font-black tracking-tight text-slate-950 dark:text-white tabular-nums">
+                <span className="text-[17px] sm:text-[19px] font-black tracking-tight text-slate-950 dark:text-white tabular-nums">
                   {formattedClock.hoursMinutes}
                 </span>
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-indigo-300">
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-indigo-300">
                   {formattedClock.ampm}
                 </span>
-                <span className="text-[12px] font-mono font-bold text-slate-600 dark:text-slate-400 tabular-nums">
+                <span className="text-[11px] sm:text-[12px] font-mono font-bold text-slate-600 dark:text-slate-400 tabular-nums">
                   :{formattedClock.seconds}
                 </span>
               </div>
-              <p className="text-[11.5px] font-bold text-slate-700 dark:text-slate-300 tracking-tight mt-1 leading-none whitespace-nowrap">
-                {formattedClock.dateStr}
+              <p className="text-[10.5px] sm:text-[11.5px] font-bold text-slate-700 dark:text-slate-300 tracking-tight mt-1 leading-none whitespace-nowrap">
+                <span className="hidden 2xl:inline">{formattedClock.dateStr}</span>
+                <span className="inline 2xl:hidden">{formattedClock.shortDateStr}</span>
               </p>
             </div>
           </div>
@@ -991,10 +999,11 @@ export function Topbar() {
                 setStaffMenuOpen((prev) => !prev);
                 setNotificationsOpen(false);
               }}
-              className="flex items-center gap-2.5 p-1.5 pr-2.5 rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 transition-all cursor-pointer"
-              aria-label="Staff Profile & Terminal Menu"
+              className="relative h-11 w-11 rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 p-1 flex items-center justify-center transition-all cursor-pointer group shadow-2xs hover:ring-2 hover:ring-indigo-500/30 shrink-0"
+              aria-label={`Staff Profile Menu: ${staffProfile.name}`}
+              title={`${staffProfile.name} • ${staffProfile.title} — Click for staff profile & terminal actions`}
             >
-              <div className="relative">
+              <div className="relative h-9 w-9 rounded-xl overflow-hidden shrink-0">
                 {staffAvatarUrl ? (
                   <Image
                     src={staffAvatarUrl}
@@ -1002,10 +1011,10 @@ export function Topbar() {
                     width={36}
                     height={36}
                     unoptimized
-                    className="h-9 w-9 rounded-xl object-cover shadow-xs ring-2 ring-white dark:ring-slate-900"
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 text-white font-black text-xs flex items-center justify-center shadow-xs ring-2 ring-white dark:ring-slate-900">
+                  <div className="h-full w-full bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 text-white font-black text-xs flex items-center justify-center">
                     {staffProfile.initials}
                   </div>
                 )}
@@ -1015,26 +1024,11 @@ export function Topbar() {
                   }`}
                 />
               </div>
-
-              <div className="hidden lg:block text-left min-w-0">
-                <p className="text-xs font-black text-slate-950 dark:text-white leading-tight truncate max-w-[130px]">
-                  {staffProfile.name}
-                </p>
-                <p className="text-[10.5px] font-semibold text-slate-600 dark:text-slate-400 leading-tight truncate max-w-[130px]">
-                  {staffProfile.title}
-                </p>
-              </div>
-
-              <ChevronDown
-                className={`h-4 w-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${
-                  staffMenuOpen ? 'rotate-180' : ''
-                }`}
-              />
             </button>
 
             {/* Staff Dropdown Menu */}
             {staffMenuOpen && (
-              <div className="absolute right-0 mt-2.5 w-76 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2.5 w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 overflow-hidden">
                 {/* Staff Identity Header + Interactive Photo Uploader */}
                 <div className="p-4 bg-slate-50/90 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-3">
@@ -1064,10 +1058,15 @@ export function Topbar() {
                     </button>
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-black text-slate-950 dark:text-white truncate">
-                        {staffProfile.name}
-                      </p>
-                      <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-black text-slate-950 dark:text-white truncate">
+                          {staffProfile.name}
+                        </p>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                          {role}
+                        </span>
+                      </div>
+                      <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate mt-0.5">
                         {staffProfile.title}
                       </p>
                       <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate mt-0.5">
