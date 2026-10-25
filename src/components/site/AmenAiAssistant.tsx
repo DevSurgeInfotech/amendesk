@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
-  Sparkles,
   Send,
   X,
   Phone,
@@ -434,7 +433,6 @@ export function AmenAiAssistant() {
               <span className="text-xs sm:text-sm font-black tracking-tight text-white">
                 Amen AI Assistant
               </span>
-              <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
             </div>
             <span className="text-[10px] font-semibold text-indigo-200 block">
               {isOpen ? 'Click to minimize' : '24/7 Auction & Showroom Advisor'}
