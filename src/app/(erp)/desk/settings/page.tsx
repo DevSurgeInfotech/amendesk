@@ -1,8 +1,15 @@
 'use client';
 
-import { Suspense, useState, useMemo, useEffect, useTransition } from 'react';
+import {
+  Suspense,
+  useState,
+  useMemo,
+  useEffect,
+  useTransition,
+  useSyncExternalStore,
+} from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useTerminal, ROLE_STAFF_NAMES } from '@/context/TerminalContext';
 import { authService } from '@/lib/auth/authService';
 import { db } from '@/lib/db';
@@ -72,20 +79,85 @@ function getRoleBadgeStyle(role: AppRole): string {
   }
 }
 
+function SettingsSkeleton() {
+  return (
+    <div className="space-y-6" suppressHydrationWarning>
+      {/* Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              Settings
+            </h1>
+            <span className="h-5 w-36 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Terminal login access, RBAC role assignments, organization profile, and business rules
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href="/desk/hr"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all border border-indigo-200 dark:border-indigo-800"
+          >
+            <Briefcase className="h-3.5 w-3.5" />
+            <span>Staff &amp; Payroll Directory</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Tabs Navigation Skeleton */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 flex-wrap">
+        <div className="h-9 w-48 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="h-9 w-36 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="h-9 w-36 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="h-9 w-40 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+      </div>
+
+      {/* Content Skeleton Card */}
+      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-xs">
+        <div className="h-5 w-56 rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="h-3.5 w-80 rounded-lg bg-slate-100 dark:bg-slate-800/60 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+          <div className="h-24 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 animate-pulse" />
+          <div className="h-24 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 animate-pulse" />
+          <div className="h-24 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 animate-pulse" />
+          <div className="h-24 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 animate-pulse" />
+        </div>
+        <div className="h-48 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 animate-pulse mt-4" />
+      </div>
+    </div>
+  );
+}
+
+const emptySubscribe = () => () => {};
+
+function useIsMounted(): boolean {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
 function WorkspaceSettingsContent() {
+  const mounted = useIsMounted();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { activeTenant, currentUser, role, setRole, cleanSlateDatabase } = useTerminal();
   const activeAppRole = normalizeAppRole(role);
   const [, startTransition] = useTransition();
 
   const tabParam = searchParams.get('tab');
+  const targetTab = resolveSettingsTab(tabParam);
   const [activeTab, setActiveTab] = useState<
     'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY'
-  >(() => resolveSettingsTab(tabParam));
+  >(targetTab);
   const [prevTabParam, setPrevTabParam] = useState(tabParam);
   if (tabParam !== prevTabParam) {
     setPrevTabParam(tabParam);
-    setActiveTab(resolveSettingsTab(tabParam));
+    setActiveTab(targetTab);
   }
 
   const [feedback, setFeedback] = useState<{
@@ -422,8 +494,25 @@ function WorkspaceSettingsContent() {
     }
   };
 
+  const handleTabSelect = (tab: 'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY') => {
+    setActiveTab(tab);
+    const tabMap: Record<'STAFF' | 'PROFILE' | 'RULES' | 'SECURITY', string> = {
+      STAFF: 'users',
+      PROFILE: 'profile',
+      RULES: 'rules',
+      SECURITY: 'security',
+    };
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tabMap[tab]);
+    router.replace(`/desk/settings?${params.toString()}`, { scroll: false });
+  };
+
+  if (!mounted) {
+    return <SettingsSkeleton />;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" suppressHydrationWarning>
       {/* Top Context */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
@@ -488,7 +577,7 @@ function WorkspaceSettingsContent() {
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 flex-wrap">
         <button
           type="button"
-          onClick={() => setActiveTab('STAFF')}
+          onClick={() => handleTabSelect('STAFF')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'STAFF'
               ? 'bg-indigo-600 text-white shadow-xs'
@@ -501,7 +590,7 @@ function WorkspaceSettingsContent() {
 
         <button
           type="button"
-          onClick={() => setActiveTab('PROFILE')}
+          onClick={() => handleTabSelect('PROFILE')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'PROFILE'
               ? 'bg-indigo-600 text-white shadow-xs'
@@ -514,7 +603,7 @@ function WorkspaceSettingsContent() {
 
         <button
           type="button"
-          onClick={() => setActiveTab('RULES')}
+          onClick={() => handleTabSelect('RULES')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'RULES'
               ? 'bg-indigo-600 text-white shadow-xs'
@@ -527,7 +616,7 @@ function WorkspaceSettingsContent() {
 
         <button
           type="button"
-          onClick={() => setActiveTab('SECURITY')}
+          onClick={() => handleTabSelect('SECURITY')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeTab === 'SECURITY'
               ? 'bg-indigo-600 text-white shadow-xs'
@@ -1181,22 +1270,34 @@ function WorkspaceSettingsContent() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase text-slate-400">
-                  Active Role:
-                </span>
-                <select
-                  value={activeAppRole}
-                  onChange={(e) => setRole(e.target.value as AppRole)}
-                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 cursor-pointer"
-                >
-                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => (
-                    <option key={r} value={r}>
-                      {r} — {ROLE_LABELS[r]}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {activeTenant.isSandbox ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">
+                    Role Simulator:
+                  </span>
+                  <select
+                    value={activeAppRole}
+                    onChange={(e) => setRole(e.target.value as AppRole)}
+                    aria-label="Active RBAC Role Simulator"
+                    className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 cursor-pointer"
+                  >
+                    {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => (
+                      <option key={r} value={r}>
+                        {r} — {ROLE_LABELS[r]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400">
+                    Role:
+                  </span>
+                  <span className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                    {activeAppRole} ({ROLE_LABELS[activeAppRole]})
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1654,13 +1755,7 @@ function WorkspaceSettingsContent() {
 
 export default function WorkspaceSettingsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-8 text-center text-slate-500 font-semibold text-sm">
-          Loading Settings...
-        </div>
-      }
-    >
+    <Suspense fallback={<SettingsSkeleton />}>
       <WorkspaceSettingsContent />
     </Suspense>
   );

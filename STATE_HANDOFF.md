@@ -222,6 +222,22 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Settings Hydration Mismatch Resolution & Production RBAC Guard)
+- **Goal**: Resolve React hydration mismatch console error occurring when accessing `/desk/settings?tab=security` on `desk.localhost:3001`.
+- **Root Cause Identified**:
+  - `WorkspaceSettingsContent` read client-dependent state (session operator, tenant, role, and localStorage workspace settings) during server-side rendering and initial client render.
+  - On `tab=security`, `<select value={activeAppRole}>` caused a mismatch between server-rendered option selection (`activeAppRole` defaulting to `OWNER` on server) and client-selected options or custom staff roles.
+  - In Next.js Suspense static/dynamic prerendering, query parameter `tab=security` evaluated to empty/null on the server prerender (defaulting to `STAFF`), but evaluated to `'security'` on the client, creating divergent tab layouts on initial hydration.
+- **Accomplishments**:
+  - **Zero-Mismatch Hydration Architecture via `useIsMounted()`**: Implemented canonical React 18/19 `useSyncExternalStore` hook returning `false` during server rendering and hydration, and transitioning to `true` post-mount.
+  - **Matching Skeleton Fallback (`SettingsSkeleton`)**: Rendered an identical structured skeleton (`SettingsSkeleton`) during SSR and initial hydration, and connected it as the Suspense fallback.
+  - **Production RBAC Guard**: Gated the interactive role simulator dropdown in Settings to sandbox mode (`activeTenant.isSandbox`), while rendering a secure, immutable static role badge in live production.
+  - **Seamless URL Synchronization**: Upgraded tab navigation buttons to push URL search parameters via `router.replace(..., { scroll: false })`, maintaining perfect alignment with Sidebar submodules (`?tab=users`, `?tab=profile`, `?tab=rules`, `?tab=security`).
+  - **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% (0 errors, 0 warnings).
+- **Changed Files**:
+  - `src/app/(erp)/desk/settings/page.tsx`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (Removal of Dev Surge Platform Vendor Console Links from Client ERP Navigation)
 - **Goal**: Address critical boundary violation by completely removing the vendor "Dev Surge Platform" link from Settings header and Topbar user profile menu in client ERP navigation, ensuring strict white-label separation in live production.
 - **Root Cause Identified**:
