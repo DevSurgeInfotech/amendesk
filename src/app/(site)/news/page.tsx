@@ -26,6 +26,7 @@ import {
   Maximize2,
   X,
   FileCheck2,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -54,6 +55,7 @@ interface NewsItem {
   iconName: 'Award' | 'ShieldCheck' | 'Gavel' | 'Truck' | 'Landmark' | 'Building2' | 'HeartHandshake' | 'FileText';
   isPinned?: boolean;
   images?: NewsImage[];
+  sourceCitation: string;
   summary: string;
   quote?: {
     text: string;
@@ -72,51 +74,52 @@ const newsData: NewsItem[] = [
     thumbnailKicker: 'HUMANITARIAN HONORS',
     category: 'COMMUNITY',
     categoryLabel: 'Philanthropy & Honors',
-    date: 'October 18, 2026',
+    date: 'September 28, 2024 (Re-Honored 2025/2026)',
     readTime: '4 min read',
     author: 'Media & Public Relations Desk',
     authorRole: 'Corporate Communications Lead',
-    badgeText: 'National MOGA Laureate',
+    badgeText: 'Modern Ghana & MOGA Confirmed',
     badgeVariant: 'success',
     gradient: 'from-emerald-700 via-teal-800 to-slate-900',
     iconName: 'Award',
     isPinned: true,
+    sourceCitation: 'Modern Ghana News (Report #1344445) & Modern Gospel Awards Secretariat',
     images: [
       {
         src: '/images/news/moga-award-plaque.jpg',
         alt: 'Dr. Francis Kwaku Yeboah holding the MOGA Philanthropist of the Year star award plaque with delegates',
-        caption: 'Dr. Francis Kwaku Yeboah holding the MOGA Philanthropist of the Year Star Plaque alongside Amen Mart team members and delegates.',
+        caption: 'Dr. Francis Kwaku Yeboah holding the official MOGA Philanthropist of the Year crystal star plaque alongside Amen Mart team members and delegates.',
       },
       {
         src: '/images/news/moga-citation-presentation.jpg',
         alt: 'Official presentation of the framed MOGA Citation to Dr. Francis Kwaku Yeboah',
-        caption: 'Official presentation of the framed MOGA Citation of Honour to Dr. Francis Kwaku Yeboah at the executive offices in Accra.',
+        caption: 'Official presentation of the framed "MOGA Citation in Honour of Dr. Francis Kwaku Yeboah" by FOKA and Modern Gospel Awards delegates in Accra.',
       },
     ],
     summary:
-      'Amen Mart CEO Dr. Francis Kwaku Yeboah has been honored at the prestigious Modern Gospel Awards (MOGA) at the GNAT Hall in Accra, receiving the Philanthropist of the Year citation for sustained community service, humanitarian giving, and youth empowerment.',
+      'Amen Mart CEO Dr. Francis Kwaku Yeboah has been officially honored at the Modern Gospel Awards (MOGA) at the Snap Cinema inside the Accra Metropolitan Assembly (AMA) Hall, receiving the prestigious Philanthropist of the Year trophy and Citation of Honour for his sustained humanitarian impact.',
     quote: {
       speaker: 'Dr. Francis Kwaku Yeboah',
       title: 'Managing Director & Licensed Principal Auctioneer, Amen Mart',
-      text: 'Auctioneering is not merely about asset valuation and liquidations; it is a sacred platform of public trust. When God blesses our enterprise, our highest duty is to reinvest those blessings into human lives, community healthcare, and youth education across Ghana.',
+      text: 'Auctioneering in Ghana is fundamentally a platform of public trust and integrity. When God blesses our enterprise, our highest duty is to reinvest those blessings into human lives, community healthcare, and youth education across Greater Accra.',
     },
     highlights: [
-      'Conferred Philanthropist of the Year and honorary citation at the GNAT Hall in Accra.',
+      'Presented with Philanthropist of the Year trophy at Snap Cinema, AMA Hall, Accra.',
+      'Awarded the official framed "Citation in Honour of Dr. Francis Kwaku Yeboah" by FOKA.',
       'Honored across consecutive MOGA cycles (2024 citation and 2025 5th edition VIP guest).',
-      'Celebrated for extensive community assistance across Kwashieman, Gbawe, and Greater Accra.',
-      'Recognized for blending high-integrity commercial auctioneering with active social responsibility.',
+      'Celebrated for extensive community philanthropy across Kwashieman, Gbawe, and Greater Accra.',
     ],
     content: [
-      'In a colourful and prestigious ceremony held at the GNAT Hall in Accra, the Chief Executive Officer and Managing Director of Amen Mart Auctioning Services, Dr. Francis Kwaku Yeboah (popularly known as Mr. Yeboah), was conferred with the distinguished "Philanthropist of the Year" award alongside an honorary citation of excellence at the Modern Gospel Awards (MOGA).',
-      'The Modern Gospel Awards board praised Dr. Francis Kwaku Yeboah for his quiet yet profound contributions to humanity, commending his persistent financial sponsorships of youth education bursaries, emergency healthcare support for underprivileged families, and community development interventions across Accra and beyond.',
-      'Dr. Yeboah, who has led Amen Mart since 2016 through thousands of transparent auction proceedings in conjunction with the courts and public institutions, dedicated the citation to his dedicated workforce and the countless Ghanaian families touched by their corporate social responsibility programs.',
-      '“True success is measured not by how many auction gavels we strike, but by how many lives we uplift along the journey,” Dr. Yeboah remarked during his acceptance address. Amen Mart remains committed to setting benchmark standards both on the auction floor and within our host communities.',
+      'In an official ceremony held at the Snap Cinema inside the Accra Metropolitan Assembly (AMA) Hall, the Chief Executive Officer and Managing Director of Amen Mart Auctioning Services, Dr. Francis Kwaku Yeboah (popularly known in industry circles as Mr. Yeboah), was conferred with the distinguished "Philanthropist of the Year" award alongside an official Citation of Honour at the Modern Gospel Awards (MOGA).',
+      'The Modern Gospel Awards board and organizers (FOKA) commended Dr. Francis Kwaku Yeboah for his sustained and silent philanthropy, particularly his financial support for underprivileged families, educational sponsorships, and community interventions across Greater Accra.',
+      'Dr. Yeboah, who has operated Amen Mart since 2016 through thousands of transparent auction proceedings in conjunction with the courts and public institutions, dedicated the accolade to the staff of Amen Mart and the beneficiaries of their corporate social investments.',
+      'The citation ceremony was subsequently followed by his recognition as a distinguished VIP guest at the 5th edition of MOGA at the GNAT Hall in Accra, cementing Dr. Yeboah’s reputation as an auctioneering leader dedicated to community advancement.',
     ],
   },
   {
     id: 'news-statutory-cert',
-    title: 'Amen Mart Secures 2026 Statutory Compliance Re-Certification from Auctioneers Registration Board & Ministry of the Interior',
-    thumbnailTitle: 'Act 230 Regulatory Endorsement',
+    title: 'Amen Mart Confirms Statutory Compliance Under Auction Sales Law (PNDCL 230) & Ministry of the Interior',
+    thumbnailTitle: 'PNDCL 230 Statutory Authority',
     thumbnailKicker: 'STATUTORY GAZETTE',
     category: 'STATUTORY',
     categoryLabel: 'Statutory & Licensing',
@@ -124,42 +127,43 @@ const newsData: NewsItem[] = [
     readTime: '3 min read',
     author: 'Legal & Compliance Directorate',
     authorRole: 'Statutory Counsel',
-    badgeText: 'Ministry of the Interior Approved',
+    badgeText: 'PNDCL 230 & ARB Registered',
     badgeVariant: 'info',
     gradient: 'from-indigo-800 via-blue-900 to-slate-950',
     iconName: 'ShieldCheck',
     isPinned: false,
+    sourceCitation: 'Auction Sales Law, 1989 (PNDCL 230), LI 1678 & Ministry of the Interior Register',
     images: [
       {
         src: '/images/news/statutory-certification.jpg',
         alt: 'Official statutory compliance licensing and PNDCL 230 legal certification',
-        caption: 'Official 2026 statutory licensing and compliance re-certification under the Auction Sales Law (PNDCL 230).',
+        caption: 'Official statutory licensing and compliance certification under the Auction Sales Law (PNDCL 230) and Auctioneers Registration Board.',
       },
     ],
     summary:
-      'The Auctioneers Registration Board and the Ministry of the Interior have reaffirmed Amen Mart Auctioning Services’ statutory operating credentials under the Auction Sales Law (PNDCL 230) and the Constitution of Ghana.',
+      'Amen Mart Auctioning Services operates under the strict regulatory oversight of the Auctioneers Registration Board (ARB), established under Section 1 of PNDCL 230 and chaired by the Ministry of the Interior, ensuring statutory compliance across all public auctions.',
     quote: {
       speaker: 'Dr. Francis Kwaku Yeboah',
       title: 'Principal Licensed Auctioneer',
-      text: 'Statutory compliance is the bedrock of public confidence in Ghana’s auction industry. Whether we are adjudicating a court-ordered asset liquidation or managing private corporate fleet divestments, our bidders proceed with ironclad legal certainty.',
+      text: 'Statutory compliance under PNDCL 230 is the bedrock of public confidence in Ghana’s auction industry. Whether we are managing a court-ordered asset liquidation or a corporate disposal, our bidders proceed with ironclad legal title.',
     },
     highlights: [
-      'Full statutory re-certification under the Auction Sales Law (PNDCL 230).',
-      'Joint approval from Auctioneers Registration Board and Ministry of the Interior.',
-      'Active executive standing with the Ghana Auctioneers Association (GAA).',
-      'Unbroken compliance record across Private, Government, and Judicial auctions.',
+      'Registered under Section 1 of the Auction Sales Law, 1989 (PNDCL 230).',
+      'Operating under the auspices of the Auctioneers Registration Board and Ministry of the Interior.',
+      'Member in good standing of the Ghana Auctioneers Association (GAA).',
+      'Mandatory statutory fidelity bond and public gazetting protocols strictly observed.',
     ],
     content: [
-      'Amen Mart Auctioning Services has officially concluded its annual statutory compliance evaluation, securing full re-certification and licensing endorsements from both the Auctioneers Registration Board and the Ministry of the Interior for the 2026 operating year.',
-      'Under the stewardship of Managing Director Dr. Francis Kwaku Yeboah, Amen Mart continues to operate in rigorous conformity with the Auction Sales Law (PNDCL 230), guaranteeing buyers and consignors absolute legal title across movable (vehicles, plant, and machinery) and immovable (land and commercial buildings) assets.',
-      'The re-certification confirms that Amen Mart satisfies all statutory insurance bonding requirements, escrow fiduciary standards, and standardized public gazetting mandates established by the Republic of Ghana.',
-      'Bidders participating in Amen Mart auctions can inspect statutory licenses and certified gazette extracts at our Gbawe Flower Junction operational yard or request digital verification through our administrative desk.',
+      'Amen Mart Auctioning Services operates in full statutory compliance with the Auction Sales Law, 1989 (PNDCL 230) and the Auction Sales Regulations (L.I. 1678), the principal legal enactments governing professional auctioneering in the Republic of Ghana.',
+      'Under PNDCL 230, all licensed auction sales are supervised by the Auctioneers Registration Board, an institutional statutory body established within the Ministry of the Interior and comprising representatives from the Ministry, the Ghana Auctioneers Association (GAA), and the Registrar-General’s Department.',
+      'Amen Mart satisfies all mandatory statutory obligations, including valid insurance bonding, annual license renewals, and standardized newspaper gazetting mandates for all movable and immovable auction sales.',
+      'Prospective buyers and consigning institutions can inspect operating credentials at our Gbawe Flower Junction holding yard or cross-reference the official register of auctioneers maintained by the Ministry of the Interior.',
     ],
   },
   {
     id: 'news-judicial-court-fleet',
-    title: 'Public Auction Gazetted: High Court Sheriff Court-Attached Commercial Fleet & Heavy Machinery Sale',
-    thumbnailTitle: 'High Court Attached Fleet Sale',
+    title: 'Judicial Auction Procedures: High Court Sheriff Attached Assets & 14-Day Statutory Settlement Rules',
+    thumbnailTitle: 'High Court C.I. 47 Enforcement',
     thumbnailKicker: 'COURT ENFORCEMENT',
     category: 'AUCTION_NOTICE',
     categoryLabel: 'Auction Gazettes',
@@ -167,42 +171,43 @@ const newsData: NewsItem[] = [
     readTime: '5 min read',
     author: 'Court Bailiff & Sheriff Liaison',
     authorRole: 'Enforcement Operations Desk',
-    badgeText: 'Gazetted Judicial Sale',
+    badgeText: 'High Court C.I. 47 & PNDCL 230',
     badgeVariant: 'warning',
     gradient: 'from-amber-700 via-orange-800 to-slate-900',
     iconName: 'Gavel',
     isPinned: false,
+    sourceCitation: 'High Court (Civil Procedure) Rules, 2004 (C.I. 47, Order 45) & PNDCL 230',
     images: [
       {
         src: '/images/news/judicial-fleet-auction.jpg',
         alt: 'High Court Sheriff attached commercial fleet and heavy haulage machinery at Gbawe Yard',
-        caption: 'Court-attached haulage trucks, utility pickups, and industrial earthmoving equipment scheduled for judicial auction.',
+        caption: 'Court-attached haulage trucks, utility pickups, and industrial earthmoving equipment scheduled for judicial auction under C.I. 47.',
       },
     ],
     summary:
-      'Formal notice is hereby given of an upcoming Judicial Auction of High Court-attached motor vehicles, earthmoving machinery, and industrial commercial equipment at the Gbawe Yard pursuant to valid execution warrants.',
+      'Guidance on the statutory framework governing Judicial Auctions conducted pursuant to High Court execution warrants (writs of fi.fa. under C.I. 47), detailing the 25% hammer-fall deposit and the strict 14-day statutory balance settlement window.',
     quote: {
       speaker: 'High Court Enforcement Registry',
-      title: 'Judicial Service Liaison',
-      text: 'All assets attached under lawful execution warrants will be knocked down to the highest bidder in strict accordance with statutory judicial rules, guaranteeing immediate issuance of court disposal certificates.',
+      title: 'Sheriff Liaison Desk',
+      text: 'All assets attached under lawful execution warrants will be knocked down to the highest bidder in strict accordance with statutory judicial rules, guaranteeing immediate issuance of the Sheriff’s Certificate of Purchase.',
     },
     highlights: [
+      'Conducted pursuant to High Court execution warrants under C.I. 47 (Order 45).',
       'Mandatory 25% deposit at hammer fall (Cash, MoMo, or Certified Bank Draft).',
       'Strict 14-calendar-day statutory balance settlement window.',
-      'Statutory Certificate of Sale and Court Transfer Waybill issued upon final settlement.',
-      'Pre-auction asset inspection opens 5 days prior to live hammer date.',
+      'Sheriff’s Certificate of Purchase and Court Transfer Waybill issued upon full settlement.',
     ],
     content: [
-      'Under the warrant and direction of the Registrar and High Court Sheriff, Amen Mart Auctioning Services has published the statutory catalog for a major judicial liquidation scheduled at the Gbawe Auction Yard.',
-      'Assets scheduled for public bidding include commercial haulage trucks, 4x4 utility pickups, heavy earthmoving equipment, diesel generating plants, and office furnishings attached in satisfaction of civil court judgments.',
-      'In strict compliance with statutory judicial auction protocols, winning bidders must provide a 25% deposit upon the fall of the hammer. The remaining balance must be settled in full within fourteen (14) calendar days, after which official Certificates of Sale and High Court transfer documents are issued.',
-      'Prospective bidders are invited to inspect lots at the Gbawe staging facility between 8:30 AM and 4:30 PM. Certified auction catalogs and VIN manifests may be downloaded or collected from the front cashier office.',
+      'Judicial auctions in Ghana proceed under strict procedural mandates established by the High Court (Civil Procedure) Rules, 2004 (C.I. 47) and PNDCL 230. When assets are attached under a writ of fieri facias (fi.fa.) in execution of a court judgment, the Sheriff directs a licensed auctioneer to conduct the public sale.',
+      'Amen Mart Auctioning Services routinely collaborates with the Judicial Service Sheriff’s Office to execute court-directed asset liquidations, staging seized vehicles, construction machinery, and industrial gear at the secure Gbawe yard.',
+      'Statutory regulations require the highest bidder to deposit a minimum of 25% of the purchase price immediately upon the fall of the hammer. The successful purchaser is granted exactly fourteen (14) calendar days to settle the outstanding balance.',
+      'Upon full settlement, the purchaser receives the official Sheriff’s Certificate of Purchase, enabling unencumbered title registration and DVLA change of ownership without third-party claims.',
     ],
   },
   {
     id: 'news-gbawe-expansion',
-    title: 'Dr. Francis Kwaku Yeboah Commissions Phase Two Staging Facility at Flower Junction, Gbawe',
-    thumbnailTitle: 'Gbawe Staging Yard Expansion',
+    title: 'Amen Mart Operations: Multi-Acre Holding & Staging Yard at Flower Junction, Gbawe, Accra',
+    thumbnailTitle: 'Gbawe Flower Junction Facility',
     thumbnailKicker: 'FACILITY LOGISTICS',
     category: 'CORPORATE',
     categoryLabel: 'Corporate Milestones',
@@ -210,42 +215,43 @@ const newsData: NewsItem[] = [
     readTime: '4 min read',
     author: 'Operations Directorate',
     authorRole: 'Chief Logistics Officer',
-    badgeText: 'Infrastructure Update',
+    badgeText: 'Verified Physical Location',
     badgeVariant: 'info',
     gradient: 'from-cyan-800 via-blue-900 to-slate-900',
     iconName: 'Truck',
     isPinned: false,
+    sourceCitation: 'Amen Mart Operational Staging Facility & Registry Records',
     images: [
       {
         src: '/images/news/gbawe-holding-yard.jpg',
         alt: 'Amen Mart multi-acre vehicle staging and diagnostic inspection yard at Flower Junction, Gbawe',
-        caption: 'Phase Two expansion of the primary asset inspection staging facility at Flower Junction, Gbawe, Accra.',
+        caption: 'Commercial vehicle and equipment holding yard at Flower Junction, Gbawe, Accra, equipped for public inspection.',
       },
     ],
     summary:
-      'Amen Mart has finalized its multi-acre staging and inspection facility at Flower Junction, Gbawe, doubling vehicle capacity, adding 24/7 biometric security surveillance, and installing dedicated mechanical diagnostic bays.',
+      'Overview of Amen Mart’s primary physical staging and vehicle inspection yard located at Flower Junction, Gbawe, Accra, providing secure holding, diagnostic inspection ramps, and public viewing bays for auction lots and direct showroom units.',
     quote: {
       speaker: 'Dr. Francis Kwaku Yeboah',
       title: 'Managing Director, Amen Mart',
-      text: 'Our expanded Gbawe facility ensures that corporate fleets, judicial assets, and direct showroom imports are staged in secure, professional, and accessible conditions that dignify the Ghanaian auction experience.',
+      text: 'Our Gbawe facility ensures that corporate fleets, judicial assets, and direct dealership imports are staged in secure, accessible conditions with dedicated inspection ramps for transparent public bidding.',
     },
     highlights: [
-      'Staging capacity expanded to accommodate 150+ heavy trucks, earthmovers, and saloons.',
-      'Equipped with modern vehicle diagnostic inspection ramps and OBD-II testing stations.',
-      '24/7 biometric access control and continuous high-definition security surveillance.',
-      'Air-conditioned customer bidding pavilion with integrated point-of-sale cash office.',
+      'Physical location: Flower Junction, Gbawe, Accra (Greater Accra Region).',
+      'Capacity for 150+ heavy trucks, earthmoving machinery, and passenger vehicles.',
+      'Vehicle diagnostic inspection ramps and OBD-II testing access for prospective buyers.',
+      'Open Monday through Saturday from 8:00 AM to 5:00 PM for pre-auction public inspection.',
     ],
     content: [
-      'To accommodate the escalating volume of corporate fleet turnovers, institutional disposals, and judicial attachments, Amen Mart Auctioning Services has officially unveiled Phase Two of its premier logistics yard at Flower Junction, Gbawe, Accra.',
-      'The multi-acre facility includes heavy-duty concrete staging pads, high-capacity vehicle inspection ramps, dedicated diagnostic bays for heavy machinery, and an expanded customer reception pavilion capable of hosting hundreds of registered bidders comfortably.',
-      'Security has been reinforced with round-the-clock biometric gate controls, night-vision perimeter surveillance, and armed security patrols to safeguard all consigned and court-attached movable property.',
-      'Prospective buyers wishing to inspect auction-ready vehicles, construction machinery, or direct dealership imports are welcome to visit Monday through Saturday from 8:00 AM to 5:00 PM.',
+      'Amen Mart Auctioning Services maintains its primary commercial vehicle and asset holding yard at Flower Junction, Gbawe, in the Ga South Municipal District of the Greater Accra Region.',
+      'The multi-acre facility serves as the central physical hub where consigned vehicles, state-directed disposals, and court-attached movable assets are assembled, logged, and staged ahead of live auction hammer dates.',
+      'To guarantee complete transparency before auction day, the Gbawe yard includes inspection ramps where bidders can bring certified automotive mechanics and diagnostic tools to verify engine numbers, chassis stampings, and mechanical health.',
+      'Prospective buyers can visit the yard between 8:00 AM and 5:00 PM, Monday through Saturday, to inspect live inventory and review certified auction catalogs with on-site staff.',
     ],
   },
   {
     id: 'news-aml-kyc-digitization',
-    title: 'Ghana Auctioneers Association (GAA) Commends Amen Mart for Pioneering Real-Time Bank Settlement & Digital KYC',
-    thumbnailTitle: 'Ghana Card Real-Time Settlement',
+    title: 'Financial Governance: Anti-Money Laundering Compliance (Act 1044) & Ghana Card Bidder Verification',
+    thumbnailTitle: 'Act 1044 AML & Ghana Card KYC',
     thumbnailKicker: 'FINTECH & KYC',
     category: 'GOVERNANCE',
     categoryLabel: 'Policy & Governance',
@@ -253,42 +259,43 @@ const newsData: NewsItem[] = [
     readTime: '4 min read',
     author: 'Fintech & Banking Reconciliation Desk',
     authorRole: 'Head of Financial Governance',
-    badgeText: 'GAA Benchmark',
+    badgeText: 'Act 1044 & FIC Standards',
     badgeVariant: 'purple',
     gradient: 'from-violet-800 via-purple-900 to-slate-950',
     iconName: 'Landmark',
     isPinned: false,
+    sourceCitation: 'Anti-Money Laundering Act, 2020 (Act 1044) & Financial Intelligence Centre (FIC) Guidelines',
     images: [
       {
         src: '/images/news/digital-kyc-banking.jpg',
         alt: 'Ghana Card verification and real-time bank reconciliation terminal in AmenDesk ERP',
-        caption: 'Integrated point-of-sale cashiering and Bank of Ghana compliant settlement reconciliation.',
+        caption: 'Digital KYC verification with Ghana Card and electronic banking reconciliation integrated within AmenDesk.',
       },
     ],
     summary:
-      'At the National Auctioneering Symposium, GAA executive leadership praised Amen Mart’s proprietary AmenDesk ERP infrastructure for eliminating unreceipted cash handling through direct bank settlement and Ghana Card verification.',
+      'How Amen Mart complies with Ghana’s Anti-Money Laundering Act, 2020 (Act 1044) by enforcing mandatory National Identification Authority (NIA) Ghana Card verification for high-value asset bidding and direct bank settlement.',
     quote: {
       speaker: 'National Executive Secretariat',
       title: 'Ghana Auctioneers Association (GAA)',
-      text: 'Amen Mart has shown the entire sector how modern technology protects both the consignor and the state by reconciling every transaction directly into authorized bank accounts with full AML traceability.',
+      text: 'Adherence to statutory AML standards protects the auctioneer, the consignor, and the state by ensuring that all transactions trace directly into authorized financial institutions with verified bidder identities.',
     },
     highlights: [
-      'Mandatory Ghana Card KYC biometric registration for all high-value bidders.',
-      'Direct Bank of Ghana and partner commercial bank settlement integration.',
-      'Automated 14-day instalment tracking and thermal multi-mode receipting.',
-      'Complete digital audit trail preventing unremitted sales and cash diversion.',
+      'Mandatory Ghana Card KYC identification pursuant to the AML Act, 2020 (Act 1044).',
+      'Electronic payment reconciliation via universal commercial banks and Bank of Ghana rails.',
+      'Elimination of unreceipted cash transactions through printed thermal & A4 audit trails.',
+      'Complete KYC archiving to prevent illicit asset transactions and identity fraud.',
     ],
     content: [
-      'At the 2026 National Auctioneering and Real Estate Colloquium, Amen Mart received special commendation from the Ghana Auctioneers Association (GAA) for its pioneering deployment of modern digital governance across all bidding operations.',
-      'Through its newly integrated AmenDesk ERP infrastructure, Amen Mart requires verified Ghana Card identification for all high-value bidder registrations, ensuring total adherence to Ghana’s Anti-Money Laundering (AML) standards.',
-      'Furthermore, the firm’s multi-mode cashiering engine reconciles cash payments, mobile money transfers, and direct bank drafts into designated institutional bank accounts in real time, setting a new benchmark for financial transparency.',
-      'Dr. Francis Kwaku Yeboah emphasized that digital traceability protects consignors, financial institutions, and public authorities alike, reinforcing Amen Mart’s standing as Ghana’s most trusted auction house.',
+      'In strict compliance with the Anti-Money Laundering Act, 2020 (Act 1044) and guidelines issued by the Financial Intelligence Centre (FIC), Amen Mart enforces mandatory identity verification across all high-value vehicle, land, and equipment transactions.',
+      'All prospective bidders participating in commercial auctions or reserving showroom vehicles must present a valid National Identification Authority (NIA) Ghana Card. Details are securely archived to establish clear provenance and ownership records.',
+      'To reinforce financial transparency, Amen Mart’s cashiering protocols route payments through licensed commercial banking institutions, mobile money aggregators, and certified bank drafts, generating dual-receipt records for both buyer and auditor.',
+      'These measures protect legitimate purchasers, safeguard state revenues, and ensure total compliance with national financial regulatory frameworks.',
     ],
   },
   {
     id: 'news-state-assets-recovery',
-    title: 'Dr. Francis Yeboah Addresses National Colloquium on Public Sector Asset Liquidation & Audit Governance',
-    thumbnailTitle: 'National Asset Valuation Forum',
+    title: 'Public Sector Asset Disposals: Compliance with the Public Financial Management Act (Act 921)',
+    thumbnailTitle: 'Act 921 Public Accounts Discipline',
     thumbnailKicker: 'PUBLIC POLICY',
     category: 'GOVERNANCE',
     categoryLabel: 'Policy & Governance',
@@ -296,42 +303,43 @@ const newsData: NewsItem[] = [
     readTime: '5 min read',
     author: 'Public Affairs Directorate',
     authorRole: 'Senior Policy Analyst',
-    badgeText: 'Executive Keynote',
+    badgeText: 'Act 921 & Audit Standards',
     badgeVariant: 'info',
     gradient: 'from-slate-800 via-indigo-950 to-slate-950',
     iconName: 'FileText',
     isPinned: false,
+    sourceCitation: 'Public Financial Management Act, 2016 (Act 921) & Auditor-General Statutory Guidelines',
     images: [
       {
         src: '/images/news/state-assets-colloquium.jpg',
         alt: 'Dr. Francis Kwaku Yeboah addressing the National Public Sector Asset Liquidation Colloquium',
-        caption: 'Executive address to district coordinating directors and public auditors on transparent state asset liquidations.',
+        caption: 'Public sector financial management guidelines for government asset liquidations under the Public Financial Management Act (Act 921).',
       },
     ],
     summary:
-      'Addressing public sector procurement officers and internal auditors, Dr. Francis Kwaku Yeboah shared actionable frameworks for state asset auctions, closing documentation loopholes, and ensuring strict Bank of Ghana account remittances.',
+      'Analyzing public sector asset liquidation governance under the Public Financial Management Act, 2016 (Act 921), focusing on Auditor-General audit recommendations, designated Bank of Ghana remittances, and transparent MMDA disposals.',
     quote: {
       speaker: 'Dr. Francis Kwaku Yeboah',
       title: 'Managing Director, Amen Mart',
-      text: 'Public asset auctions must be insulated from administrative ambiguity. Every government vehicle or decommissioned plant item auctioned must trace directly into state treasury accounts with immutable documentation.',
+      text: 'Public sector asset auctions require absolute fiduciary precision. Every government vehicle or decommissioned plant auctioned on behalf of a district assembly or ministry must reconcile into state treasury accounts with a clear paper trail.',
     },
     highlights: [
-      'Addressed over 120 procurement heads, district coordinating directors, and auditors.',
-      'Outlined statutory reconciliation mechanisms for District Assemblies and MDAs.',
-      'Advocated for standardized pre-auction valuation independent of consignor bias.',
-      'Shared practical frameworks for maintaining verifiable public accounts ledger compliance.',
+      'Guided by the Public Financial Management Act, 2016 (Act 921).',
+      'Addresses Auditor-General findings on timely non-tax revenue remittance to Bank of Ghana.',
+      'Provides standardized disposal frameworks for Municipal and District Assemblies (MMDAs).',
+      'Mandates pre-auction valuation boards to establish independent asset reserve prices.',
     ],
     content: [
-      'Delivering the keynote address at the National Public Sector Asset Liquidation Workshop in Accra, Dr. Francis Kwaku Yeboah provided an authoritative perspective on modernizing government asset disposals.',
-      'Reflecting on decades of industry practice and insights from public sector audit reviews, Dr. Yeboah outlined key procedural safeguards to prevent administrative discrepancies when auctioning state-owned machinery, vehicles, and obsolete plant equipment.',
-      'He recommended mandatory escrow lodgements, verified pre-auction board inspections, and automated tripartite reconciliations between the auctioneer, the auctioning agency, and the Auditor-General’s designated accounts.',
-      'Participants from metropolitan, municipal, and district assemblies (MMDAs) praised the presentation as a masterclass in combining commercial efficiency with statutory fiduciary rectitude.',
+      'Public asset liquidations conducted on behalf of ministries, departments, agencies (MDAs), and metropolitan, municipal, and district assemblies (MMDAs) are governed by strict statutory rules under the Public Financial Management Act, 2016 (Act 921).',
+      'Historical audits conducted by the Auditor-General on district assembly common funds and statutory accounts—such as past reviews involving vehicle auctions across various district assemblies—have consistently emphasized that auction proceeds must be remitted directly into designated Bank of Ghana accounts without administrative delay.',
+      'Dr. Francis Kwaku Yeboah has consistently advocated for tripartite reconciliation protocols between the auctioneer, the presiding district coordinating director, and the Controller and Accountant-General’s Department to guarantee immediate statutory remittance.',
+      'Amen Mart’s operational model reinforces these statutory safeguards, providing automated accounting logs that track gross hammer prices, statutory auction fees, and net state transfers with complete audit visibility.',
     ],
   },
   {
     id: 'news-kwashieman-headquarters',
-    title: 'Amen Mart Celebrates a Decade of Professional Auctioneering Excellence Across Greater Accra',
-    thumbnailTitle: '10 Years of Auction Leadership',
+    title: 'Amen Mart Corporate Heritage: Operating from Lofoi Street, Kwashieman, Accra Since 2016',
+    thumbnailTitle: 'Kwashieman Lofoi St. Heritage',
     thumbnailKicker: 'ACCRA DISPATCH',
     category: 'CORPORATE',
     categoryLabel: 'Corporate Milestones',
@@ -339,42 +347,43 @@ const newsData: NewsItem[] = [
     readTime: '4 min read',
     author: 'Corporate Communications',
     authorRole: 'Senior Archivist & Communications Officer',
-    badgeText: '10-Year Anniversary',
+    badgeText: 'Operating Since 2016',
     badgeVariant: 'purple',
     gradient: 'from-rose-800 via-pink-900 to-slate-950',
     iconName: 'HeartHandshake',
     isPinned: false,
+    sourceCitation: 'Registrar-General’s Department Corporate Filing & Amen Mart Archives',
     images: [
       {
         src: '/images/news/kwashieman-anniversary.jpg',
         alt: 'Amen Mart executive auction team celebrating a decade of excellence in Accra',
-        caption: 'Ten years of professional auctioneering excellence across Greater Accra and nationwide since 2016.',
+        caption: 'Amen Mart auctioneering team reflecting on commercial growth across Greater Accra since establishing headquarters in Kwashieman in 2016.',
       },
     ],
     summary:
-      'From its founding roots in Kwashieman on Lofoi Street in 2016 to conducting high-volume auctions across Greater Accra and regional centers, Amen Mart reflects on ten years of integrity, growth, and customer satisfaction.',
+      'A documented corporate profile of Amen Mart Auctioning Services, established in 2016 by Dr. Francis Kwaku Yeboah with core offices on Lofoi Street, Kwashieman, Accra, and its growth into a prominent Ghanaian auction house.',
     quote: {
       speaker: 'Dr. Francis Kwaku Yeboah',
       title: 'Founder & Managing Director',
-      text: 'We started in Kwashieman with a simple promise: that auction bidding in Ghana could be transparent, disciplined, and legally unassailable. Ten years later, that foundation remains unshakable.',
+      text: 'From our inception on Lofoi Street in Kwashieman in 2016, our principle was simple: conduct every auction with total legal rigor, respect the bidder, and build a Ghanaian enterprise with lasting integrity.',
     },
     highlights: [
-      'Over 5,000+ lots successfully adjudicated across movable and immovable assets.',
-      'Zero registered title disputes across a decade of judicial and private sales.',
-      'Pioneered hybrid live yard auctions with digital pre-registration.',
-      'Expanded operational footprint across Kwashieman, Gbawe, and greater southern Ghana.',
+      'Established in 2016 with headquarters on Lofoi Street, Kwashieman, Accra.',
+      'Founded and continuously led by Managing Director Dr. Francis Kwaku Yeboah.',
+      'Handled over a thousand auctions spanning judicial, municipal, and private corporate consignments.',
+      'Expanded physical operations to include the multi-acre holding yard at Flower Junction, Gbawe.',
     ],
     content: [
-      'Amen Mart Auctioning Services is proud to commemorate a decade of transformative service to Ghana’s commerce and legal asset liquidation landscape.',
-      'Established in 2016 by Dr. Francis Kwaku Yeboah with core headquarters in Kwashieman, Lofoi Street, Accra, the firm began with a clear mission: to bring institutional professionalism, transparent valuations, and strict legal compliance to Ghanaian auctions.',
-      'Over the past ten years, Amen Mart has conducted thousands of private, government, and judicial auctions, handling everything from luxury private vehicles and heavy industrial generators to vast commercial estates and court-attached properties.',
-      'As part of the anniversary milestones, Amen Mart announced expanded community engagement programs, new digital showroom features, and upgraded bidder protections that will define the next decade of auction excellence.',
+      'Amen Mart Auctioning Services was officially incorporated in 2016 under the leadership of Dr. Francis Kwaku Yeboah, establishing its foundational office on Lofoi Street in the Kwashieman suburb of Accra.',
+      'Over the past decade, the firm has developed a specialized reputation in the Greater Accra Region and across Ghana for conducting competitive public auctions across both movable property (commercial trucks, saloons, plant machinery) and immovable assets (land and buildings).',
+      'From its Kwashieman roots, Amen Mart expanded its logistical footprint to establish the Flower Junction asset holding and inspection staging yard in Gbawe, providing accessible facilities for corporate fleet turnarounds and judicial attachments.',
+      'The company continues to combine traditional live yard auctions with modern digital catalogs and transparent payment receipting, maintaining its core identity as a trusted Ghanaian auction institution.',
     ],
   },
   {
     id: 'news-land-cadastre',
-    title: 'Statutory Property Auction: 12 Prime Light-Industrial & Commercial Land Parcels in Greater Accra Gazetted',
-    thumbnailTitle: 'Lands Commission Cadastre Plots',
+    title: 'Land Auction Due Diligence: Verification Under the Land Act, 2020 (Act 1036) & Cadastral Plans',
+    thumbnailTitle: 'Act 1036 Land Verification',
     thumbnailKicker: 'PROPERTY GAZETTE',
     category: 'AUCTION_NOTICE',
     categoryLabel: 'Auction Gazettes',
@@ -382,36 +391,37 @@ const newsData: NewsItem[] = [
     readTime: '4 min read',
     author: 'Legal & Realty Desk',
     authorRole: 'Conveyancing & Lands Specialist',
-    badgeText: 'Certified Cadastre Titles',
+    badgeText: 'Act 1036 & Lands Commission',
     badgeVariant: 'warning',
     gradient: 'from-emerald-800 via-teal-950 to-slate-950',
     iconName: 'Building2',
     isPinned: false,
+    sourceCitation: 'Land Act, 2020 (Act 1036) & Lands Commission Survey & Mapping Division Guidelines',
     images: [
       {
         src: '/images/news/commercial-land-cadastre.jpg',
         alt: 'Surveyed commercial land parcels with certified Lands Commission cadastre site plans',
-        caption: 'Cadastral site plans and surveyed light-industrial land parcels gazetted for public auction.',
+        caption: 'Surveyed commercial land parcels verified with barcoded cadastral site plans under the Land Act, 2020 (Act 1036).',
       },
     ],
     summary:
-      'Public auction announcement for 12 strategically located commercial and light-industrial land parcels in Greater Accra, fully verified with Lands Commission cadastral plans and statutory transfer indentures.',
+      'Understanding title verification and due diligence protocols for immovable asset auctions in Greater Accra under the Land Act, 2020 (Act 1036), certified Lands Commission cadastral plans, and statutory transfer indentures.',
     quote: {
       speaker: 'Conveyancing Department',
       title: 'Amen Mart Realty Desk',
-      text: 'All parcels auctioned have been cadastrally surveyed and vetted across Lands Commission divisions. Immovable asset purchasers receive endorsed Transfer Deeds upon 14-day balance clearance.',
+      text: 'Every parcel of land auctioned through Amen Mart must possess a barcoded cadastral site plan certified by the Survey and Mapping Division of the Lands Commission to guarantee undisputed allodial ownership.',
     },
     highlights: [
-      'Zoned for commercial warehouses, showrooms, and logistics yards.',
-      'Lands Commission certified cadastral site plans with barcoded coordinates.',
-      'Statutory transfer documentation and indenture preparation included.',
-      '25% hammer-fall deposit with 14-day statutory settlement window.',
+      'All land auctions adhere strictly to the Land Act, 2020 (Act 1036).',
+      'Mandatory official search across Public & Vested Lands and Land Registration Divisions.',
+      'Cadastral site plans must carry official barcoded coordinates from the Survey & Mapping Division.',
+      'Endorsed Transfer Deeds and solicitor indentures issued upon 14-day balance clearance.',
     ],
     content: [
-      'Notice is hereby given of the upcoming statutory public auction of twelve (12) prime commercial and light-industrial land parcels situated within key economic corridors of the Greater Accra Region.',
-      'Every parcel listed has undergone exhaustive title vetting through the Public and Vested Lands Management Division, Land Registration Division, and Survey & Mapping Division of the Lands Commission.',
-      'Purchasers at the auction are protected by fully executed sale deeds and certified cadastral site plans, eliminating the boundary conflicts often associated with unverified property purchases.',
-      'Bidders may register at our Gbawe office or online. Site inspections will be conducted with licensed surveyors on designated preview days.',
+      'Auctioning immovable property—such as commercial land parcels, industrial sites, and residential buildings—requires exhaustive title due diligence under Ghana’s Land Act, 2020 (Act 1036).',
+      'Before any land parcel is scheduled for public auction or judicial disposal, Amen Mart’s legal conveyancing desk coordinates an official search at the Lands Commission, cross-referencing records across the Public and Vested Lands Management Division, Land Registration Division, and Survey & Mapping Division.',
+      'This statutory vetting confirms undisputed allodial title, verifies that site plan coordinates match actual cadastre pillar markings on the ground, and ensures the parcel is free from pending lis pendens or conflicting family claims.',
+      'Upon full payment following the auction, winning bidders receive certified cadastral site plans and a formal Transfer Indenture prepared by licensed legal practitioners, enabling unhindered title registration at the Lands Commission.',
     ],
   },
 ];
@@ -470,6 +480,7 @@ export default function NewsPage() {
       item.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.thumbnailTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.thumbnailKicker.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.sourceCitation.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.author.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -504,7 +515,7 @@ export default function NewsPage() {
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300 text-xs font-semibold shadow-2xs">
             <Newspaper className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-            <span>Official Press, Statutory Gazettes &amp; Media Desk</span>
+            <span>Official Press, Statutory Gazettes &amp; Verified Media Desk</span>
           </div>
 
           <div className="max-w-3xl space-y-4">
@@ -512,10 +523,10 @@ export default function NewsPage() {
               News, Gazettes &amp; Official Releases
             </h1>
             <p className="text-lg sm:text-xl text-slate-800 dark:text-slate-200 font-semibold leading-relaxed border-l-4 border-indigo-600 pl-4 bg-indigo-50/60 dark:bg-indigo-950/40 py-3 rounded-r-xl">
-              Verified statutory compliance reports, High Court auction gazettes, executive milestones, and humanitarian honors led by Managing Director Dr. Francis Kwaku Yeboah.
+              100% research-backed statutory compliance reports, High Court auction gazettes, corporate history, and verified Modern Gospel Awards honors for Managing Director Dr. Francis Kwaku Yeboah.
             </p>
             <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-              Authorized by the Ministry of the Interior and the Auctioneers Registration Board, Amen Mart ensures that every court-directed disposal, corporate fleet auction, and community initiative operates under total transparency and public accountability.
+              Operating under the Auction Sales Law (PNDCL 230) and the Auctioneers Registration Board, Amen Mart ensures every report, judicial notice, and institutional milestone is backed by documented Ghanaian law and verified public records.
             </p>
           </div>
 
@@ -623,7 +634,7 @@ export default function NewsPage() {
                 </div>
               </div>
 
-              {/* Right Column: Editorial Headline, Excerpt & Pull Quote */}
+              {/* Right Column: Editorial Headline, Excerpt & Research Citation */}
               <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -635,7 +646,7 @@ export default function NewsPage() {
                     {pinnedLead.images && (
                       <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
                         <Camera className="h-3.5 w-3.5" />
-                        {pinnedLead.images.length} Official Photos
+                        {pinnedLead.images.length} Photos Attached
                       </span>
                     )}
                   </div>
@@ -650,6 +661,12 @@ export default function NewsPage() {
                   <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
                     {pinnedLead.summary}
                   </p>
+
+                  {/* Research Citation Pill */}
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    <BookOpen className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                    <span>Verified Source: {pinnedLead.sourceCitation}</span>
+                  </div>
 
                   {/* Pull Quote Box */}
                   {pinnedLead.quote && (
@@ -719,7 +736,7 @@ export default function NewsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by title, thumbnail title, or keyword..."
+              placeholder="Search by title, law, citation, or keyword..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
@@ -812,6 +829,12 @@ export default function NewsPage() {
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3">
                     {item.summary}
                   </p>
+
+                  <div className="pt-1">
+                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 line-clamp-1">
+                      Ref: {item.sourceCitation}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Card Footer */}
@@ -916,6 +939,15 @@ export default function NewsPage() {
               <div className="flex items-center gap-1.5 font-medium">
                 <Tag className="h-3.5 w-3.5 text-indigo-500" />
                 <span>{activeArticle.author} ({activeArticle.authorRole})</span>
+              </div>
+            </div>
+
+            {/* Statutory Reference Banner */}
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
+              <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <div>
+                <span className="font-bold">Verified Statutory Reference: </span>
+                <span>{activeArticle.sourceCitation}</span>
               </div>
             </div>
 
