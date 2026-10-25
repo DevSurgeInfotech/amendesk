@@ -395,7 +395,7 @@ flowchart TD
     - Added automatic login account provisioning in `EmployeeModal.tsx` via `authService.inviteStaff()` so adding staff in `/desk/hr` immediately provisions their terminal login in `/desk/settings`.
     - Created [`SalaryModal.tsx`](file:///d:/amendesk/src/components/erp/hr/SalaryModal.tsx) with live GRA PAYE & SSNIT calculation preview and Hubtel MoMo / Bank Transfer payout configuration, accessible exclusively from the **Monthly Payroll** tab (`/desk/hr?tab=payroll`) by `OWNER` or `ACCOUNTANT`.
   - **Protected Staff & Payroll Views (`src/app/(erp)/desk/hr/page.tsx`)**:
-    - Added live RBAC role switcher and permission enforcement in `/desk/hr`.
+    - Gated the interactive RBAC role simulator to sandbox/dev environments (`activeTenant.isSandbox`) for Dev Surge testing and reference, while enforcing a static, locked role badge in production (`amen-mart-live`) so regular staff can never switch their own permissions.
     - Hidden all salary KPIs, `Monthly Pay` columns, and `Payslip` actions when viewed by non-finance roles (`SECRETARY`, `HR_ADMIN`, etc.), while locking the `Monthly Payroll` and `GRA & SSNIT Filings` tabs to `OWNER` and `ACCOUNTANT`.
     - Added `Set / Edit Staff Salary` button and inline `Set Salary` / `Edit Salary` actions in the `Monthly Payroll` tab.
   - **Unified Settings & RBAC Matrix (`src/app/(erp)/desk/settings/page.tsx`)**:

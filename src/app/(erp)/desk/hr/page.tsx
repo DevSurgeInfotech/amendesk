@@ -122,7 +122,7 @@ function getEmployeeStatusLabel(status: Employee['status']) {
 
 function HrModuleContent() {
   const searchParams = useSearchParams();
-  const { role, setRole, currentStaffName } = useTerminal();
+  const { role, setRole, currentStaffName, activeTenant } = useTerminal();
   const activeAppRole = normalizeAppRole(role);
   const permissions = getRolePermissions(activeAppRole);
 
@@ -466,29 +466,41 @@ function HrModuleContent() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Active RBAC Role Switcher for Staff & Payroll Governance */}
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-            <span className="text-[10px] font-bold uppercase text-slate-400">
-              RBAC:
-            </span>
-            <select
-              value={activeAppRole}
-              onChange={(e) => setRole(e.target.value as AppRole)}
-              aria-label="Active RBAC Role"
-              className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer text-xs"
-            >
-              {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => (
-                <option
-                  key={r}
-                  value={r}
-                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                >
-                  {r} ({ROLE_LABELS[r]})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* RBAC Role Indicator: Interactive Simulator in Sandbox for Dev Surge testing; Static secure badge in Production */}
+          {activeTenant.isSandbox ? (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <span className="text-[10px] font-bold uppercase text-slate-400">
+                RBAC Simulator:
+              </span>
+              <select
+                value={activeAppRole}
+                onChange={(e) => setRole(e.target.value as AppRole)}
+                aria-label="Active RBAC Role Simulator"
+                className="bg-transparent font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer text-xs"
+              >
+                {(Object.keys(ROLE_LABELS) as AppRole[]).map((r) => (
+                  <option
+                    key={r}
+                    value={r}
+                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  >
+                    {r} ({ROLE_LABELS[r]})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <span className="text-[10px] font-bold uppercase text-slate-400">
+                Role:
+              </span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                {activeAppRole} ({ROLE_LABELS[activeAppRole]})
+              </span>
+            </div>
+          )}
 
           {permissions.canConfigureSalaryAndPayroll && (
             <button
