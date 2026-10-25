@@ -148,14 +148,15 @@ flowchart TD
 - [ ] End-to-end Paystack card deposit subaccount integration testing in live environment.
 - [ ] Final yard staff acceptance testing and thermal printer hardware pairing checks.
 
-#### Auxiliary Module: HR & Payroll Engine (Ghana Statutory Compliance & Salaried Staff Management) — **PLANNED / ARCHITECTED**
+#### Auxiliary Module: HR & Payroll Engine (Ghana Statutory Compliance & Salaried Staff Management) — **COMPLETED (100%)**
 - [x] Comprehensive Master Implementation Plan curated and refined ([`amen-mart-hr-payroll-plan.md`](file:///d:/amendesk/amen-mart-hr-payroll-plan.md)).
-- [x] Salaried-only workforce architecture specified: All operational, yard, administrative, showroom, and auction-day duties are performed exclusively by full-time salaried staff (no casual pay rates, no casual muster rolls, and no staff sales commissions).
+- [x] Salaried-only workforce architecture implemented (`/desk/hr`): All operational, yard, administrative, showroom, and auction-day duties are performed exclusively by full-time salaried staff (no casual pay rates, no casual muster rolls, and no staff sales commissions).
 - [x] Corporate business-line fee rule codified: Car Dealership is Amen Mart's own direct business (no 7% auction fee), whereas the 7% statutory auction fee applies across all auctions (cars, property, collectibles).
-- [x] Ghana statutory tax & pension engine specified: GRA PAYE Act 896 graduated tax bands (0%–35%), SSNIT Act 766 Tier 1 (13.5% employer), generic Tier 2 (5.0% employee deduction without locking to a specific trustee), and optional Tier 3 voluntary.
-- [x] Direct Hubtel API automated Mobile Money execution specified for monthly salary disbursements alongside commercial bank transfers.
-- [x] Dexie.js Schema v5 evolution architected: `employees`, `payrollRuns`, `payrollSlips`, `staffAttendance`, `leaveRequests`.
-- [x] QuickBooks-style double-entry accounting integration architected: `acc-2150` (GRA PAYE Payable), `acc-2160` (SSNIT Tier 1 Payable), `acc-2170` (Tier 2 Occupational Pension Payable), `acc-2180` (Accrued Net Salaries), `acc-6080` (Staff Salaries & Allowances), `acc-6085` (Employer SSNIT Expense).
+- [x] Ghana statutory tax & pension engine implemented ([`src/lib/hr/payrollEngine.ts`](file:///d:/amendesk/src/lib/hr/payrollEngine.ts)): GRA PAYE Act 896 graduated tax bands (0%–35%), SSNIT Act 766 Tier 1 (13.5% total: 13.0% employer + 0.5% employee), generic Tier 2 (5.0% employee deduction without locking to a specific trustee), and optional Tier 3 voluntary.
+- [x] Direct Hubtel API automated Mobile Money execution implemented ([`src/app/api/payroll/hubtel-disburse/route.ts`](file:///d:/amendesk/src/app/api/payroll/hubtel-disburse/route.ts)) for monthly salary disbursements alongside commercial bank transfers.
+- [x] Dexie.js Schema v5 evolution implemented ([`src/lib/db/index.ts`](file:///d:/amendesk/src/lib/db/index.ts)): `employees`, `payrollRuns`, `payrollSlips`, `staffAttendance`, `leaveRequests`.
+- [x] QuickBooks-style double-entry accounting integration implemented ([`src/lib/hr/payrollLedgerSync.ts`](file:///d:/amendesk/src/lib/hr/payrollLedgerSync.ts)): `acc-2150` (GRA PAYE Payable), `acc-2160` (SSNIT Tier 1 Payable), `acc-2170` (Tier 2 Occupational Pension Payable), `acc-2180` (Accrued Net Salaries), `acc-6080` (Staff Salaries & Allowances), `acc-6085` (Employer SSNIT Expense).
+- [x] Dual A4 Executive & 80mm POS Thermal Payslip Generator ([`src/components/erp/hr/PayslipModal.tsx`](file:///d:/amendesk/src/components/erp/hr/PayslipModal.tsx)) and GRA DT 0107 / SSNIT CSV exporters.
 
 ---
 
@@ -182,6 +183,7 @@ flowchart TD
 | `/desk/land` | Land Desk | Parcel records, site plans, buyer checklists | ✅ Active |
 | `/desk/property` | Property Desk | Unit listings, sales/leases, document attachments | ✅ Active |
 | `/desk/crm` | Customer Relations | Unified profiles, KYC Ghana Card verification, reminders | ✅ Active |
+| `/desk/hr` | Staff & Payroll | Salaried staff directory, GRA PAYE & SSNIT payroll, Hubtel API | ✅ Active |
 | `/desk/accounts` | Accounts & Finance | QuickBooks ledger, P&L, balance sheet, cash shifts | ✅ Active |
 | `/desk/payment-plans` | Payment Plans | 14-day instalment engine, balance due dates, extensions | ✅ Active |
 | `/desk/payments` | Cash Office | Multi-mode receipting (Cash, MoMo, Bank, Card), thermal receipts | ✅ Active |
@@ -215,32 +217,36 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
-### Session: 2026-10-25 (HR & Payroll Module Architectural Specification & Master Implementation Plan)
-- **Goal**: Curate and refine a comprehensive, production-grade master implementation plan for adding an offline-first HR & Payroll module to AmenDesk for salaried staff management, Ghanaian statutory compliance, and automated Hubtel API MoMo disbursement.
+### Session: 2026-10-25 (HR & Payroll Module Full Implementation — Salaried Staff, GRA PAYE, SSNIT & Hubtel API)
+- **Goal**: Curate the master implementation plan and execute all 5 sprints to build the offline-first HR & Payroll module (`/desk/hr`) for salaried staff management, Ghanaian statutory compliance, and automated Hubtel API MoMo disbursement.
 - **Accomplishments**:
   - **Comprehensive Master Implementation Plan (`amen-mart-hr-payroll-plan.md` & Artifact)**:
-    - Authored and committed [`amen-mart-hr-payroll-plan.md`](file:///d:/amendesk/amen-mart-hr-payroll-plan.md) in the project root alongside [`amen-mart-erp-website-plan.md`](file:///d:/amendesk/amen-mart-erp-website-plan.md), with full technical and operational blueprints.
-    - Generated interactive user-facing artifact in brain storage with feedback capability.
-  - **Salaried-Only Workforce Architecture (Client Decisions Incorporated)**:
-    - Removed casual pay rates, Screen 2 (Auction Day Casual Muster Roll), and staff sales commissions entirely — all work at Amen Mart is performed exclusively by full-time salaried staff paid monthly salaries and standard allowances.
+    - Authored and refined [`amen-mart-hr-payroll-plan.md`](file:///d:/amendesk/amen-mart-hr-payroll-plan.md) incorporating all client decisions: strictly salaried staff only (no casual pay rates, no casual muster rolls, and no staff sales commissions), generic Tier 2 pension, and direct Hubtel API automated execution.
     - Codified corporate business-line fee rule: Car Dealership is Amen Mart's own direct-sale business (no 7% auction fee), whereas the **7% auction fee** applies to all auctions (cars, property, collectibles) per unit sold.
-    - Configured **direct Hubtel API automated execution** for Mobile Money monthly salary payouts alongside commercial bank transfers.
-  - **Ghana Statutory Compliance Engine**:
-    - Formulated the exact 2026 GRA PAYE graduated monthly tax bands (0% to 35%) with personal reliefs.
-    - Modeled the SSNIT Act 766 pension structure: Tier 1 (13.5% employer contribution - 2.5% NHIS + 11% pension), generic Tier 2 (5.0% employee deduction without hardcoding a specific trustee), and optional Tier 3 voluntary provident funds.
-  - **Offline-First Data Architecture (Dexie.js Schema v5)**:
-    - Designed 5 typed IndexedDB tables: `employees`, `payrollRuns`, `payrollSlips`, `staffAttendance`, `leaveRequests`.
-    - Integrated with background sync engine (`syncOutbox`) to enable offline attendance tracking and payslip generation.
-  - **QuickBooks Double-Entry Accounting Ledger Integration**:
-    - Expanded Chart of Accounts with `acc-2150` (GRA PAYE Payable), `acc-2160` (SSNIT Tier 1 Payable), `acc-2170` (Tier 2 Occupational Pension Payable), `acc-2180` (Accrued Net Salaries), `acc-6080` (Staff Salaries & Allowances), and `acc-6085` (Employer Pension Expense).
-    - Specified automated balanced General Journal Entry creation upon payroll approval and Hubtel API / bank disbursement.
-  - **Dual Slip Generation & Statutory Exporters**:
-    - Architected 80mm POS thermal payslip layout alongside formal A4 executive payslips with statutory tax breakdowns and YTD totals.
-    - Specified export generators for GRA Form DT 0107, SSNIT Tier 1 electronic schedule, generic Tier 2 deduction schedule, and commercial bank CSVs.
+  - **Sprint 1 — Foundation, TypeScript Types & Dexie Schema v5**:
+    - Created [`src/lib/types/hr.ts`](file:///d:/amendesk/src/lib/types/hr.ts) and exported via [`src/lib/types/index.ts`](file:///d:/amendesk/src/lib/types/index.ts).
+    - Upgraded [`src/lib/db/index.ts`](file:///d:/amendesk/src/lib/db/index.ts) to Dexie Version 5 with 5 new tables (`employees`, `payrollRuns`, `payrollSlips`, `staffAttendance`, `leaveRequests`) and automatic upgrade seeding.
+    - Expanded Chart of Accounts in [`src/lib/db/seed.ts`](file:///d:/amendesk/src/lib/db/seed.ts) with `acc-2150` (GRA PAYE Payable), `acc-2160` (SSNIT Tier 1 Payable), `acc-2170` (Tier 2 Occupational Pension Payable), `acc-2180` (Accrued Net Salaries), `acc-6080` (Staff Salaries & Allowances), and `acc-6085` (Employer Pension Expense), plus realistic salaried staff seed records.
+    - Registered `Staff & Payroll` (`/desk/hr`) and its 5 submodules in [`src/components/erp/Sidebar.tsx`](file:///d:/amendesk/src/components/erp/Sidebar.tsx).
+  - **Sprint 2, 3, 4 & 5 — Salaried Staff Directory, Statutory Engine, Hubtel API & QuickBooks Ledger Sync**:
+    - Built [`src/lib/hr/payrollEngine.ts`](file:///d:/amendesk/src/lib/hr/payrollEngine.ts) implementing exact 2026 GRA PAYE graduated monthly tax bands (0% to 35%), SSNIT Act 766 calculations (13.0% employer + 0.5% employee Tier 1 = 13.5% total Tier 1; 5.0% generic Tier 2 employee deduction; optional Tier 3 voluntary), and CSV schedule generators (GRA Form DT 0107, SSNIT Tier 1, Generic Tier 2).
+    - Built [`src/app/api/payroll/hubtel-disburse/route.ts`](file:///d:/amendesk/src/app/api/payroll/hubtel-disburse/route.ts) and [`src/lib/hr/payrollLedgerSync.ts`](file:///d:/amendesk/src/lib/hr/payrollLedgerSync.ts) for automated Hubtel API Mobile Money salary execution and balanced double-entry QuickBooks Journal Entry posting.
+    - Built [`src/components/erp/hr/EmployeeModal.tsx`](file:///d:/amendesk/src/components/erp/hr/EmployeeModal.tsx) with live real-time GRA PAYE & SSNIT preview, [`src/components/erp/hr/PayslipModal.tsx`](file:///d:/amendesk/src/components/erp/hr/PayslipModal.tsx) with dual A4 Executive and 80mm POS Thermal slip printing, and [`src/app/(erp)/desk/hr/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/hr/page.tsx) housing all 5 operational tabs.
   - Verified mandatory quality gates: `npm run check` passing 100% (0 TSC errors, 0 ESLint warnings).
 - **Changed Files**:
-  - `amen-mart-hr-payroll-plan.md` (Comprehensive master implementation plan)
-  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog & auxiliary module status)
+  - `amen-mart-hr-payroll-plan.md`
+  - `src/lib/types/hr.ts`
+  - `src/lib/types/index.ts`
+  - `src/lib/hr/payrollEngine.ts`
+  - `src/lib/hr/payrollLedgerSync.ts`
+  - `src/app/api/payroll/hubtel-disburse/route.ts`
+  - `src/lib/db/seed.ts`
+  - `src/lib/db/index.ts`
+  - `src/components/erp/hr/EmployeeModal.tsx`
+  - `src/components/erp/hr/PayslipModal.tsx`
+  - `src/app/(erp)/desk/hr/page.tsx`
+  - `src/components/erp/Sidebar.tsx`
+  - `STATE_HANDOFF.md`
 
 ### Session: 2026-10-24 (ERP Dashboard & Sidebar Module-by-Module Remediation)
 - **Goal**: Remediate text overload, repetitive descriptions, truncated KPI currency figures, and unnecessary Licensing & Affiliation clutter across the ERP Dashboard ([`src/app/(erp)/desk/page.tsx`](file:///d:/amendesk/src/app/%28erp%29/desk/page.tsx)) and audit the ERP Sidebar ([`src/components/erp/Sidebar.tsx`](file:///d:/amendesk/src/components/erp/Sidebar.tsx)) and all linked ERP modules module-by-module.

@@ -15,6 +15,7 @@ import {
   Building2,
   Warehouse,
   Users,
+  Briefcase,
   Database,
   ChevronDown,
   ChevronLeft,
@@ -155,6 +156,19 @@ const erpModules: ModuleItem[] = [
     submodules: [
       { label: 'All Customers', href: '/desk/crm' },
       { label: 'KYC Verified', href: '/desk/crm?filter=VERIFIED' },
+    ],
+  },
+  {
+    id: 'hr',
+    label: 'Staff & Payroll',
+    href: '/desk/hr',
+    icon: Briefcase,
+    submodules: [
+      { label: 'Salaried Staff', href: '/desk/hr' },
+      { label: 'Monthly Payroll', href: '/desk/hr?tab=payroll' },
+      { label: 'Attendance', href: '/desk/hr?tab=attendance' },
+      { label: 'Leave Register', href: '/desk/hr?tab=leave' },
+      { label: 'GRA & SSNIT', href: '/desk/hr?tab=reports' },
     ],
   },
   {
