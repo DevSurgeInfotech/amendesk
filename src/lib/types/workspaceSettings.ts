@@ -17,6 +17,8 @@ export interface WorkspaceSettings {
   receiptPrinterWidth: '80mm' | '58mm' | 'A4';
   autoPrintReceipt: boolean;
   enableSmsReceiptAlerts: boolean;
+  idleLockMinutes?: number; // Enterprise idle timeout in minutes (default 15)
+  enableIdleLock?: boolean; // Whether auto-idle lock is active (default true)
   updatedAt?: string;
 }
 
@@ -51,6 +53,8 @@ export const DEFAULT_WORKSPACE_SETTINGS: Record<string, WorkspaceSettings> = {
     receiptPrinterWidth: '80mm',
     autoPrintReceipt: true,
     enableSmsReceiptAlerts: true,
+    idleLockMinutes: 15,
+    enableIdleLock: true,
     updatedAt: '2026-01-01T00:00:00Z',
   },
   'amen-mart-sandbox': {
@@ -70,6 +74,8 @@ export const DEFAULT_WORKSPACE_SETTINGS: Record<string, WorkspaceSettings> = {
     receiptPrinterWidth: '80mm',
     autoPrintReceipt: true,
     enableSmsReceiptAlerts: false,
+    idleLockMinutes: 15,
+    enableIdleLock: true,
     updatedAt: '2026-01-01T00:00:00Z',
   },
 };

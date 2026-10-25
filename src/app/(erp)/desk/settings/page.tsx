@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTerminal, ROLE_STAFF_NAMES } from '@/context/TerminalContext';
+import { useIdleLock } from '@/context/IdleLockContext';
 import { authService } from '@/lib/auth/authService';
 import { db } from '@/lib/db';
 import { syncEngine } from '@/lib/sync/syncEngine';
@@ -45,6 +46,7 @@ import {
   Search,
   UserCheck,
   Lock,
+  ShieldCheck,
   Briefcase,
 } from 'lucide-react';
 
@@ -146,6 +148,13 @@ function WorkspaceSettingsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { activeTenant, currentUser, role, setRole, cleanSlateDatabase } = useTerminal();
+  const {
+    timeoutMinutes,
+    setTimeoutMinutes,
+    isAutoLockEnabled,
+    setIsAutoLockEnabled,
+    lockTerminal,
+  } = useIdleLock();
   const activeAppRole = normalizeAppRole(role);
   const [, startTransition] = useTransition();
 
@@ -1378,6 +1387,109 @@ function WorkspaceSettingsContent() {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* TAB 4 SECTION 2: WORKSPACE IDLE LOCK & PHYSICAL YARD PROTECTION */}
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Enterprise Idle Lock &amp; Physical Terminal Protection</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      Default: 15 Minutes
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Automatically secures unattended workstations in the auction yard, cashier cash till, and executive offices.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={lockTerminal}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                <span>Test Lock Screen Now</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Timeout Duration Selector */}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <label className="block text-xs font-bold text-slate-900 dark:text-white">
+                  Inactivity Timeout Threshold
+                </label>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Time elapsed with zero mouse or keyboard interaction before the terminal locks.
+                </p>
+                <select
+                  value={timeoutMinutes}
+                  onChange={(e) => {
+                    const mins = parseInt(e.target.value, 10);
+                    setTimeoutMinutes(mins);
+                    showNotification('SUCCESS', `Idle lock timeout updated to ${mins} minutes.`);
+                  }}
+                  className="w-full mt-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white cursor-pointer"
+                >
+                  <option value={5}>5 Minutes (High Security — Front Desk POS &amp; Cash Shifts)</option>
+                  <option value={10}>10 Minutes (Standard Security)</option>
+                  <option value={15}>15 Minutes (Statutory Recommended &amp; Default Standard)</option>
+                  <option value={30}>30 Minutes (Yard Operations &amp; Inspection Tablet)</option>
+                  <option value={60}>60 Minutes (Administrative &amp; Audit Review)</option>
+                </select>
+              </div>
+
+              {/* Auto-Lock Enabled Toggle */}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      Automatic Idle Locking
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !isAutoLockEnabled;
+                        setIsAutoLockEnabled(next);
+                        showNotification('SUCCESS', `Auto-lock has been ${next ? 'enabled' : 'disabled'}.`);
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                        isAutoLockEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                      }`}
+                      aria-label="Toggle Auto-lock"
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          isAutoLockEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    When active, the terminal presents a full-screen frosted glass lock screen requiring the active staff member&apos;s password to continue.
+                  </p>
+                </div>
+
+                <div className="text-[10.5px] font-mono text-slate-500 pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
+                  <span>Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300 font-bold">Ctrl+Alt+L</kbd></span>
+                  <span>Offline Preserved: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">100%</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Informational Guidance Notice */}
+            <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+              <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="leading-relaxed">
+                <strong>Statutory Compliance &amp; Yard Security:</strong> In physical auction yards and front-desk cash offices, staff frequently step away to inspect vehicle lots or oversee bidder documentation. The 15-minute default lock ensures Ghana Card KYC numbers, sealed auction bids, and till collections are protected without terminating ongoing shifts or losing offline draft receipts.
+              </div>
+            </div>
           </div>
 
           {/* Comprehensive RBAC Permissions Matrix (Including Staff & Payroll Separation) */}

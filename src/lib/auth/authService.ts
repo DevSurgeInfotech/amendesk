@@ -535,6 +535,34 @@ class AuthService {
     return this.login('amen-mart-live', 'amenmart.live', 'amen@2026', true);
   }
 
+  public verifyPassword(userIdOrUsername: string, password: string): boolean {
+    this.ensureInitialized();
+    const users = this.getUsers();
+    const normalized = userIdOrUsername.trim().toLowerCase();
+    const user = users.find(
+      (u) =>
+        u.id === userIdOrUsername ||
+        u.username.toLowerCase() === normalized ||
+        u.email.toLowerCase() === normalized
+    );
+    if (!user || !user.isActive) return false;
+
+    const tenants = this.getTenants();
+    const tenant = tenants.find((t) => t.id === user.tenantId);
+
+    const isDemoPassword =
+      (tenant?.environment === 'SANDBOX' || user.tenantId === 'amen-mart-sandbox') &&
+      (password === 'demo123' || password === 'amen@2026');
+
+    return user.password === password || Boolean(isDemoPassword);
+  }
+
+  public unlockWorkspace(password: string): boolean {
+    const session = this.getSession();
+    if (!session?.user?.id) return false;
+    return this.verifyPassword(session.user.id, password);
+  }
+
   public resetToDefaultAccounts(): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(DEFAULT_TENANTS));

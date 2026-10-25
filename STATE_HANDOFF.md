@@ -225,6 +225,52 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Enterprise Workspace Idle Lock Screen & Terminal Security — Light Mode Rollout)
+- **Goal**: Curate a premium enterprise idle lock screen for AmenDesk with a statutory default lock threshold of 15 minutes, requiring staff to re-authenticate with their account password to continue working in their AmenDesk workspace, rendered in a crisp, executive light mode theme.
+- **Root Cause & Security Objective**:
+  - Unattended terminals in high-traffic environments (auction yard tablets, cashier cash office till PCs, and front desk showroom counters) present risk of unauthorized physical inspection of sealed bidder records, Ghana Card KYC identifiers, cash shift balances, and confidential judicial court writ orders.
+  - Previous sessions lacked an automatic idle locking mechanism, forcing either full logouts (which discarded unsaved offline draft entries or interrupted cash shift reconciliations) or leaving the active screen exposed.
+  - Staff required an enterprise-grade idle lock overlay that securely obscures workspace contents after 15 minutes of inactivity while preserving in-memory form drafts, active POS cash till shifts, and offline Dexie IndexedDB sync queues without logging out.
+- **Accomplishments**:
+  - **Light Mode Enterprise Aesthetics (`src/components/erp/IdleLockScreen.tsx`)**:
+    - Built a high-fidelity light theme idle lock screen matching AmenDesk's LandingGo slate `#e9eff5` canvas with frosted glass backdrop and subtle ambient pastel lighting.
+    - Large high-contrast digital clock (`font-mono text-4xl sm:text-5xl font-black text-slate-950`) with live Accra time and full Ghanaian calendar date (`Accra, Ghana • GMT+0`).
+    - Statutory compliance header: AmenDesk high-res shield logo, "Enterprise" badge, Republic of Ghana national flag ribbon, and Ministry of the Interior / ARB authorization badges.
+    - Active environment & network indicators: "Live Production Yard" vs "Sandbox Demo Yard" badge, plus "Online Terminal" vs "Offline Yard Mode" indicator.
+    - Elevated pure white staff card with multi-colored ring avatar, staff full name, granted RBAC role badge, `@username`, and facility location (`Gbawe Head Office Yard & Cash Office`).
+    - Security-hardened password unlock form with autofocus, show/hide password toggle, loading spinner state, shake animation on invalid attempts, and clear Ghanaian staff error alerts.
+    - Sandbox demo quick hint pill (`demo123` / `amen@2026`) with one-click auto-fill for staging terminals.
+    - "Switch Account / Sign Out" link enabling other staff members to log in cleanly without exposing the locked user's workspace.
+    - Offline safety affirmation: "Unsaved drafts, POS cash shifts & offline Dexie records remain preserved."
+  - **Comprehensive Idle Lock Engine (`src/context/IdleLockContext.tsx`)**:
+    - Centralized context monitoring multi-event user activity (`mousemove`, `mousedown`, `keydown`, `touchstart`, `scroll`, `wheel`, `click`) with throttled timestamp recording.
+    - Configurable timeout with statutory default of **15 minutes** (900 seconds) and auto-lock toggle.
+    - Multi-tab synchronization via `storage` and custom `amendesk-idle-lock-change` events.
+    - Automatic `visibilitychange` listener immediately checking elapsed background time when waking from system sleep or switching browser tabs.
+    - Cross-platform keyboard shortcut for instantaneous manual locking: `Ctrl+Alt+L` / `⌘+Alt+L` / `Ctrl+Shift+L`.
+    - Local persistence across browser reloads via `amendesk_terminal_is_locked` so a locked screen remains locked even after refreshing.
+  - **Authentication Service Integration (`src/lib/auth/authService.ts`)**:
+    - Added `verifyPassword(userIdOrUsername, password)` and `unlockWorkspace(password)` verifying credentials for both live production and sandbox demo accounts without destroying active tokens.
+  - **Workspace & RBAC Settings Management (`src/app/(erp)/desk/settings/page.tsx`, `src/lib/types/workspaceSettings.ts`)**:
+    - Extended `WorkspaceSettings` schema with `idleLockMinutes: 15` and `enableIdleLock: true`.
+    - In `/desk/settings?tab=SECURITY`, added dedicated "Enterprise Idle Lock & Physical Terminal Protection" card with timeout selector (5m, 10m, 15m [Default], 30m, 60m), auto-lock toggle, and "Test Lock Screen Now" button.
+  - **Topbar Quick Action & Dropdown Integration (`src/components/erp/Topbar.tsx`)**:
+    - Added quick-lock button in Topbar header right cluster next to notifications.
+    - Added "Lock Workspace Terminal (Ctrl+Alt+L)" menu action in the staff profile dropdown.
+  - **Shell Layout Integration (`src/app/(erp)/desk/layout.tsx`)**:
+    - Wrapped ERP workspace shell in `<IdleLockProvider>` and mounted `<IdleLockScreen />` at the top layout level.
+- **Changed Files**:
+  - `src/components/erp/IdleLockScreen.tsx` (New)
+  - `src/context/IdleLockContext.tsx` (New)
+  - `src/lib/auth/authService.ts`
+  - `src/lib/types/workspaceSettings.ts`
+  - `src/app/(erp)/desk/layout.tsx`
+  - `src/components/erp/Topbar.tsx`
+  - `src/app/(erp)/desk/settings/page.tsx`
+  - `src/lib/db/index.ts`
+  - `STATE_HANDOFF.md`
+- **Quality Gates**: Verified with `npm run check` (TypeScript typecheck + strict ESLint `--max-warnings 0`) passing 100% with 0 errors and 0 warnings.
+
 ### Session: 2026-10-25 (Judicial Lot Intake Sheriff Writ of Execution Remediation & Document Uploader Overhaul)
 - **Goal**: In the lot intake wizard (`/desk/auctions/intake`), under the Judicial auction category, remove the hardcoded default embedded PDF (`/docs/court_order_sample.pdf`) and properly remediate the Sheriff Writ of Execution / Court Order document attachment workflow.
 - **Root Cause Identified**:
@@ -797,6 +843,28 @@ flowchart TD
 - **Changed Files**:
   - `src/app/login/page.tsx` (Remediated card surface contrast and elevation, removed Quick Test Access and footer badges, kept clean minimalist interface)
   - `STATE_HANDOFF.md` (Updated session changelog)
+
+### Session: 2026-10-25 (E2E Showroom & Auction Lot Audit & Clean Slate ID Bug Fix)
+- **Goal**: Audit end-to-end data flow for uploading lots/cars on AmenDesk and their visibility in the showroom, and map all website lead submission endpoints ("Register to Bid", "Inquire / Reserve", "Reserve Online").
+- **Accomplishments**:
+  - **Comprehensive E2E Architecture Audit**:
+    - Clarified the intentional architectural separation between **Direct Dealership Cars** (uploaded at `/desk/dealership`, displayed in `/showroom`, reserved via Paystack deposit) and **Auction Lots** (uploaded at `/desk/auctions/intake`, displayed in `/auctions` and home page notices, reserved via bidder registration with 7% statutory auction fee).
+    - Mapped the 5 internal AmenDesk destinations for inbound website submissions: CRM Inbound Pipeline (`/desk/crm?filter=INQUIRIES`), Unified Communication Hub (`/desk/communication`), 14-day Payment Plans (`/desk/payment-plans`), Cash Office Receipts (`/desk/payments`), and QuickBooks General Ledger (`/desk/accounts`).
+  - **Clean Slate ID Prefix Purge Bug Remediation**:
+    - Discovered that `ensureLiveCleanSlate()` in [`src/lib/db/index.ts`](file:///d:/amendesk/src/lib/db/index.ts) used over-broad prefix matching (`l.id.startsWith('lot-')`, `p.id.startsWith('prop-')`, `plan-`, etc.), which inadvertently deleted runtime user-created lots, properties, and payment plans generated with `${prefix}-${Date.now()}` upon database boot in Live mode.
+    - Updated all purge predicates to specifically target seed data (`lot-00`, `prop-00`, `plan-00`, `rcp-00`, `wb-00`, etc.) while protecting all real staff entries.
+  - **Enterprise Terminal Idle Lock & Physical Yard Protection**:
+    - Verified and hardened [`IdleLockContext.tsx`](file:///d:/amendesk/src/context/IdleLockContext.tsx) and [`IdleLockScreen.tsx`](file:///d:/amendesk/src/components/erp/IdleLockScreen.tsx) with full-screen frosted glass lock overlay, live Accra clock, password re-authentication via `authService.verifyPassword`, and configurable idle timeout (default 15 minutes).
+    - Integrated quick manual lock button (`Ctrl+Alt+L`) in [`Topbar.tsx`](file:///d:/amendesk/src/components/erp/Topbar.tsx) and configurable timeout controls in [`settings/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/settings/page.tsx).
+- **Changed Files**:
+  - `src/lib/db/index.ts` (Remediated seed purge predicates in ensureLiveCleanSlate)
+  - `src/context/IdleLockContext.tsx` (Enterprise terminal idle lock context and activity throttling)
+  - `src/components/erp/IdleLockScreen.tsx` (Full-screen terminal lock screen with password re-entry)
+  - `src/components/erp/Topbar.tsx` (Quick lock terminal action button and staff menu integration)
+  - `src/app/(erp)/desk/settings/page.tsx` (Inactivity timeout threshold selector and auto-lock toggle)
+  - `src/lib/auth/authService.ts` (verifyPassword and unlockWorkspace helpers)
+  - `src/lib/types/workspaceSettings.ts` (idleLockMinutes and enableIdleLock schema settings)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with audit analysis and bug fix log)
 
 ### Session: 2026-10-25 (News Portal Editorial Expansion & Thumbnail Titles Architecture)
 - **Goal**: Research authentic news on Dr. Francis Kwaku Yeboah and Amen Mart Auctioning Services, expand the official News page with deep-coverage stories, and introduce aesthetic thumbnail titles and editorial kickers.

@@ -269,7 +269,7 @@ export class AmenDeskDB extends Dexie {
       const seedLotIds = new Set(initialLots.map((l) => l.id));
       const lots = await this.auctionLots.toArray();
       const seedLotsToDelete = lots.filter(
-        (l) => seedLotIds.has(l.id) || l.id.startsWith('lot-') || l.id.startsWith('LOT-')
+        (l) => seedLotIds.has(l.id) || l.id.startsWith('lot-00') || l.id.startsWith('LOT-SEED-')
       );
       if (seedLotsToDelete.length > 0) {
         await this.auctionLots.bulkDelete(seedLotsToDelete.map((l) => l.id));
@@ -279,7 +279,7 @@ export class AmenDeskDB extends Dexie {
       const seedVehIds = new Set(initialVehicles.map((v) => v.id));
       const vehicles = await this.dealershipVehicles.toArray();
       const seedVehiclesToDelete = vehicles.filter(
-        (v) => seedVehIds.has(v.id) || v.id.startsWith('veh-')
+        (v) => seedVehIds.has(v.id) || v.id.startsWith('veh-00')
       );
       if (seedVehiclesToDelete.length > 0) {
         await this.dealershipVehicles.bulkDelete(seedVehiclesToDelete.map((v) => v.id));
@@ -289,7 +289,7 @@ export class AmenDeskDB extends Dexie {
       const seedLandIds = new Set(initialLandParcels.map((p) => p.id));
       const parcels = await this.landParcels.toArray();
       const seedParcelsToDelete = parcels.filter(
-        (p) => seedLandIds.has(p.id) || p.id.startsWith('lnd-')
+        (p) => seedLandIds.has(p.id) || p.id.startsWith('lnd-00')
       );
       if (seedParcelsToDelete.length > 0) {
         await this.landParcels.bulkDelete(seedParcelsToDelete.map((p) => p.id));
@@ -299,7 +299,7 @@ export class AmenDeskDB extends Dexie {
       const seedPropIds = new Set(initialProperties.map((p) => p.id));
       const properties = await this.propertyUnits.toArray();
       const seedPropsToDelete = properties.filter(
-        (p) => seedPropIds.has(p.id) || p.id.startsWith('prop-')
+        (p) => seedPropIds.has(p.id) || p.id.startsWith('prop-00')
       );
       if (seedPropsToDelete.length > 0) {
         await this.propertyUnits.bulkDelete(seedPropsToDelete.map((p) => p.id));
@@ -309,7 +309,7 @@ export class AmenDeskDB extends Dexie {
       const seedPlanIds = new Set(initialPaymentPlans.map((p) => p.id));
       const plans = await this.paymentPlans.toArray();
       const seedPlansToDelete = plans.filter(
-        (p) => seedPlanIds.has(p.id) || p.id.startsWith('plan-')
+        (p) => seedPlanIds.has(p.id) || p.id.startsWith('plan-00')
       );
       if (seedPlansToDelete.length > 0) {
         await this.paymentPlans.bulkDelete(seedPlansToDelete.map((p) => p.id));
@@ -319,7 +319,7 @@ export class AmenDeskDB extends Dexie {
       const seedReceiptIds = new Set(initialReceipts.map((r) => r.id));
       const receipts = await this.receipts.toArray();
       const seedReceiptsToDelete = receipts.filter(
-        (r) => seedReceiptIds.has(r.id) || r.id.startsWith('rcp-') || r.id.startsWith('AM-RCP-2026-00')
+        (r) => seedReceiptIds.has(r.id) || r.id.startsWith('rcp-00') || r.id.startsWith('AM-RCP-2026-00')
       );
       if (seedReceiptsToDelete.length > 0) {
         await this.receipts.bulkDelete(seedReceiptsToDelete.map((r) => r.id));
@@ -329,7 +329,7 @@ export class AmenDeskDB extends Dexie {
       const seedWaybillIds = new Set(initialWaybills.map((w) => w.id));
       const waybills = await this.waybills.toArray();
       const seedWaybillsToDelete = waybills.filter(
-        (w) => seedWaybillIds.has(w.id) || w.id.startsWith('wb-') || w.id.startsWith('AM-WB-2026-00')
+        (w) => seedWaybillIds.has(w.id) || w.id.startsWith('wb-00') || w.id.startsWith('AM-WB-2026-00')
       );
       if (seedWaybillsToDelete.length > 0) {
         await this.waybills.bulkDelete(seedWaybillsToDelete.map((w) => w.id));
@@ -339,7 +339,7 @@ export class AmenDeskDB extends Dexie {
       const seedDocIds = new Set(initialSaleTransferDocs.map((d) => d.id));
       const docs = await this.saleTransferDocs.toArray();
       const seedDocsToDelete = docs.filter(
-        (d) => seedDocIds.has(d.id) || d.id.startsWith('doc-') || d.id.startsWith('AM-TRF-2026-00')
+        (d) => seedDocIds.has(d.id) || d.id.startsWith('doc-00') || d.id.startsWith('AM-TRF-2026-00')
       );
       if (seedDocsToDelete.length > 0) {
         await this.saleTransferDocs.bulkDelete(seedDocsToDelete.map((d) => d.id));
@@ -349,7 +349,7 @@ export class AmenDeskDB extends Dexie {
       const seedInvIds = new Set(initialInventoryItems.map((i) => i.id));
       const invItems = await this.inventoryItems.toArray();
       const seedInvToDelete = invItems.filter(
-        (i) => seedInvIds.has(i.id) || i.id.startsWith('inv-')
+        (i) => seedInvIds.has(i.id) || i.id.startsWith('inv-00')
       );
       if (seedInvToDelete.length > 0) {
         await this.inventoryItems.bulkDelete(seedInvToDelete.map((i) => i.id));
@@ -358,7 +358,7 @@ export class AmenDeskDB extends Dexie {
       const seedMovIds = new Set(initialStockMovements.map((m) => m.id));
       const movs = await this.stockMovements.toArray();
       const seedMovsToDelete = movs.filter(
-        (m) => seedMovIds.has(m.id) || m.id.startsWith('mov-')
+        (m) => seedMovIds.has(m.id) || m.id.startsWith('mov-00')
       );
       if (seedMovsToDelete.length > 0) {
         await this.stockMovements.bulkDelete(seedMovsToDelete.map((m) => m.id));
@@ -368,7 +368,7 @@ export class AmenDeskDB extends Dexie {
       const seedExpIds = new Set(initialExpenses.map((e) => e.id));
       const expenses = await this.expenses.toArray();
       const seedExpToDelete = expenses.filter(
-        (e) => seedExpIds.has(e.id) || e.id.startsWith('exp-')
+        (e) => seedExpIds.has(e.id) || e.id.startsWith('exp-00')
       );
       if (seedExpToDelete.length > 0) {
         await this.expenses.bulkDelete(seedExpToDelete.map((e) => e.id));
@@ -377,7 +377,7 @@ export class AmenDeskDB extends Dexie {
       const seedInvcIds = new Set(initialInvoices.map((i) => i.id));
       const invoices = await this.invoices.toArray();
       const seedInvoicesToDelete = invoices.filter(
-        (i) => seedInvcIds.has(i.id) || i.id.startsWith('invc-')
+        (i) => seedInvcIds.has(i.id) || i.id.startsWith('invc-00')
       );
       if (seedInvoicesToDelete.length > 0) {
         await this.invoices.bulkDelete(seedInvoicesToDelete.map((i) => i.id));
@@ -386,7 +386,7 @@ export class AmenDeskDB extends Dexie {
       const seedShiftIds = new Set(initialCashShifts.map((s) => s.id));
       const shifts = await this.cashShifts.toArray();
       const seedShiftsToDelete = shifts.filter(
-        (s) => seedShiftIds.has(s.id) || s.id.startsWith('shf-')
+        (s) => seedShiftIds.has(s.id) || s.id.startsWith('shf-00')
       );
       if (seedShiftsToDelete.length > 0) {
         await this.cashShifts.bulkDelete(seedShiftsToDelete.map((s) => s.id));
@@ -395,7 +395,7 @@ export class AmenDeskDB extends Dexie {
       const seedDepositIds = new Set(initialBankDeposits.map((d) => d.id));
       const deposits = await this.bankDeposits.toArray();
       const seedDepositsToDelete = deposits.filter(
-        (d) => seedDepositIds.has(d.id) || d.id.startsWith('dep-')
+        (d) => seedDepositIds.has(d.id) || d.id.startsWith('dep-00')
       );
       if (seedDepositsToDelete.length > 0) {
         await this.bankDeposits.bulkDelete(seedDepositsToDelete.map((d) => d.id));
@@ -405,7 +405,7 @@ export class AmenDeskDB extends Dexie {
       const seedRunIds = new Set(initialPayrollRuns.map((r) => r.id));
       const pRuns = await this.payrollRuns.toArray();
       const seedRunsToDelete = pRuns.filter(
-        (r) => seedRunIds.has(r.id) || r.id.startsWith('prun-')
+        (r) => seedRunIds.has(r.id) || r.id.startsWith('prun-00')
       );
       if (seedRunsToDelete.length > 0) {
         await this.payrollRuns.bulkDelete(seedRunsToDelete.map((r) => r.id));
@@ -414,7 +414,7 @@ export class AmenDeskDB extends Dexie {
       const seedSlipIds = new Set(initialPayrollSlips.map((s) => s.id));
       const pSlips = await this.payrollSlips.toArray();
       const seedSlipsToDelete = pSlips.filter(
-        (s) => seedSlipIds.has(s.id) || s.id.startsWith('pslip-')
+        (s) => seedSlipIds.has(s.id) || s.id.startsWith('pslip-00')
       );
       if (seedSlipsToDelete.length > 0) {
         await this.payrollSlips.bulkDelete(seedSlipsToDelete.map((s) => s.id));
@@ -423,7 +423,7 @@ export class AmenDeskDB extends Dexie {
       const seedAttIds = new Set(initialStaffAttendance.map((a) => a.id));
       const atts = await this.staffAttendance.toArray();
       const seedAttsToDelete = atts.filter(
-        (a) => seedAttIds.has(a.id) || a.id.startsWith('att-')
+        (a) => seedAttIds.has(a.id) || a.id.startsWith('att-00')
       );
       if (seedAttsToDelete.length > 0) {
         await this.staffAttendance.bulkDelete(seedAttsToDelete.map((a) => a.id));
@@ -432,7 +432,7 @@ export class AmenDeskDB extends Dexie {
       const seedLvrIds = new Set(initialLeaveRequests.map((l) => l.id));
       const lvrs = await this.leaveRequests.toArray();
       const seedLvrsToDelete = lvrs.filter(
-        (l) => seedLvrIds.has(l.id) || l.id.startsWith('lvr-')
+        (l) => seedLvrIds.has(l.id) || l.id.startsWith('lvr-00')
       );
       if (seedLvrsToDelete.length > 0) {
         await this.leaveRequests.bulkDelete(seedLvrsToDelete.map((l) => l.id));
