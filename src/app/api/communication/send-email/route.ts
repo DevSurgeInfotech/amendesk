@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     const apiKey = body.customApiKey || process.env.RESEND_API_KEY;
     const defaultFrom =
-      process.env.RESEND_FROM_EMAIL || 'Amen Mart <notifications@kehillahos.app>';
+      process.env.RESEND_FROM_EMAIL || 'Amen Mart Auctioning Services <onboarding@resend.dev>';
 
     let resendMessageId = '';
     let isSimulated = false;
