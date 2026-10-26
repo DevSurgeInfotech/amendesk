@@ -54,6 +54,23 @@ export function formatDateTime(dateStr: string | Date | undefined): string {
 }
 
 /**
+ * Returns human-friendly relative time (e.g. "Just now", "15m ago", "2h ago", "Yesterday")
+ */
+export function formatRelativeTime(dateStr: string | Date | undefined): string {
+  if (!dateStr) return 'Recently';
+  const d = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+  if (isNaN(d.getTime())) return 'Recently';
+  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (diffSec < 45) return 'Just now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  const diffDays = Math.floor(diffSec / 86400);
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return formatDate(d);
+}
+
+/**
  * Returns instalment countdown metadata: status badge color, label, and urgency
  */
 export function getInstalmentWindowInfo(dueDateStr: string | undefined): {

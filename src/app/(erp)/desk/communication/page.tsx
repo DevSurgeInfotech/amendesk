@@ -20,6 +20,10 @@ import { Modal } from '@/components/ui/Modal';
 import { WhatsAppIcon } from '@/components/ui/WhatsAppIcon';
 import { useTerminal } from '@/context/TerminalContext';
 import {
+  markCustomerInquiryAsRead,
+  markCustomerInquiryAsUnread,
+} from '@/lib/notifications/operationalNotifications';
+import {
   Mail,
   Send,
   Clock,
@@ -50,6 +54,7 @@ function CommunicationHubContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
+    activeTenant,
     currentStaffName,
     desktopNotifsAllowed,
     desktopNotifsEnabled,
@@ -154,7 +159,11 @@ function CommunicationHubContent() {
           customerEmail: cust.email || undefined,
           direction: 'INBOUND',
           channel: 'WEB_INBOUND',
-          status: cust.leadStatus === 'NEW' || !cust.leadStatus ? 'RECEIVED' : 'READ',
+          status: cust.isRead
+            ? 'READ'
+            : cust.leadStatus === 'NEW' || !cust.leadStatus
+            ? 'RECEIVED'
+            : 'READ',
           subject: cust.inquirySubject || `Inbound: ${cust.inquiryType || 'General Inquiry'}`,
           message: cust.inquiryMessage || cust.notes || 'Inquiry registered through website portal.',
           businessLine:
@@ -198,6 +207,20 @@ function CommunicationHubContent() {
     if (!selectedMessage?.customerId) return null;
     return (customers ?? []).find((c) => c.id === selectedMessage.customerId) || null;
   }, [customers, selectedMessage]);
+
+  // Auto-mark selected message as read when viewed in Communications
+  useEffect(() => {
+    if (!selectedMessage) return;
+    if (selectedMessage.direction !== 'INBOUND') return;
+    const isUnread =
+      selectedMessage.status === 'RECEIVED' ||
+      selectedMessage.status === 'PENDING' ||
+      (associatedCustomer && !associatedCustomer.isRead);
+
+    if (isUnread && selectedMessage.customerId) {
+      void markCustomerInquiryAsRead(selectedMessage.customerId, activeTenant.id);
+    }
+  }, [selectedMessage, associatedCustomer, activeTenant.id]);
 
   // Inbox Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -249,14 +272,18 @@ function CommunicationHubContent() {
   const kpiStats = useMemo(() => {
     const totalInbound = allMessages.filter((m) => m.direction === 'INBOUND').length;
     const newUnread = allMessages.filter(
-      (m) => m.direction === 'INBOUND' && (m.status === 'RECEIVED' || m.status === 'PENDING')
+      (m) =>
+        m.direction === 'INBOUND' &&
+        m.status !== 'READ' &&
+        (m.status === 'RECEIVED' || m.status === 'PENDING') &&
+        !(customers ?? []).find((c) => c.id === m.customerId)?.isRead
     ).length;
     const emailsSent = allMessages.filter((m) => m.channel === 'EMAIL' && m.direction === 'OUTBOUND').length;
     const whatsappSent = allMessages.filter((m) => m.channel === 'WHATSAPP' && m.direction === 'OUTBOUND').length;
     const responseRate = totalInbound > 0 ? Math.round(((totalInbound - newUnread) / totalInbound) * 100) : 100;
 
     return { totalInbound, newUnread, emailsSent, whatsappSent, responseRate };
-  }, [allMessages]);
+  }, [allMessages, customers]);
 
   // Email Reply Modal State
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -841,7 +868,8 @@ function CommunicationHubContent() {
                 ) : (
                   filteredMessages.map((msg) => {
                     const isSelected = msg.id === selectedMessage?.id;
-                    const isNew = msg.direction === 'INBOUND' && msg.status === 'RECEIVED';
+                    const isMsgRead = msg.status === 'READ' || (customers ?? []).find((c) => c.id === msg.customerId)?.isRead;
+                    const isNew = msg.direction === 'INBOUND' && !isMsgRead;
                     return (
                       <div
                         key={msg.id}
@@ -993,6 +1021,34 @@ function CommunicationHubContent() {
                         <Mail className="h-3.5 w-3.5 shrink-0" />
                         <span>Resend Email</span>
                       </Button>
+
+                      {selectedMessage.direction === 'INBOUND' && selectedMessage.customerId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const isCurrentlyRead =
+                              selectedMessage.status === 'READ' || associatedCustomer?.isRead;
+                            if (isCurrentlyRead) {
+                              void markCustomerInquiryAsUnread(selectedMessage.customerId!, activeTenant.id);
+                            } else {
+                              void markCustomerInquiryAsRead(selectedMessage.customerId!, activeTenant.id);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer text-slate-700 dark:text-slate-300"
+                        >
+                          {selectedMessage.status === 'READ' || associatedCustomer?.isRead ? (
+                            <>
+                              <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span>Mark Unread</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                              <span>Mark as Read</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
 

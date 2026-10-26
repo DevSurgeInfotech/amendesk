@@ -225,6 +225,8 @@ export interface Customer {
   inquiryType?: string;
   inquirySubject?: string;
   inquiryMessage?: string;
+  isRead?: boolean;
+  readAt?: string;
 }
 
 export interface DealershipVehicle {

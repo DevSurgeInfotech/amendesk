@@ -47,28 +47,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const current = await loadInquiriesFromFile();
+    const existingIndex = body.id ? current.findIndex((c) => c.id === body.id) : -1;
+    const existing = existingIndex >= 0 ? current[existingIndex] : null;
+
     const customerRecord: Customer = {
       id: body.id || `cust-${Date.now()}`,
       fullName: String(body.fullName).trim(),
       phone: String(body.phone).trim(),
-      email: body.email ? String(body.email).trim() : '',
-      ghanaCardNumber: body.ghanaCardNumber || 'WEB_GENERAL_CONTACT',
-      address: body.address || 'Contact Page Web Inbound',
+      email: body.email ? String(body.email).trim() : (existing?.email || ''),
+      ghanaCardNumber: body.ghanaCardNumber || existing?.ghanaCardNumber || 'WEB_GENERAL_CONTACT',
+      address: body.address || existing?.address || 'Contact Page Web Inbound',
       customerType: 'INDIVIDUAL',
       kycVerified: false,
-      leadSource: body.leadSource || 'CONTACT_PAGE',
-      leadStatus: 'NEW',
-      inquiryType: body.inquiryType || 'AUCTION_INQUIRY',
-      inquirySubject: body.inquirySubject || '',
-      inquiryMessage: (body.inquiryMessage || body.message || '').trim(),
+      leadSource: body.leadSource || existing?.leadSource || 'CONTACT_PAGE',
+      leadStatus: body.leadStatus || existing?.leadStatus || 'NEW',
+      inquiryType: body.inquiryType || existing?.inquiryType || 'AUCTION_INQUIRY',
+      inquirySubject: body.inquirySubject || existing?.inquirySubject || '',
+      inquiryMessage: (body.inquiryMessage || body.message || existing?.inquiryMessage || '').trim(),
+      isRead: typeof body.isRead === 'boolean' ? body.isRead : (existing?.isRead || false),
+      readAt: body.readAt || existing?.readAt,
       notes:
         body.notes ||
+        existing?.notes ||
         `Contact Inbound (${body.inquiryType || 'General'}): ${(body.inquiryMessage || body.message || '').trim() || 'General inquiry requested via website.'}`,
-      createdAt: body.createdAt || new Date().toISOString(),
+      createdAt: body.createdAt || existing?.createdAt || new Date().toISOString(),
     };
 
-    const current = await loadInquiriesFromFile();
-    const existingIndex = current.findIndex((c) => c.id === customerRecord.id);
     if (existingIndex >= 0) {
       current[existingIndex] = customerRecord;
     } else {
@@ -81,5 +86,31 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('Error handling inbound inquiry:', err);
     return NextResponse.json({ success: false, error: 'Internal server error.' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    if (!body.id) {
+      return NextResponse.json({ success: false, error: 'Inquiry ID required' }, { status: 400 });
+    }
+
+    const current = await loadInquiriesFromFile();
+    const idx = current.findIndex((c) => c.id === body.id);
+    if (idx >= 0) {
+      current[idx] = {
+        ...current[idx],
+        ...body,
+      };
+      inMemoryInquiries = current;
+      await saveInquiriesToFile(current);
+      return NextResponse.json({ success: true, lead: current[idx] });
+    }
+
+    return NextResponse.json({ success: false, error: 'Inquiry not found' }, { status: 404 });
+  } catch (err) {
+    console.error('Error updating inbound inquiry:', err);
+    return NextResponse.json({ success: false, error: 'Failed to update inquiry' }, { status: 500 });
   }
 }

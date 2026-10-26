@@ -16,6 +16,7 @@ import { QuickActionBar } from '@/components/erp/dashboard/QuickActionBar';
 import { GateScannerModal } from '@/components/erp/GateScannerModal';
 import { VehicleIntakeModal } from '@/components/erp/dashboard/VehicleIntakeModal';
 import { OperationalAlerts } from '@/components/erp/dashboard/OperationalAlerts';
+import { RecentInboundInquiries } from '@/components/erp/dashboard/RecentInboundInquiries';
 import { SettlementWatchlist } from '@/components/erp/dashboard/SettlementWatchlist';
 import {
   CollectionsTrendChart,
@@ -524,6 +525,7 @@ export default function DeskDashboardPage() {
         lots={lots}
         receipts={receipts}
         customers={customers}
+        paymentPlans={paymentPlans}
         onSelectLotForExtension={(lot) => setSelectedLotForExtension(lot)}
         onSelectLotForWaybill={(lot) => setSelectedLotForWaybill(lot)}
       />
@@ -536,6 +538,9 @@ export default function DeskDashboardPage() {
         <ReceivablesAgingChart buckets={agingBuckets} />
         <PortfolioMixChart lines={businessLineValues} />
       </div>
+
+      {/* Recent Inbound Inquiries & Website Leads Hub */}
+      <RecentInboundInquiries customers={customers} />
 
       {/* Pending Hammer Settlements Watchlist */}
       <SettlementWatchlist

@@ -226,6 +226,51 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-26 (Notification Click & Read Auto-Dismissal, Recent Dashboard Inquiries & Overdue Watchlist Remediation)
+- **Goal**: Resolve notification persistence issue where clicked and read inquiries remained in the Topbar alerts bell until manually clicking "Mark all read", and ensure recent website inbound inquiries (sorted newest first) and overdue hammer settlements prominently appear on the main ERP dashboard.
+- **Root Cause Analysis**:
+  1. **Topbar Alert Dismissal**: In `src/components/erp/Topbar.tsx`, clicking an alert link `<Link href={item.href}>` only called `setNotificationsOpen(false)`. It never triggered `handleDismissNotif(item.id)`, leaving the notification active in state and localStorage with its red badge intact.
+  2. **Communications Read Lifecycle**: When navigating to `/desk/communication?leadId=...`, the message was displayed in the detail pane but neither Dexie `communications` nor `customers` updated to `'READ'`, leaving the inquiry marked as an active unread alert across the app.
+  3. **Dashboard Recent Inquiries Invisibility**: In `src/components/erp/dashboard/OperationalAlerts.tsx`, `inboundLeads` was filtered but not sorted by `createdAt`. IndexedDB returned records in primary key insertion order, causing the oldest seed customer (`cust-001` John Maxwell from Oct 25) to occupy `inboundLeads[0]`, entirely masking the latest inbound inquiry (Samuel Menah from Oct 26) from the dashboard card.
+  4. **Overdue Scope**: `OperationalAlerts.tsx` only evaluated auction lots with literal `status === 'OVERDUE'`, missing lots with expired 14-day balance due dates and overdue receivables in payment plans.
+- **Accomplishments**:
+  - **Auto-Dismissal on Click & Centralized Operational Notifications ([`src/lib/notifications/operationalNotifications.ts`](file:///d:/amendesk/src/lib/notifications/operationalNotifications.ts))**:
+    - Created unified notification lifecycle module with `getDismissedNotifIds`, `dismissNotification`, `dismissNotifications`, `undismissNotification`, `markCustomerInquiryAsRead`, and `markCustomerInquiryAsUnread`.
+    - Integrated multi-tab reactive synchronization using `CustomEvent('amendesk:notification_dismissed')` and `BroadcastChannel('amendesk_notifs_sync')`.
+    - Updated `Topbar.tsx` to automatically call `handleDismissNotif(item.id)` on `<Link>` click, instantly clearing the notification and decrementing the topbar bell badge.
+    - Added `isRead?: boolean` and `readAt?: string` to `Customer` interface ([`src/lib/types/index.ts`](file:///d:/amendesk/src/lib/types/index.ts)) and updated Topbar `notifications` computation to exclude read leads (`!c.isRead`).
+  - **Communications Hub Read State & Explicit Controls ([`src/app/(erp)/desk/communication/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/communication/page.tsx))**:
+    - Implemented auto-mark-as-read `useEffect`: Viewing an inbound message in Communications automatically marks it as read in Dexie (`db.customers` and `db.communications`), updates the server API (`/api/communication/messages` and `/api/inquiries`), and dismisses the operational alert.
+    - Added an explicit "Mark as Read" / "Mark Unread" toggle button to the conversation action bar alongside Call, WhatsApp, and Resend Email.
+    - Updated thread list badges and `kpiStats.newUnread` to respect `isRead`.
+  - **Inbound Inquiries API PATCH Support ([`src/app/api/inquiries/route.ts`](file:///d:/amendesk/src/app/api/inquiries/route.ts))**:
+    - Added `PATCH` endpoint and enhanced `POST` to merge read status and prevent overwriting existing inquiry timestamps.
+  - **Dashboard Operational Alerts & Recent Inquiries Remediation ([`src/components/erp/dashboard/OperationalAlerts.tsx`](file:///d:/amendesk/src/components/erp/dashboard/OperationalAlerts.tsx))**:
+    - Sorted `inboundLeads` descending by `createdAt` (`new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()`). The most recent inquiry (e.g. Samuel Menah) now renders as the headline alert with relative timestamp (`formatRelativeTime`), inquiry type label, message excerpt, and direct reply link.
+    - Added indicator for multiple pending inquiries (`+N more`).
+    - Extended overdue calculations to include expired 14-day lots and payment plans (`balanceDueDate` / `currentDueDate` in the past), calculating accurate total overdue balances and lot references.
+  - **Dedicated Dashboard Recent Inbound Inquiries Widget ([`src/components/erp/dashboard/RecentInboundInquiries.tsx`](file:///d:/amendesk/src/components/erp/dashboard/RecentInboundInquiries.tsx))**:
+    - Built comprehensive dashboard hub displaying all recent website inquiries with category filter tabs (`All`, `Unread / New`, `Showroom`, `Auctions`, `Land & Property`).
+    - Provides full client contact information, message blockquotes, direct Phone Call (`tel:`), WhatsApp (`wa.me`) quick dispatch, and one-click "Mark as Read" / "Mark Unread" controls.
+    - Embedded into the main ERP dashboard page ([`src/app/(erp)/desk/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/page.tsx)).
+  - **Enhanced Settlement Watchlist ([`src/components/erp/dashboard/SettlementWatchlist.tsx`](file:///d:/amendesk/src/components/erp/dashboard/SettlementWatchlist.tsx))**:
+    - Pinned all overdue hammer balances to the top with high-visibility rose borders, overdue tags, days overdue, and quick Extend / Pay buttons.
+    - Added filter tabs for `All Settlements`, `Overdue`, and `Within 14-Day Window`.
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict) with 0 compiler errors and 0 warnings.
+- **Changed Files**:
+  - `src/lib/types/index.ts` (Added `isRead` and `readAt` to `Customer`)
+  - `src/lib/utils/date.ts` (Added `formatRelativeTime` helper)
+  - `src/lib/notifications/operationalNotifications.ts` (Centralized notification dismissal and inquiry read synchronization)
+  - `src/lib/crm/leads.ts` (Initialized `isRead: false` on new lead creation)
+  - `src/components/erp/Topbar.tsx` (Auto-dismiss on alert click, reactive event listener, filtered read inquiries)
+  - `src/components/erp/dashboard/OperationalAlerts.tsx` (Sorted newest inquiries first, relative time, robust overdue calculation)
+  - `src/components/erp/dashboard/RecentInboundInquiries.tsx` (New dashboard inquiry hub with category tabs and quick reply/read actions)
+  - `src/components/erp/dashboard/SettlementWatchlist.tsx` (Overdue-first sorting, overdue filter tabs, rose alert styling)
+  - `src/app/(erp)/desk/page.tsx` (Mounted RecentInboundInquiries, passed paymentPlans to OperationalAlerts)
+  - `src/app/(erp)/desk/communication/page.tsx` (Auto-mark read on view, manual toggle button, reactive read state)
+  - `src/app/api/inquiries/route.ts` (Added PATCH handler and preserved read state)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+
 ### Session: 2026-10-26 (Windows Desktop & PC Workstation Inbound Inquiry Notifications & Notable Sound in ERP & Windows)
 - **Goal**: Implement native Windows Desktop / Action Center notifications with a prominent, notable 3-tone corporate audio chime sounding in both the AmenDesk ERP workspace and Windows Action Center for inbound inquiries arriving from the showroom, auctions, land/property desks, and Amen AI Assistant.
 - **Accomplishments**:

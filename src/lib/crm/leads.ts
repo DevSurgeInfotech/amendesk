@@ -214,6 +214,7 @@ export async function recordInboundLead(data: InboundLeadInput): Promise<Custome
     kycVerified: false,
     leadSource,
     leadStatus: 'NEW',
+    isRead: false,
     inquiryType,
     inquirySubject: data.inquirySubject || '',
     inquiryMessage: cleanMessage,

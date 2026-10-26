@@ -8,6 +8,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { formatGHS } from '@/lib/utils/currency';
 import { isCustomerInboundLead, getLeadSourceLabel, extractInquiryDetails } from '@/lib/crm/leads';
+import {
+  getDismissedNotifIds,
+  dismissNotification,
+  dismissNotifications,
+  NOTIF_DISMISSED_EVENT,
+  NOTIF_CHANNEL_NAME,
+} from '@/lib/notifications/operationalNotifications';
 import { useTerminal, ROLE_STAFF_NAMES, type UserRole } from '@/context/TerminalContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useSidebar } from '@/context/SidebarContext';
@@ -203,42 +210,45 @@ export function Topbar() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [dismissedNotifIds, setDismissedNotifIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = localStorage.getItem(`amendesk_dismissed_notifs_${activeTenant.id}`);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
+    return getDismissedNotifIds(activeTenant.id);
   });
   const [staffMenuOpen, setStaffMenuOpen] = useState(false);
 
+  // Sync dismissed notifications across tabs & components in real time
+  useEffect(() => {
+    const handleSync = () => {
+      setDismissedNotifIds(getDismissedNotifIds(activeTenant.id));
+    };
+
+    window.addEventListener(NOTIF_DISMISSED_EVENT, handleSync);
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel(NOTIF_CHANNEL_NAME);
+        bc.onmessage = handleSync;
+      } catch {
+        // Non-blocking
+      }
+    }
+
+    return () => {
+      window.removeEventListener(NOTIF_DISMISSED_EVENT, handleSync);
+      bc?.close();
+    };
+  }, [activeTenant.id]);
+
   const handleDismissNotif = useCallback(
     (id: string) => {
-      setDismissedNotifIds((prev) => {
-        const next = Array.from(new Set([...prev, id]));
-        try {
-          localStorage.setItem(`amendesk_dismissed_notifs_${activeTenant.id}`, JSON.stringify(next));
-        } catch (err) {
-          console.error('Failed to save dismissed notification:', err);
-        }
-        return next;
-      });
+      dismissNotification(activeTenant.id, id);
+      setDismissedNotifIds((prev) => Array.from(new Set([...prev, id])));
     },
     [activeTenant.id]
   );
 
   const handleDismissAll = useCallback(
     (ids: string[]) => {
-      setDismissedNotifIds((prev) => {
-        const next = Array.from(new Set([...prev, ...ids]));
-        try {
-          localStorage.setItem(`amendesk_dismissed_notifs_${activeTenant.id}`, JSON.stringify(next));
-        } catch (err) {
-          console.error('Failed to save dismissed notifications:', err);
-        }
-        return next;
-      });
+      dismissNotifications(activeTenant.id, ids);
+      setDismissedNotifIds((prev) => Array.from(new Set([...prev, ...ids])));
     },
     [activeTenant.id]
   );
@@ -487,7 +497,7 @@ export function Topbar() {
 
     // 1. Inbound Website Inquiries & Contact Requests (New & Awaiting Contact)
     const inboundLeads = safeCustomers
-      .filter((c) => isCustomerInboundLead(c) && (c.leadStatus === 'NEW' || !c.leadStatus))
+      .filter((c) => isCustomerInboundLead(c) && !c.isRead && (c.leadStatus === 'NEW' || !c.leadStatus))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     for (const lead of inboundLeads.slice(0, 4)) {
@@ -574,7 +584,7 @@ export function Topbar() {
   }, [lots, receipts, customers, pendingSyncCount, dismissedNotifIds]);
 
   const pendingInboundCount = useMemo(() => {
-    return (customers ?? []).filter((c) => isCustomerInboundLead(c) && (c.leadStatus === 'NEW' || !c.leadStatus)).length;
+    return (customers ?? []).filter((c) => isCustomerInboundLead(c) && !c.isRead && (c.leadStatus === 'NEW' || !c.leadStatus)).length;
   }, [customers]);
 
   // Parse Staff Identity for Avatar & Dropdown
@@ -930,7 +940,10 @@ export function Topbar() {
                           </div>
                           <Link
                             href={item.href}
-                            onClick={() => setNotificationsOpen(false)}
+                            onClick={() => {
+                              handleDismissNotif(item.id);
+                              setNotificationsOpen(false);
+                            }}
                             className="block mt-0.5 group"
                           >
                             <p className="text-xs font-extrabold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
