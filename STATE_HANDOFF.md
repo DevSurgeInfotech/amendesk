@@ -226,6 +226,34 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-26 (Enterprise Terminal Idle Lock Redesign: Conciseness, Zero-Scroll Viewport Lock & Luxury Styling)
+- **Goal**: Remediate the enterprise terminal idle lock screen (`IdleLockScreen.tsx`) to remove excessive verbosity, eliminate all viewport scrolling, and provide an ultra-refined, professional executive aesthetic.
+- **Root Cause & Audit Findings**:
+  - **Verbosity & Clutter**: The previous lock screen contained over 160 words of repetitive legal citations ("Ministry of the Interior • ARB Registered Auctioneer PNDCL 230"), redundant facility addresses ("Amen Mart Head Office Yard • Gbawe Cash Office"), flag badges, long disclaimers ("Active terminal state, draft receipts & offline ledger records remain safely preserved"), and wordy button labels ("Resume AmenDesk Workspace").
+  - **Viewport Overflow & Scrolling**: The modal container used `overflow-y-auto` paired with bulky double-bezel paddings (`p-7 sm:p-8`), tall header elements, multi-line chronometers, and stacked footnotes totaling >850px in height. On standard laptop and landscape displays (768px, 800px, 900px), it triggered an unprofessional vertical scrollbar.
+  - **Dark Mode Disconnect**: Background and text colors were hardcoded to light values (`bg-[#eef2f6]/95 text-slate-900`), ignoring terminal dark theme preferences.
+- **Accomplishments**:
+  - **Word Count Reduction (~85% Reduction)**:
+    - Reduced text footprint from ~160 words down to ~25 essential words.
+    - Simplified header to crisp Amen Mart brand mark + "AmenDesk", with minimal status pills: "Live" / "Sandbox" and "Online" / "Offline".
+    - Replaced multi-line chronometer disclaimers with an Apple-style digital clock (Accra time) with clean tabular numbers and compact date.
+    - Trimmed button and prompt labels to direct, executive actions: "Enter password", "Unlock", and "Switch Account".
+  - **Non-Scrollable Viewport Lock (`h-screen h-[100dvh] overflow-hidden`)**:
+    - Re-architected container geometry to `fixed inset-0 z-[9999] h-screen h-[100dvh] max-h-screen overflow-hidden flex flex-col justify-between`.
+    - Applied `shrink-0` to header and footer with `flex-1 min-h-0 items-center justify-center` in the center stage.
+    - Reduced card padding and elements to fit within ~420px height, guaranteeing zero scrollbars and zero vertical drift across all screen sizes.
+  - **Luxury Professional Aesthetic & Dark Mode Support**:
+    - Frosted glass elevation (`backdrop-blur-xl bg-white/85 dark:bg-slate-900/85`) with subtle gold hairline accent (`#D5AA40`).
+    - Staff avatar with subtle gold/navy ring and discrete lock badge.
+    - Caps Lock warning indicator that appears only when active.
+    - Keyboard ergonomics: Enter submits, Escape clears password input, and autofocus is applied on lock.
+    - Retained tactile shake animation (`animate-lock-shake`) with automatic password text selection upon failed verification.
+  - **Mandatory Quality Gates Passed**:
+    - Verified via `npm run check` (TypeScript typecheck + strict ESLint): 0 errors, 0 warnings.
+- **Changed Files**:
+  - `src/components/erp/IdleLockScreen.tsx` (Complete redesign for conciseness, non-scrollable viewport containment, and premium aesthetics)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+
 ### Session: 2026-10-26 (Showroom Catalog Asset Edit & Management Remediation Across All ERP Modules)
 - **Goal**: Audit and remediate the issue where all showroom items accessible within the ERP (`/desk/dealership`, `/desk/auctions`, `/desk/land`, `/desk/property`, and `/desk/inventory`) could not be edited once created.
 - **Root Cause Identified**:
