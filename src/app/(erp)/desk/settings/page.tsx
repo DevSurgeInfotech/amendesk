@@ -48,6 +48,10 @@ import {
   Lock,
   ShieldCheck,
   Briefcase,
+  Bell,
+  Volume2,
+  VolumeX,
+  Monitor,
 } from 'lucide-react';
 
 function resolveSettingsTab(
@@ -147,7 +151,20 @@ function WorkspaceSettingsContent() {
   const mounted = useIsMounted();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { activeTenant, currentUser, role, setRole, cleanSlateDatabase } = useTerminal();
+  const {
+    activeTenant,
+    currentUser,
+    role,
+    setRole,
+    cleanSlateDatabase,
+    desktopNotifsAllowed,
+    desktopNotifsEnabled,
+    desktopNotifsSound,
+    requestDesktopNotifPermission,
+    toggleDesktopNotifs,
+    toggleDesktopNotifSound,
+    testDesktopNotification,
+  } = useTerminal();
   const {
     timeoutMinutes,
     setTimeoutMinutes,
@@ -1488,6 +1505,121 @@ function WorkspaceSettingsContent() {
               <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="leading-relaxed">
                 <strong>Statutory Compliance &amp; Yard Security:</strong> In physical auction yards and front-desk cash offices, staff frequently step away to inspect vehicle lots or oversee bidder documentation. The 15-minute default lock ensures Ghana Card KYC numbers, sealed auction bids, and till collections are protected without terminating ongoing shifts or losing offline draft receipts.
+              </div>
+            </div>
+          </div>
+
+          {/* TAB 4 SECTION 3: WINDOWS DESKTOP & WORKSTATION NOTIFICATIONS */}
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <Monitor className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Windows Desktop &amp; PC Workstation Alerts</span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        desktopNotifsAllowed && desktopNotifsEnabled
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                      }`}
+                    >
+                      {desktopNotifsAllowed && desktopNotifsEnabled ? 'Windows Action Center Active' : 'Off / Disabled'}
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Dispatches native Windows toast notifications and audio chimes for inbound inquiries from the showroom, auctions, and land desk.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {desktopNotifsAllowed ? (
+                  <button
+                    type="button"
+                    onClick={testDesktopNotification}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+                  >
+                    <Bell className="h-3.5 w-3.5" />
+                    <span>Send Test Toast</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const granted = await requestDesktopNotifPermission();
+                      if (granted) testDesktopNotification();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+                  >
+                    <Bell className="h-3.5 w-3.5" />
+                    <span>Request Windows Permission</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-white">
+                    Desktop Toast Notifications
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Show Windows Action Center toast when minimized or backgrounded
+                  </div>
+                </div>
+                {desktopNotifsAllowed ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleDesktopNotifs(!desktopNotifsEnabled)}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer ${
+                      desktopNotifsEnabled
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {desktopNotifsEnabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                ) : (
+                  <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                    Permission Needed
+                  </span>
+                )}
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-white">
+                    Executive Two-Tone Audio Chime
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Play offline Web Audio chime on incoming website leads
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleDesktopNotifSound(!desktopNotifsSound)}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    desktopNotifsSound
+                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {desktopNotifsSound ? (
+                    <>
+                      <Volume2 className="h-3.5 w-3.5" />
+                      <span>Chime Active</span>
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="h-3.5 w-3.5" />
+                      <span>Muted</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

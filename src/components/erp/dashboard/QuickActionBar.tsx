@@ -8,6 +8,7 @@ import {
   Truck,
   Receipt,
   Building,
+  ScanLine,
 } from 'lucide-react';
 
 interface QuickActionBarProps {
@@ -16,6 +17,7 @@ interface QuickActionBarProps {
   onOpenWaybillModal: () => void;
   onOpenExpenseModal: () => void;
   onOpenBankDepositModal: () => void;
+  onOpenGateScanner?: () => void;
 }
 
 interface QuickActionConfig {
@@ -42,6 +44,7 @@ export function QuickActionBar({
   onOpenWaybillModal,
   onOpenExpenseModal,
   onOpenBankDepositModal,
+  onOpenGateScanner,
 }: QuickActionBarProps) {
   const actions: QuickActionConfig[] = [
     {
@@ -140,10 +143,31 @@ export function QuickActionBar({
       arrowPos: 'right-6',
       onClick: onOpenBankDepositModal,
     },
+    ...(onOpenGateScanner
+      ? [
+          {
+            id: 'gate-scanner',
+            title: 'Gate Scanner',
+            subtitle: 'Scan Waybill QR',
+            ariaLabel: 'Gate Scanner: Verify Waybill and gate release pass',
+            icon: ScanLine,
+            iconBgClass: 'bg-teal-600 text-white group-hover:bg-white group-hover:text-indigo-600',
+            borderClass: 'border-teal-200 dark:border-teal-900/60',
+            bgClass: 'bg-white dark:bg-slate-900',
+            hoverClass:
+              'hover:bg-indigo-600 hover:border-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:border-indigo-600',
+            titleColorClass: 'text-slate-900 dark:text-slate-100 group-hover:text-white',
+            subtitleColorClass: 'text-slate-500 group-hover:text-indigo-100',
+            tooltipPos: 'right-0 sm:right-0 lg:right-0',
+            arrowPos: 'right-6',
+            onClick: onOpenGateScanner,
+          },
+        ]
+      : []),
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+    <div className={`grid grid-cols-2 sm:grid-cols-3 ${onOpenGateScanner ? 'lg:grid-cols-7' : 'lg:grid-cols-6'} gap-2.5`}>
       {actions.map((action) => {
         const Icon = action.icon;
         const sharedClasses = `surface-card group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl border shadow-2xs ${action.borderClass} ${action.bgClass} ${action.hoverClass} transition-all text-left cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500`;

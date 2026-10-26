@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
@@ -21,12 +22,22 @@ import {
   CheckCircle2,
   Lock,
   Images,
+  QrCode,
 } from 'lucide-react';
 
-export default function ShowroomPage() {
+function ShowroomContent() {
+  const searchParams = useSearchParams();
+  const initialStock = searchParams.get('stock') || searchParams.get('vin') || searchParams.get('q') || '';
+
   const vehicles = useLiveQuery(() => db.dealershipVehicles.toArray(), []) || [];
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialStock);
+  const [prevStock, setPrevStock] = useState(initialStock);
+  if (initialStock !== prevStock) {
+    setPrevStock(initialStock);
+    setSearchQuery(initialStock);
+  }
+
   const [fuelFilter, setFuelFilter] = useState<string>('ALL');
   const [selectedVehicleForDeposit, setSelectedVehicleForDeposit] = useState<DealershipVehicle | null>(null);
   const [galleryVehicle, setGalleryVehicle] = useState<DealershipVehicle | null>(null);
@@ -245,6 +256,28 @@ export default function ShowroomPage() {
           </div>
         </div>
       </div>
+
+      {/* Scanned QR Filter Banner */}
+      {initialStock && (
+        <div className="flex items-center justify-between p-3.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs text-indigo-950 dark:text-indigo-200 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-indigo-600 text-white">
+              <QrCode className="h-4 w-4" />
+            </div>
+            <span>
+              Scanned Vehicle Sticker: <strong className="font-mono text-indigo-700 dark:text-indigo-300">{initialStock}</strong>
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs"
+            onClick={() => setSearchQuery('')}
+          >
+            Show All Showroom Cars
+          </Button>
+        </div>
+      )}
 
       {/* Vehicles Grid */}
       {filteredVehicles.length === 0 ? (
@@ -475,5 +508,19 @@ export default function ShowroomPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function ShowroomPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-500 font-semibold text-sm">
+          Loading Showroom Vehicles...
+        </div>
+      }
+    >
+      <ShowroomContent />
+    </Suspense>
   );
 }

@@ -13,6 +13,7 @@ import { WaybillModal } from '@/components/erp/WaybillModal';
 import { RecordExpenseModal } from '@/components/erp/accounting/RecordExpenseModal';
 import { BankDepositModal } from '@/components/erp/accounting/BankDepositModal';
 import { QuickActionBar } from '@/components/erp/dashboard/QuickActionBar';
+import { GateScannerModal } from '@/components/erp/GateScannerModal';
 import { VehicleIntakeModal } from '@/components/erp/dashboard/VehicleIntakeModal';
 import { OperationalAlerts } from '@/components/erp/dashboard/OperationalAlerts';
 import { SettlementWatchlist } from '@/components/erp/dashboard/SettlementWatchlist';
@@ -103,6 +104,7 @@ export default function DeskDashboardPage() {
   const [isVehicleIntakeOpen, setIsVehicleIntakeOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [isBankDepositOpen, setIsBankDepositOpen] = useState(false);
+  const [isGateScannerOpen, setIsGateScannerOpen] = useState(false);
   const [syncToast, setSyncToast] = useState<{
     show: boolean;
     message: string;
@@ -479,6 +481,7 @@ export default function DeskDashboardPage() {
         onOpenWaybillModal={() => setIsGeneralWaybillOpen(true)}
         onOpenExpenseModal={() => setIsExpenseOpen(true)}
         onOpenBankDepositModal={() => setIsBankDepositOpen(true)}
+        onOpenGateScanner={() => setIsGateScannerOpen(true)}
       />
 
       {/* Executive KPI Cards */}
@@ -607,6 +610,12 @@ export default function DeskDashboardPage() {
         isOpen={isBankDepositOpen}
         onClose={() => setIsBankDepositOpen(false)}
         onSuccess={() => setIsBankDepositOpen(false)}
+      />
+
+      {/* 8. Security Gate Pass & Waybill QR Scanner Modal */}
+      <GateScannerModal
+        isOpen={isGateScannerOpen}
+        onClose={() => setIsGateScannerOpen(false)}
       />
 
       {/* Floating Toast Notification for Cloud Sync Telemetry */}

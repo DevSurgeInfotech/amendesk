@@ -22,6 +22,16 @@ import { syncEngine, type SyncResult } from '@/lib/sync/syncEngine';
 import type { AppRole, AuthSession, TenantRecord } from '@/lib/types/auth';
 import { ROLE_LABELS } from '@/lib/types/auth';
 import { authService, SESSION_STORAGE_KEY } from '@/lib/auth/authService';
+import {
+  getNotificationPermission,
+  isDesktopNotificationEnabled,
+  setDesktopNotificationEnabled,
+  isDesktopNotificationSoundEnabled,
+  setDesktopNotificationSoundEnabled,
+  requestDesktopNotificationPermission,
+  sendDesktopNotification,
+  notifyInboundInquiry,
+} from '@/lib/notifications/desktopNotification';
 
 export type UserRole =
   | AppRole
@@ -70,6 +80,15 @@ interface TerminalContextType {
   activeTenant: Tenant;
   switchTenant: (id: TenantId) => void;
   isProduction: boolean;
+
+  // Windows & Desktop Notifications
+  desktopNotifsAllowed: boolean;
+  desktopNotifsEnabled: boolean;
+  desktopNotifsSound: boolean;
+  requestDesktopNotifPermission: () => Promise<boolean>;
+  toggleDesktopNotifs: (enabled: boolean) => void;
+  toggleDesktopNotifSound: (enabled: boolean) => void;
+  testDesktopNotification: () => void;
 }
 
 const AVATAR_STORAGE_KEY = 'amendesk_staff_avatar';
@@ -178,6 +197,56 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [desktopNotifsAllowed, setDesktopNotifsAllowed] = useState(false);
+  const [desktopNotifsEnabled, setDesktopNotifsEnabled] = useState(false);
+  const [desktopNotifsSound, setDesktopNotifsSound] = useState(true);
+
+  // Sync initial notification permissions and preferences
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateNotifState = () => {
+      setDesktopNotifsAllowed(getNotificationPermission() === 'granted');
+      setDesktopNotifsEnabled(isDesktopNotificationEnabled());
+      setDesktopNotifsSound(isDesktopNotificationSoundEnabled());
+    };
+
+    updateNotifState();
+
+    window.addEventListener('amendesk-notification-pref-change', updateNotifState);
+    window.addEventListener('storage', updateNotifState);
+
+    return () => {
+      window.removeEventListener('amendesk-notification-pref-change', updateNotifState);
+      window.removeEventListener('storage', updateNotifState);
+    };
+  }, []);
+
+  const requestDesktopNotifPermission = async (): Promise<boolean> => {
+    const granted = await requestDesktopNotificationPermission();
+    setDesktopNotifsAllowed(granted);
+    setDesktopNotifsEnabled(isDesktopNotificationEnabled());
+    return granted;
+  };
+
+  const toggleDesktopNotifs = (enabled: boolean) => {
+    setDesktopNotificationEnabled(enabled);
+    setDesktopNotifsEnabled(enabled);
+  };
+
+  const toggleDesktopNotifSound = (enabled: boolean) => {
+    setDesktopNotificationSoundEnabled(enabled);
+    setDesktopNotifsSound(enabled);
+  };
+
+  const testDesktopNotification = () => {
+    sendDesktopNotification({
+      title: '🔔 AmenDesk Windows Alert Test',
+      body: 'Desktop notifications are active. Inbound inquiries will alert here on Windows in real time.',
+      url: '/desk/communication',
+      playChime: true,
+    });
+  };
 
   const session = useSyncExternalStore(
     subscribeAuthSession,
@@ -285,6 +354,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
           if (event.data?.type === 'NEW_LEAD' && event.data?.customer) {
             try {
               await db.customers.put(event.data.customer);
+              notifyInboundInquiry(event.data.customer);
             } catch (err) {
               console.error('Failed to put broadcasted lead into db:', err);
             }
@@ -306,6 +376,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
               const existing = await db.customers.get(inq.id);
               if (!existing) {
                 await db.customers.put(inq);
+                notifyInboundInquiry(inq);
               }
             }
           }
@@ -369,6 +440,13 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
         activeTenant,
         switchTenant,
         isProduction,
+        desktopNotifsAllowed,
+        desktopNotifsEnabled,
+        desktopNotifsSound,
+        requestDesktopNotifPermission,
+        toggleDesktopNotifs,
+        toggleDesktopNotifSound,
+        testDesktopNotification,
       }}
     >
       {children}

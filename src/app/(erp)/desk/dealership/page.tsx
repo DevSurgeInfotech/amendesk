@@ -15,7 +15,8 @@ import Link from 'next/link';
 import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { EditVehicleModal } from '@/components/erp/EditVehicleModal';
-import { PlusCircle, Fuel, Gauge, CreditCard, Search, ArrowRight, Images, Pencil } from 'lucide-react';
+import { VehicleStickerModal } from '@/components/erp/VehicleStickerModal';
+import { PlusCircle, Fuel, Gauge, CreditCard, Search, ArrowRight, Images, Pencil, QrCode } from 'lucide-react';
 
 function generateVehicleId(): string {
   return `car-${Date.now()}`;
@@ -38,6 +39,7 @@ function DealershipContent() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingCar, setEditingCar] = useState<DealershipVehicle | null>(null);
   const [galleryCar, setGalleryCar] = useState<DealershipVehicle | null>(null);
+  const [stickerCar, setStickerCar] = useState<DealershipVehicle | null>(null);
 
   // Filters
   const resolvedStatus =
@@ -381,6 +383,18 @@ function DealershipContent() {
                       Edit Vehicle
                     </Button>
 
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                      onClick={() => setStickerCar(car)}
+                      icon={<QrCode className="h-3.5 w-3.5 text-indigo-600" />}
+                    >
+                      QR Sticker
+                    </Button>
+                  </div>
+
+                  <div className="mt-2">
                     {car.status !== 'SOLD' ? (
                       <Link href={`/desk/payments?category=DEALERSHIP&id=${car.id}`} className="block w-full">
                         <Button
@@ -581,6 +595,15 @@ function DealershipContent() {
           title={`${galleryCar.year} ${galleryCar.make} ${galleryCar.model}`}
           subtitle={`Stock #${galleryCar.stockNumber} • VIN: ${galleryCar.vin}`}
           photos={galleryCar.photos}
+        />
+      )}
+
+      {/* Vehicle QR Window Sticker Modal */}
+      {stickerCar && (
+        <VehicleStickerModal
+          isOpen={Boolean(stickerCar)}
+          onClose={() => setStickerCar(null)}
+          vehicle={stickerCar}
         />
       )}
     </div>

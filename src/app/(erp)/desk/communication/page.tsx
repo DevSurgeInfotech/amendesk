@@ -34,6 +34,11 @@ import {
   AlertCircle,
   X,
   Copy,
+  Bell,
+  BellRing,
+  Volume2,
+  VolumeX,
+  Monitor,
 } from 'lucide-react';
 
 type TabView = 'INBOX' | 'COMPOSE' | 'TEMPLATES' | 'LOGS';
@@ -44,7 +49,16 @@ type FilterBusinessLine = 'ALL' | CommunicationBusinessLine;
 function CommunicationHubContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { currentStaffName } = useTerminal();
+  const {
+    currentStaffName,
+    desktopNotifsAllowed,
+    desktopNotifsEnabled,
+    desktopNotifsSound,
+    requestDesktopNotifPermission,
+    toggleDesktopNotifs,
+    toggleDesktopNotifSound,
+    testDesktopNotification,
+  } = useTerminal();
 
   // Active Tab from URL query parameter
   const tabParam = searchParams.get('tab')?.toUpperCase() as TabView | undefined;
@@ -523,6 +537,118 @@ function CommunicationHubContent() {
             <span>New Dispatch</span>
           </Button>
         </div>
+      </div>
+
+      {/* Windows & Desktop Notifications Control Strip */}
+      <div className="surface-card rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+        {!desktopNotifsAllowed ? (
+          <div className="p-4 bg-gradient-to-r from-indigo-50/90 via-sky-50/40 to-white dark:from-indigo-950/40 dark:via-slate-900 dark:to-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <BellRing className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                    Windows Desktop Inbound Alerts
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
+                    Recommended for Desk
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                  Receive instant Windows Action Center popups with chime when clients inquire from the showroom, land desk, or website.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={async () => {
+                  const granted = await requestDesktopNotifPermission();
+                  if (granted) {
+                    testDesktopNotification();
+                  }
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Bell className="h-3.5 w-3.5" />
+                <span>Enable Windows Alerts</span>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 py-3 bg-emerald-50/50 dark:bg-emerald-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-emerald-500">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                {desktopNotifsEnabled && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span
+                  className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                    desktopNotifsEnabled ? 'bg-emerald-500' : 'bg-slate-400'
+                  }`}
+                />
+              </span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Monitor className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Windows Desktop Notifications {desktopNotifsEnabled ? 'Active' : 'Paused'}</span>
+                  </span>
+                  <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                    Windows Action Center Ready
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  New inquiries toast on your PC taskbar even if AmenDesk is minimized or working in another window.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => toggleDesktopNotifSound(!desktopNotifsSound)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  desktopNotifsSound
+                    ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                    : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'
+                }`}
+                title={desktopNotifsSound ? 'Mute Chime Sound' : 'Enable Chime Sound'}
+              >
+                {desktopNotifsSound ? (
+                  <Volume2 className="h-3.5 w-3.5 text-indigo-600" />
+                ) : (
+                  <VolumeX className="h-3.5 w-3.5 text-slate-400" />
+                )}
+                <span>{desktopNotifsSound ? 'Chime ON' : 'Chime Muted'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={testDesktopNotification}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Bell className="h-3.5 w-3.5" />
+                <span>Test Alert</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleDesktopNotifs(!desktopNotifsEnabled)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                  desktopNotifsEnabled
+                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    : 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700'
+                }`}
+              >
+                {desktopNotifsEnabled ? 'Pause Alerts' : 'Resume Alerts'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* KPI 5-Card Metric Overview */}

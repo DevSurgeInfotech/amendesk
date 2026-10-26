@@ -226,6 +226,37 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-26 (Windows Desktop & PC Workstation Inbound Inquiry Notifications)
+- **Goal**: Implement native Windows Desktop / Action Center notifications with executive offline two-tone audio chime for inbound inquiries arriving in AmenDesk Communication Hub and CRM from the public showroom, auctions, land/property desks, and Amen AI Assistant.
+- **Accomplishments**:
+  - **Dedicated Client Notification Engine ([`src/lib/notifications/desktopNotification.ts`](file:///d:/amendesk/src/lib/notifications/desktopNotification.ts))**:
+    - HTML5 Web Notification API integration feeding directly into Windows Action Center toasts.
+    - Offline two-tone synthesized audio chime using Web Audio API (`AudioContext`, 587Hz -> 880Hz -> 1174Hz bell harmonic) requiring zero external audio file downloads and working 100% offline.
+    - Session-based inquiry deduplication (`Set<string>` + `sessionStorage`) with a 15-minute creation threshold to prevent duplicate alerts or historical inquiry flooding on initial app boot.
+    - Direct notification click handling: focuses the AmenDesk window (`window.focus()`) and deep-routes immediately to `/desk/communication?leadId=...` with pre-filled WhatsApp (`wa.me`) and phone actions ready for instant conversion.
+  - **Terminal Context Real-Time Synchronization ([`src/context/TerminalContext.tsx`](file:///d:/amendesk/src/context/TerminalContext.tsx))**:
+    - Wired `notifyInboundInquiry()` into `BroadcastChannel('amendesk_leads_sync')` for instant zero-latency multi-tab lead detection.
+    - Integrated with the 4-second background poller syncing from `/api/inquiries`, triggering Windows toasts when new inquiries arrive from mobile or remote showroom visitors.
+    - Exposed workstation preferences: `desktopNotifsAllowed`, `desktopNotifsEnabled`, `desktopNotifsSound`, `requestDesktopNotifPermission`, `toggleDesktopNotifs`, `toggleDesktopNotifSound`, and `testDesktopNotification`.
+  - **Communication Hub Control Strip ([`src/app/(erp)/desk/communication/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/communication/page.tsx))**:
+    - Embedded an executive Windows Desktop Notifications status and action bar:
+      - Ungranted permission: High-visibility "Enable Windows Alerts" banner highlighting taskbar popups.
+      - Active permission: Emerald live status pill ("Windows Action Center Ready"), Chime Mute/Unmute toggle, Pause/Resume toggle, and one-click "Test Alert" button.
+  - **Topbar Operational Alerts Popover ([`src/components/erp/Topbar.tsx`](file:///d:/amendesk/src/components/erp/Topbar.tsx))**:
+    - Embedded quick-status strip inside the operational alerts popover showing real-time Windows toast readiness and one-click test/enable trigger.
+  - **Workspace Settings Integration ([`src/app/(erp)/desk/settings/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/settings/page.tsx))**:
+    - Added Section 3 under RBAC & Security settings: "Windows Desktop & PC Workstation Alerts" with workstation toggles for desktop toast notifications and audio chimes.
+  - **Quality Gates Passed**: Ran mandatory `npm run check` (`tsc --noEmit` + strict ESLint `--max-warnings 0`) with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/lib/notifications/desktopNotification.ts` (New Windows notification & Web Audio chime service)
+  - `src/context/TerminalContext.tsx` (Notification preferences & real-time poller/broadcast triggers)
+  - `src/app/(erp)/desk/communication/page.tsx` (Windows Desktop Notifications control banner)
+  - `src/components/erp/Topbar.tsx` (Windows notification quick-status inside alerts popover)
+  - `src/app/(erp)/desk/settings/page.tsx` (Workstation desktop notification settings card)
+  - `src/components/ui/Modal.tsx` (Added `maxWidth="3xl"` support)
+  - `src/components/erp/GateScannerModal.tsx` (ESLint and React 19 compiler cleanups)
+  - `STATE_HANDOFF.md` (Updated session changelog and continuity ledger)
+
 ### Session: 2026-10-26 (Enterprise Terminal Idle Lock Redesign: Conciseness, Zero-Scroll Viewport Lock & Luxury Styling)
 - **Goal**: Remediate the enterprise terminal idle lock screen (`IdleLockScreen.tsx`) to remove excessive verbosity, eliminate all viewport scrolling, and provide an ultra-refined, professional executive aesthetic.
 - **Root Cause & Audit Findings**:
@@ -1220,6 +1251,45 @@ flowchart TD
   - `src/components/erp/Sidebar.tsx` (Premium SVG icon collapsed rendering, viewport-locked middle expand button, removed submodules in collapsed view)
   - `src/app/(erp)/desk/layout.tsx` (Viewport-constrained `h-screen h-[100dvh] overflow-hidden` layout preventing vertical drift)
   - `src/context/SidebarContext.tsx` (Added `Ctrl+B` / `Cmd+B` keyboard listener for sidebar toggle)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+
+### Session: 2026-10-26 (Dealership QR Window Stickers, Waybill Gate Scanner & IoT Architecture)
+- **Goal**: Implement high-impact QR code infrastructure for the Amen Mart car dealership and auction yard, embed scannable gate clearance on waybills, build an offline gate pass scanner, and architect an industrial IoT deployment roadmap.
+- **Accomplishments**:
+  - **Zero-Dependency Offline QR Engine ([`src/lib/utils/qr.ts`](file:///d:/amendesk/src/lib/utils/qr.ts))**:
+    - Developed an ISO/IEC 18004 compliant QR generator in pure TypeScript with zero external dependencies.
+    - Implemented GF(256) Galois Field tables with primitive polynomial `0x11D`, Reed-Solomon generator polynomials for Error Correction Level M (15% damage tolerance), data codeword interleaving, function patterns, timing tracks, and SVG vector path computation.
+    - Built [`src/components/ui/QRCodeView.tsx`](file:///d:/amendesk/src/components/ui/QRCodeView.tsx) for crisp, responsive client-side and printable SVG rendering.
+  - **Printable QR Window Stickers & Yard Monroney Labels ([`src/components/erp/VehicleStickerModal.tsx`](file:///d:/amendesk/src/components/erp/VehicleStickerModal.tsx))**:
+    - Built interactive modal supporting both Dealership vehicles and Auction vehicle lots.
+    - Dual printable layouts: Full A4 Windshield Monroney Spec Sheet and Compact Rear-View Mirror Hanging Tag.
+    - Dynamic QR Destination Switcher: Public Showroom Page (`/showroom?stock=...`), Direct WhatsApp Sales Chat with pre-filled vehicle details (`wa.me/233548517277`), or Internal Staff ERP fast-log.
+    - Added "QR Sticker" quick actions to Dealership vehicle cards ([`src/app/(erp)/desk/dealership/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/dealership/page.tsx)) and "QR Tag" to Auction lots ([`src/app/(erp)/desk/auctions/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/auctions/page.tsx)).
+  - **Scannable A5 Gate Release Waybill ([`src/components/erp/WaybillModal.tsx`](file:///d:/amendesk/src/components/erp/WaybillModal.tsx))**:
+    - Embedded high-contrast, cryptographically formatted Gate Clearance QR codes (`AM-WB:...`) directly into the header of printable A5 Waybills for instant gate officer verification.
+  - **Security Gate Pass & Waybill QR Scanner ([`src/components/erp/GateScannerModal.tsx`](file:///d:/amendesk/src/components/erp/GateScannerModal.tsx))**:
+    - Built dedicated gate security terminal supporting camera viewfinder (Web `BarcodeDetector` API) and handheld 2D USB/Bluetooth barcode guns.
+    - Instant local Dexie IndexedDB lookup cross-referencing Waybills, Auction Lots, Dealership Vehicles, and Payment Plans.
+    - Visual verification badges: Authorized Gate Release vs Security Hold (Unpaid balance / unrecognized counterfeit docket).
+    - One-tap "Release Vehicle (Open Gate)" button updating gate officer timestamp and recording an auditable security log in `db.stockMovements`.
+    - Integrated directly into the main ERP Quick Action Command Hub ([`src/components/erp/dashboard/QuickActionBar.tsx`](file:///d:/amendesk/src/components/erp/dashboard/QuickActionBar.tsx), [`src/app/(erp)/desk/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/page.tsx)).
+  - **Public Showroom QR Deep-Linking ([`src/app/(site)/showroom/page.tsx`](file:///d:/amendesk/src/app/(site)/showroom/page.tsx))**:
+    - Configured Showroom page with `<Suspense>` to read `stock` and `vin` URL search parameters when scanned by walk-in buyers.
+    - Displays an active "Scanned Vehicle Sticker" banner with one-click clear button.
+  - **Comprehensive Industrial IoT Architecture**:
+    - Formulated 5-system enterprise IoT strategy for Amen Mart: OBD-II battery & odometer telematics, BLE/LoRaWAN yard geofencing, RFID smart key cabinets, Edge ANPR automated gate barriers, and generator fuel telematics.
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict) passing with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/lib/utils/qr.ts` (Pure TypeScript ISO/IEC 18004 QR code matrix & SVG generator)
+  - `src/components/ui/QRCodeView.tsx` (Reusable vector QR code component)
+  - `src/components/erp/VehicleStickerModal.tsx` (Printable A4 & hang tag Monroney window sticker generator)
+  - `src/components/erp/GateScannerModal.tsx` (Offline gate clearance & waybill scanner terminal)
+  - `src/components/erp/WaybillModal.tsx` (Embedded QR code on printable A5 Waybill)
+  - `src/components/erp/dashboard/QuickActionBar.tsx` (Added Gate Scanner quick action)
+  - `src/app/(erp)/desk/page.tsx` (Wired Gate Scanner modal into ERP command hub)
+  - `src/app/(erp)/desk/dealership/page.tsx` (Added QR Window Sticker action to vehicle cards)
+  - `src/app/(erp)/desk/auctions/page.tsx` (Added QR Tag action to auction lots)
+  - `src/app/(site)/showroom/page.tsx` (Showroom QR deep-linking, query params, and filter banner)
   - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
 
 ### Session: 2026-10-25 (Featured Article Media Integration: Dr. Francis Yeboah MOGA Award Photos)

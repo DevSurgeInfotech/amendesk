@@ -16,6 +16,7 @@ import { WaybillModal } from '@/components/erp/WaybillModal';
 import { SaleTransferModal } from '@/components/erp/SaleTransferModal';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { EditAuctionLotModal } from '@/components/erp/EditAuctionLotModal';
+import { VehicleStickerModal } from '@/components/erp/VehicleStickerModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -35,6 +36,7 @@ import {
   Images,
   ExternalLink,
   Pencil,
+  QrCode,
 } from 'lucide-react';
 
 function generateReceiptNumber(): string {
@@ -81,6 +83,7 @@ function AuctionsContent() {
   const [waybillLot, setWaybillLot] = useState<AuctionLot | null>(null);
   const [saleTransferLot, setSaleTransferLot] = useState<AuctionLot | null>(null);
   const [galleryLot, setGalleryLot] = useState<AuctionLot | null>(null);
+  const [stickerLot, setStickerLot] = useState<AuctionLot | null>(null);
 
   // Yard fast bidding state
   const [activeBidLotId, setActiveBidLotId] = useState<string | null>(null);
@@ -621,15 +624,26 @@ function AuctionsContent() {
                   <div className="space-y-2">
                     {/* Active & Upcoming Yard Bidding */}
                     {(lot.status === 'ACTIVE' || lot.status === 'UPCOMING') && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingLot(lot)}
-                          icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
-                        >
-                          Edit Lot
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingLot(lot)}
+                            icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                          >
+                            Edit Lot
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                            onClick={() => setStickerLot(lot)}
+                            icon={<QrCode className="h-3.5 w-3.5 text-indigo-600" />}
+                          >
+                            QR Tag
+                          </Button>
+                        </div>
                         <Button
                           size="sm"
                           variant="primary"
@@ -812,6 +826,15 @@ function AuctionsContent() {
           title={galleryLot.title}
           subtitle={`${galleryLot.category} • ${galleryLot.lotNumber} • ${galleryLot.yardLocation}`}
           photos={galleryLot.photos || []}
+        />
+      )}
+
+      {/* QR Lot Window / Yard Tag Modal */}
+      {stickerLot && (
+        <VehicleStickerModal
+          isOpen={Boolean(stickerLot)}
+          onClose={() => setStickerLot(null)}
+          lot={stickerLot}
         />
       )}
     </div>

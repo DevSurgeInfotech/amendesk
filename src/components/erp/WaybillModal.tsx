@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { useTerminal } from '@/context/TerminalContext';
 import { Printer, Truck, CheckCircle2, Car, Gavel, ShieldCheck, AlertCircle } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils/date';
+import { QRCodeView } from '@/components/ui/QRCodeView';
 
 interface WaybillModalProps {
   isOpen: boolean;
@@ -353,16 +354,23 @@ export function WaybillModal({ isOpen, onClose, lot, onSuccess }: WaybillModalPr
                 </div>
               </div>
 
-              <div className="text-right shrink-0">
-                <span className="inline-block px-2.5 py-0.5 bg-indigo-700 text-white text-[10px] font-black uppercase tracking-wider rounded">
-                  WAYBILL &amp; GATE PASS
-                </span>
-                <p className="text-sm font-black font-mono mt-1 text-slate-900 dark:text-white">
-                  {createdWaybill.waybillNumber}
-                </p>
-                <p className="text-[9px] text-slate-500">
-                  {formatDateTime(createdWaybill.releasedAt)}
-                </p>
+              <div className="flex items-center gap-2.5 shrink-0">
+                <QRCodeView
+                  value={`AM-WB:${createdWaybill.waybillNumber}|VIN:${createdWaybill.identifier}|LOT:${createdWaybill.lotNumber}|BUYER:${createdWaybill.buyerName}|CARD:${createdWaybill.driverGhanaCard || 'N/A'}`}
+                  size={58}
+                  className="shrink-0"
+                />
+                <div className="text-right">
+                  <span className="inline-block px-2.5 py-0.5 bg-indigo-700 text-white text-[9.5px] font-black uppercase tracking-wider rounded">
+                    WAYBILL &amp; GATE PASS
+                  </span>
+                  <p className="text-sm font-black font-mono mt-0.5 text-slate-900 dark:text-white">
+                    {createdWaybill.waybillNumber}
+                  </p>
+                  <p className="text-[8.5px] text-slate-500">
+                    {formatDateTime(createdWaybill.releasedAt)}
+                  </p>
+                </div>
               </div>
             </div>
 
