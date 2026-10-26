@@ -1281,6 +1281,12 @@ flowchart TD
     - Displays an active "Scanned Vehicle Sticker" banner with one-click clear button.
   - **Comprehensive Industrial IoT Architecture**:
     - Formulated 5-system enterprise IoT strategy for Amen Mart: OBD-II battery & odometer telematics, BLE/LoRaWAN yard geofencing, RFID smart key cabinets, Edge ANPR automated gate barriers, and generator fuel telematics.
+  - **Print Output Remediation & Commercial Sticker Export Utility ([`src/lib/utils/stickerExport.ts`](file:///d:/amendesk/src/lib/utils/stickerExport.ts))**:
+    - Remediated print preview bleed where ERP dashboard background elements and modal backdrop were rendering behind the sticker. Added `.sticker-printable-area` to the strict `@media print` isolation selector in [`src/app/globals.css`](file:///d:/amendesk/src/app/globals.css) and on sticker container elements, ensuring only the isolated sticker prints with zero page clutter.
+    - Built commercial export engine supporting two high-resolution formats for external sticker printing companies:
+      1. **High-Res 300-DPI PNG Image (`downloadStickerPNG`)**: Renders on an off-screen HTML5 canvas with crisp vector borders, logo, vehicle photo, specs, price, and scannable QR modules, downloading an instantly attachable `.png` file for printing shops via WhatsApp/email.
+      2. **Scalable Vector SVG (`downloadStickerSVG`)**: Exports clean XML/SVG vector paths for commercial vinyl cutters and print plotters.
+    - Added "Download PNG (For Print Shop)", "Vector SVG", and "Print / Save PDF" buttons to [`src/components/erp/VehicleStickerModal.tsx`](file:///d:/amendesk/src/components/erp/VehicleStickerModal.tsx).
   - **Next.js Image Configuration & Unoptimized Photo Fallback**:
     - Configured `unoptimized` on primary photo rendering in [`src/components/erp/VehicleStickerModal.tsx`](file:///d:/amendesk/src/components/erp/VehicleStickerModal.tsx) to natively support client-side base64 offline uploads, camera captures, and remote URLs without server-side image optimization blockage.
     - Updated [`next.config.ts`](file:///d:/amendesk/next.config.ts) with `images.remotePatterns` configuring `images.unsplash.com` and `**.unsplash.com` hostnames.

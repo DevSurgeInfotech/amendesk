@@ -7,7 +7,18 @@ import { formatGHS } from '@/lib/utils/currency';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { QRCodeView } from '@/components/ui/QRCodeView';
-import { Printer, QrCode, Sparkles, MessageCircle, Globe, ShieldCheck, Check } from 'lucide-react';
+import { downloadStickerPNG, downloadStickerSVG } from '@/lib/utils/stickerExport';
+import {
+  Printer,
+  QrCode,
+  Sparkles,
+  MessageCircle,
+  Globe,
+  ShieldCheck,
+  Check,
+  Download,
+  FileCode2,
+} from 'lucide-react';
 
 interface VehicleStickerModalProps {
   isOpen: boolean;
@@ -27,6 +38,7 @@ export function VehicleStickerModal({
 }: VehicleStickerModalProps) {
   const [qrTarget, setQrTarget] = useState<QrTarget>('SHOWROOM');
   const [layout, setLayout] = useState<StickerLayout>('A4_WINDOW');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   if (!isOpen || (!vehicle && !lot)) return null;
 
@@ -61,8 +73,60 @@ export function VehicleStickerModal({
     qrValue = `${origin}/desk/dealership?search=${encodeURIComponent(vin)}`;
   }
 
+  const qrTargetLabel =
+    qrTarget === 'WHATSAPP'
+      ? 'Instant WhatsApp Sales Chat'
+      : qrTarget === 'STAFF_ERP'
+        ? 'Staff Maintenance & Test Drive Log'
+        : 'View Full Photos & Inspection Report';
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPNG = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadStickerPNG({
+        title,
+        stockOrLotNumber,
+        vin,
+        fuelType,
+        transmission,
+        mileageKm,
+        color,
+        priceLabel,
+        priceGhs,
+        location,
+        primaryPhoto,
+        qrValue,
+        qrTargetLabel,
+        layout,
+      });
+    } catch (err) {
+      console.error('Failed to export sticker PNG:', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadSVG = () => {
+    downloadStickerSVG({
+      title,
+      stockOrLotNumber,
+      vin,
+      fuelType,
+      transmission,
+      mileageKm,
+      color,
+      priceLabel,
+      priceGhs,
+      location,
+      primaryPhoto,
+      qrValue,
+      qrTargetLabel,
+      layout,
+    });
   };
 
   return (
@@ -75,49 +139,49 @@ export function VehicleStickerModal({
     >
       <div className="space-y-4">
         {/* Controls Bar (Hidden during printing) */}
-        <div className="no-print flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <QrCode className="h-4 w-4 text-indigo-600" /> QR Destination:
-            </span>
-            <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 p-0.5 bg-white dark:bg-slate-950 text-xs">
-              <button
-                type="button"
-                onClick={() => setQrTarget('SHOWROOM')}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center gap-1.5 ${
-                  qrTarget === 'SHOWROOM'
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                <Globe className="h-3.5 w-3.5" /> Showroom Web
-              </button>
-              <button
-                type="button"
-                onClick={() => setQrTarget('WHATSAPP')}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center gap-1.5 ${
-                  qrTarget === 'WHATSAPP'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp Lead
-              </button>
-              <button
-                type="button"
-                onClick={() => setQrTarget('STAFF_ERP')}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center gap-1.5 ${
-                  qrTarget === 'STAFF_ERP'
-                    ? 'bg-slate-800 text-white shadow-xs dark:bg-slate-200 dark:text-slate-900'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-              >
-                <ShieldCheck className="h-3.5 w-3.5" /> Staff ERP Fast-Log
-              </button>
+        <div className="no-print space-y-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <QrCode className="h-4 w-4 text-indigo-600" /> QR Target:
+              </span>
+              <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 p-0.5 bg-white dark:bg-slate-950 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setQrTarget('SHOWROOM')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center gap-1.5 ${
+                    qrTarget === 'SHOWROOM'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
+                >
+                  <Globe className="h-3.5 w-3.5" /> Showroom Web
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrTarget('WHATSAPP')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center gap-1.5 ${
+                    qrTarget === 'WHATSAPP'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp Lead
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrTarget('STAFF_ERP')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center gap-1.5 ${
+                    qrTarget === 'STAFF_ERP'
+                      ? 'bg-slate-800 text-white shadow-xs dark:bg-slate-200 dark:text-slate-900'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" /> Staff ERP Fast-Log
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
             <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 p-0.5 bg-white dark:bg-slate-950 text-xs">
               <button
                 type="button"
@@ -142,14 +206,48 @@ export function VehicleStickerModal({
                 Mirror Hang Tag
               </button>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handlePrint}
-              icon={<Printer className="h-4 w-4" />}
-            >
-              Print Sticker
-            </Button>
+          </div>
+
+          {/* Action Export Row */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+            <span className="text-xs text-slate-500 font-medium">
+              Export commercial graphics to send to sticker/printing company:
+            </span>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleDownloadPNG}
+                isLoading={isDownloading}
+                icon={<Download className="h-4 w-4" />}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs"
+                title="Download 300-DPI high-resolution PNG image to send to sticker printing company via WhatsApp or email"
+              >
+                Download PNG (For Print Shop)
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadSVG}
+                icon={<FileCode2 className="h-4 w-4 text-indigo-600" />}
+                className="text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                title="Download scalable vector SVG file for commercial vinyl cutting and print plotters"
+              >
+                Vector SVG
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                icon={<Printer className="h-4 w-4" />}
+                title="Print directly or save as clean single-page PDF"
+              >
+                Print / Save PDF
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -157,7 +255,7 @@ export function VehicleStickerModal({
         <div className="print:m-0 print:p-0 flex justify-center">
           {layout === 'A4_WINDOW' ? (
             /* A4 Full Window Monroney Sticker */
-            <div className="w-full max-w-[650px] bg-white text-slate-900 border-2 border-slate-900 p-6 rounded-2xl shadow-md font-sans">
+            <div className="sticker-printable-area a4-document-container w-full max-w-[650px] bg-white text-slate-900 border-2 border-slate-900 p-6 rounded-2xl shadow-md font-sans">
               {/* Header */}
               <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4 mb-4">
                 <div className="flex items-center gap-3">
@@ -167,6 +265,7 @@ export function VehicleStickerModal({
                     width={180}
                     height={80}
                     priority
+                    unoptimized
                     className="h-10 w-auto object-contain"
                   />
                   <div className="border-l-2 border-slate-300 pl-3">
@@ -280,11 +379,7 @@ export function VehicleStickerModal({
                   />
 
                   <p className="text-[10px] font-bold text-slate-700 mt-2">
-                    {qrTarget === 'WHATSAPP'
-                      ? 'Instant WhatsApp Sales Chat'
-                      : qrTarget === 'STAFF_ERP'
-                        ? 'Staff Maintenance & Test Drive Log'
-                        : 'View Full Photos & Inspection Report'}
+                    {qrTargetLabel}
                   </p>
                   <p className="text-[8.5px] text-slate-400 mt-0.5">
                     No special application required
@@ -300,7 +395,7 @@ export function VehicleStickerModal({
             </div>
           ) : (
             /* COMPACT REAR-VIEW MIRROR HANGING TAG */
-            <div className="w-[300px] bg-white text-slate-900 border-2 border-slate-900 p-4 rounded-3xl shadow-md font-sans text-center">
+            <div className="sticker-printable-area sticker-printable-hang-tag w-[300px] bg-white text-slate-900 border-2 border-slate-900 p-4 rounded-3xl shadow-md font-sans text-center">
               {/* Die-cut hole representation */}
               <div className="w-12 h-12 rounded-full border-4 border-slate-900 mx-auto mb-2 flex items-center justify-center">
                 <div className="w-4 h-4 rounded-full bg-slate-200" />

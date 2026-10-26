@@ -96,14 +96,14 @@ body {
     display: block !important;
   }
 
-  /* Isolate printable receipt, A4 document, or A5 waybill from background ERP shell & modal chrome */
-  body:has(.thermal-receipt-container, .a4-document-container, .a5-document-container)
-    *:not(:has(.thermal-receipt-container, .a4-document-container, .a5-document-container)):not(.thermal-receipt-container):not(.thermal-receipt-container *):not(.a4-document-container):not(.a4-document-container *):not(.a5-document-container):not(.a5-document-container *) {
+  /* Isolate printable receipt, A4 document, A5 waybill, or vehicle sticker from background ERP shell & modal chrome */
+  body:has(.thermal-receipt-container, .a4-document-container, .a5-document-container, .sticker-printable-area)
+    *:not(:has(.thermal-receipt-container, .a4-document-container, .a5-document-container, .sticker-printable-area)):not(.thermal-receipt-container):not(.thermal-receipt-container *):not(.a4-document-container):not(.a4-document-container *):not(.a5-document-container):not(.a5-document-container *):not(.sticker-printable-area):not(.sticker-printable-area *) {
     display: none !important;
   }
 
-  body:has(.thermal-receipt-container, .a4-document-container, .a5-document-container)
-    *:has(.thermal-receipt-container, .a4-document-container, .a5-document-container) {
+  body:has(.thermal-receipt-container, .a4-document-container, .a5-document-container, .sticker-printable-area)
+    *:has(.thermal-receipt-container, .a4-document-container, .a5-document-container, .sticker-printable-area) {
     position: static !important;
     overflow: visible !important;
     background: transparent !important;
@@ -166,6 +166,26 @@ body {
     color: #000 !important;
     page-break-after: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  /* Commercial Vehicle Sticker Printable Mode */
+  .sticker-printable-area {
+    width: 100% !important;
+    max-width: 650px !important;
+    margin: 0 auto !important;
+    padding: 24px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: 2px solid #0f172a !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .sticker-printable-hang-tag {
+    max-width: 320px !important;
+    border-radius: 28px !important;
   }
 
   @page {
