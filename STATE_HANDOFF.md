@@ -226,6 +226,49 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-26 (Showroom Catalog Asset Edit & Management Remediation Across All ERP Modules)
+- **Goal**: Audit and remediate the issue where all showroom items accessible within the ERP (`/desk/dealership`, `/desk/auctions`, `/desk/land`, `/desk/property`, and `/desk/inventory`) could not be edited once created.
+- **Root Cause Identified**:
+  - Across all four catalog business lines in the ERP (Car Dealership, Auction Lots, Titled Land Parcels, and Property Units), items only had intake/add forms or status toggle buttons.
+  - There were NO Edit buttons, NO Edit modals, and NO update workflows for existing showroom assets. Staff had no way to correct typos in titles/specifications, update retail prices or landed costs, add/reorder/delete photos, attach or replace cadastral plans / legal indentures / court fi.fa. writ documents, or adjust yard locations.
+  - Furthermore, if an item was registered erroneously, there was no safe delete capability to prune invalid records from the local Dexie database and sync queue.
+- **Accomplishments**:
+  - **Dealership Showroom Vehicles (`EditVehicleModal.tsx`, `/desk/dealership`)**:
+    - Created `EditVehicleModal` with complete attribute management: make, model, year, VIN, stock code, fuel type, transmission, mileage, color, landed cost, asking price with live margin calculations, status (AVAILABLE, RESERVED, SOLD), showroom facility location, description, hero showcase toggle, and photo gallery management via `ProductPhotoUploader`.
+    - Integrated automatic synchronization with linked central inventory records (`db.inventoryItems`) sharing the same stock code.
+    - Added dual edit triggers: a sleek image-overlay button and a prominent card action button.
+    - Added safe two-step delete functionality with confirmation dialog.
+  - **Land Parcels (`EditLandModal.tsx`, `/desk/land`)**:
+    - Created `EditLandModal` with comprehensive parcel management: site reference, title, location/enclave, acreage, direct sale price, title type (INDENTURE, LEASEHOLD, FREEHOLD), sale status, demarcated features, description, photo gallery, cadastral survey plan document uploader (`DocumentUploader`), and indenture/title deed document uploader (`DocumentUploader`).
+    - Added image-overlay edit trigger and card action edit button.
+    - Added safe two-step delete functionality with confirmation dialog.
+  - **Property Units (`EditPropertyModal.tsx`, `/desk/property`)**:
+    - Created `EditPropertyModal` with complete property unit management: unit reference, title, property type (RESIDENTIAL, COMMERCIAL, INDUSTRIAL), location, bedrooms, bathrooms, asking price, status, amenities/features, description, and architectural photo gallery.
+    - Added image-overlay edit trigger and card action edit button.
+    - Added safe two-step delete functionality with confirmation dialog.
+  - **Auction Lots (`EditAuctionLotModal.tsx`, `/desk/auctions`)**:
+    - Created `EditAuctionLotModal` supporting all dimensional combinations: category (PRIVATE, GOVERNMENT, JUDICIAL), asset type (MOVABLE, IMMOVABLE), movable sub-types (VEHICLE, OTHER_MOVABLE), immovable sub-types (LAND, BUILDING).
+    - Full editing for lot title, lot number, reserve price, starting bid, current bid, yard bay location, condition notes, photos, movable vehicle attributes (make, model, year, chassis number, registration number, fuel, mileage), equipment specs (serial tag, quantity, equipment type), immovable specs (parcel ref, title ref, location area, dimensions, cadastral plan upload), and judicial statutory compliance (court case number, sheriff instruction ref, court order writ upload).
+    - Integrated safe two-step delete with protection against deleting lots with active hammer deposits or settled accounts.
+    - Added image-overlay edit trigger and card action buttons across all lot states (ACTIVE, UPCOMING, AWAITING_BALANCE, FULLY_PAID, DISPOSED).
+  - **Central Inventory Stock Ledger (`EditInventoryItemModal.tsx`, `/desk/inventory`)**:
+    - Created `EditInventoryItemModal` enabling editing of stock items: name, SKU/reference, category (VEHICLE, EQUIPMENT, PART, MATERIAL), location (AUCTION_YARD, DEALERSHIP_SHOWROOM, WORKSHOP), condition (EXCELLENT, GOOD, FAIR, REQUIRES_REPAIR), quantity, landed cost, and total asset valuation.
+    - Added table action column button and two-step delete functionality.
+  - **Quality Gates Passed**:
+    - `npm run check` passed 100% (0 TypeScript errors, 0 ESLint warnings).
+- **Changed Files**:
+  - `src/components/erp/EditVehicleModal.tsx` (New)
+  - `src/components/erp/EditLandModal.tsx` (New)
+  - `src/components/erp/EditPropertyModal.tsx` (New)
+  - `src/components/erp/EditAuctionLotModal.tsx` (New)
+  - `src/components/erp/EditInventoryItemModal.tsx` (New)
+  - `src/app/(erp)/desk/dealership/page.tsx`
+  - `src/app/(erp)/desk/land/page.tsx`
+  - `src/app/(erp)/desk/property/page.tsx`
+  - `src/app/(erp)/desk/auctions/page.tsx`
+  - `src/app/(erp)/desk/inventory/page.tsx`
+  - `STATE_HANDOFF.md`
+
 ### Session: 2026-10-25 (Live Showroom Navigation Remediation & Proxy Routing Subdomain Resolution)
 - **Goal**: Fix broken navigation when clicking "Live Showroom" (top right) in `/desk/dealership` (or `/dealership`) leading to a not working / error page.
 - **Root Cause Identified**:

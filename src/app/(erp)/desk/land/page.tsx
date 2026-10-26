@@ -16,7 +16,8 @@ import { DocumentUploader } from '@/components/erp/DocumentUploader';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Link from 'next/link';
-import { MapPin, PlusCircle, CreditCard, FileCheck, Search, ArrowRight, Images, FileText } from 'lucide-react';
+import { EditLandModal } from '@/components/erp/EditLandModal';
+import { MapPin, PlusCircle, CreditCard, FileCheck, Search, ArrowRight, Images, FileText, Pencil } from 'lucide-react';
 
 function generateLandId(): string {
   return `land-${Date.now()}`;
@@ -33,6 +34,7 @@ function LandContent() {
 
   const parcels = useLiveQuery(() => db.landParcels.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingParcel, setEditingParcel] = useState<LandParcel | null>(null);
   const [selectedDeedLand, setSelectedDeedLand] = useState<LandParcel | null>(null);
   const [galleryLand, setGalleryLand] = useState<LandParcel | null>(null);
 
@@ -239,6 +241,20 @@ function LandContent() {
                         {parcel.siteRef}
                       </span>
                     </div>
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingParcel(parcel);
+                        }}
+                        className="px-2 py-0.5 rounded bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-800 dark:text-slate-100 text-xs font-bold backdrop-blur-xs flex items-center gap-1 shadow-xs transition-colors"
+                        title="Edit Land Parcel"
+                      >
+                        <Pencil className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                        <span>Edit</span>
+                      </button>
+                    </div>
                     <div className="absolute bottom-3 left-3">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
                         <Images className="h-3 w-3 text-indigo-400" />
@@ -347,35 +363,47 @@ function LandContent() {
                   </div>
                 </div>
 
-                {parcel.status !== 'SOLD' ? (
-                  <Link href={`/desk/payments?category=LAND&id=${parcel.id}`} className="block w-full">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      icon={<CreditCard className="h-3.5 w-3.5" />}
-                    >
-                      Record Sale Payment
-                    </Button>
-                  </Link>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-xs"
+                    onClick={() => setEditingParcel(parcel)}
+                    icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                  >
+                    Edit Parcel
+                  </Button>
+
+                  {parcel.status !== 'SOLD' ? (
                     <Link href={`/desk/payments?category=LAND&id=${parcel.id}`} className="block w-full">
-                      <Button size="sm" variant="outline" className="w-full text-xs">
-                        Payment Ledger
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        className="w-full text-xs"
+                        icon={<CreditCard className="h-3.5 w-3.5" />}
+                      >
+                        Record Sale
                       </Button>
                     </Link>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      className="w-full text-xs"
-                      icon={<FileCheck className="h-3.5 w-3.5" />}
-                      onClick={() => setSelectedDeedLand(parcel)}
-                    >
-                      Issue / View Deed
-                    </Button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Link href={`/desk/payments?category=LAND&id=${parcel.id}`} className="block w-full">
+                        <Button size="sm" variant="outline" className="w-full text-[11px] px-1">
+                          Ledger
+                        </Button>
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        className="w-full text-[11px] px-1"
+                        icon={<FileCheck className="h-3 w-3" />}
+                        onClick={() => setSelectedDeedLand(parcel)}
+                      >
+                        Deed
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -511,6 +539,13 @@ function LandContent() {
           </div>
         </form>
       </Modal>
+
+      {/* Edit Land Modal */}
+      <EditLandModal
+        isOpen={Boolean(editingParcel)}
+        onClose={() => setEditingParcel(null)}
+        parcel={editingParcel}
+      />
 
       {/* Sale Transfer Deed Modal */}
       {selectedDeedLand && (

@@ -14,7 +14,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
-import { PlusCircle, Fuel, Gauge, CreditCard, Search, ArrowRight, Images } from 'lucide-react';
+import { EditVehicleModal } from '@/components/erp/EditVehicleModal';
+import { PlusCircle, Fuel, Gauge, CreditCard, Search, ArrowRight, Images, Pencil } from 'lucide-react';
 
 function generateVehicleId(): string {
   return `car-${Date.now()}`;
@@ -35,6 +36,7 @@ function DealershipContent() {
 
   const vehicles = useLiveQuery(() => db.dealershipVehicles.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingCar, setEditingCar] = useState<DealershipVehicle | null>(null);
   const [galleryCar, setGalleryCar] = useState<DealershipVehicle | null>(null);
 
   // Filters
@@ -272,6 +274,20 @@ function DealershipContent() {
                         {car.stockNumber}
                       </span>
                     </div>
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCar(car);
+                        }}
+                        className="px-2 py-0.5 rounded bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-800 dark:text-slate-100 text-xs font-bold backdrop-blur-xs flex items-center gap-1 shadow-xs transition-colors"
+                        title="Edit Vehicle Details & Pricing"
+                      >
+                        <Pencil className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                        <span>Edit</span>
+                      </button>
+                    </div>
                     <div className="absolute bottom-3 left-3">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
                         <Images className="h-3 w-3 text-indigo-400" />
@@ -354,24 +370,36 @@ function DealershipContent() {
                     </div>
                   </div>
 
-                  {car.status !== 'SOLD' ? (
-                    <Link href={`/desk/payments?category=DEALERSHIP&id=${car.id}`} className="block w-full">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full"
-                        icon={<CreditCard className="h-3.5 w-3.5" />}
-                      >
-                        Record Sale Payment
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href={`/desk/payments?category=DEALERSHIP&id=${car.id}`} className="block w-full">
-                      <Button size="sm" variant="outline" className="w-full text-slate-600">
-                        View Payment Ledger
-                      </Button>
-                    </Link>
-                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setEditingCar(car)}
+                      icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                    >
+                      Edit Vehicle
+                    </Button>
+
+                    {car.status !== 'SOLD' ? (
+                      <Link href={`/desk/payments?category=DEALERSHIP&id=${car.id}`} className="block w-full">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          className="w-full"
+                          icon={<CreditCard className="h-3.5 w-3.5" />}
+                        >
+                          Record Sale
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href={`/desk/payments?category=DEALERSHIP&id=${car.id}`} className="block w-full">
+                        <Button size="sm" variant="outline" className="w-full text-slate-600">
+                          Payment Ledger
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -537,6 +565,13 @@ function DealershipContent() {
           </div>
         </form>
       </Modal>
+
+      {/* Edit Vehicle Modal */}
+      <EditVehicleModal
+        isOpen={Boolean(editingCar)}
+        onClose={() => setEditingCar(null)}
+        vehicle={editingCar}
+      />
 
       {/* Full Photo Lightbox Gallery */}
       {galleryCar && (

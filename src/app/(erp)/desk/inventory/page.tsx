@@ -11,8 +11,9 @@ import { useTerminal } from '@/context/TerminalContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { EditInventoryItemModal } from '@/components/erp/EditInventoryItemModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
-import { ArrowRightLeft, MapPin, History, PlusCircle, Search, PackageCheck } from 'lucide-react';
+import { ArrowRightLeft, MapPin, History, PlusCircle, Search, PackageCheck, Pencil } from 'lucide-react';
 
 function generateMovementId(): string {
   return `mov-${Date.now()}`;
@@ -62,6 +63,7 @@ function InventoryContent() {
 
   // Add Item modal
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [newItemName, setNewItemName] = useState('');
   const [newSku, setNewSku] = useState('');
   const [newCategory, setNewCategory] = useState<'VEHICLE' | 'EQUIPMENT' | 'PART' | 'MATERIAL'>('EQUIPMENT');
@@ -265,7 +267,7 @@ function InventoryContent() {
                   <th className="p-4 text-right">Unit Landed Cost</th>
                   <th className="p-4 text-right">Total Valuation</th>
                   <th className="p-4 text-center">Condition</th>
-                  <th className="p-4 text-center">Transfer</th>
+                  <th className="p-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -310,14 +312,24 @@ function InventoryContent() {
                         </Badge>
                       </td>
                       <td className="p-4 text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedItemForTransfer(it)}
-                          icon={<ArrowRightLeft className="h-3.5 w-3.5" />}
-                        >
-                          Relocate
-                        </Button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingItem(it)}
+                            icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedItemForTransfer(it)}
+                            icon={<ArrowRightLeft className="h-3.5 w-3.5" />}
+                          >
+                            Relocate
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -530,6 +542,12 @@ function InventoryContent() {
           </div>
         </form>
       </Modal>
+      {/* Edit Inventory Item Modal */}
+      <EditInventoryItemModal
+        isOpen={Boolean(editingItem)}
+        onClose={() => setEditingItem(null)}
+        item={editingItem}
+      />
     </div>
   );
 }

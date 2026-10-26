@@ -15,7 +15,8 @@ import { ProductPhotoUploader } from '@/components/erp/ProductPhotoUploader';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Link from 'next/link';
-import { PlusCircle, MapPin, Bed, Bath, CreditCard, FileCheck, Search, ArrowRight, Images } from 'lucide-react';
+import { EditPropertyModal } from '@/components/erp/EditPropertyModal';
+import { PlusCircle, MapPin, Bed, Bath, CreditCard, FileCheck, Search, ArrowRight, Images, Pencil } from 'lucide-react';
 
 function generatePropertyId(): string {
   return `prop-${Date.now()}`;
@@ -32,6 +33,7 @@ function PropertyContent() {
 
   const properties = useLiveQuery(() => db.propertyUnits.toArray(), []) || [];
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<PropertyUnit | null>(null);
   const [selectedDeedProp, setSelectedDeedProp] = useState<PropertyUnit | null>(null);
   const [galleryProp, setGalleryProp] = useState<PropertyUnit | null>(null);
 
@@ -237,6 +239,20 @@ function PropertyContent() {
                       {prop.propertyType}
                     </Badge>
                   </div>
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProperty(prop);
+                      }}
+                      className="px-2 py-0.5 rounded bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-800 dark:text-slate-100 text-xs font-bold backdrop-blur-xs flex items-center gap-1 shadow-xs transition-colors"
+                      title="Edit Property Unit"
+                    >
+                      <Pencil className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
                   <div className="absolute bottom-3 left-3">
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
                       <Images className="h-3 w-3 text-indigo-400" />
@@ -323,35 +339,47 @@ function PropertyContent() {
                   </div>
                 </div>
 
-                {prop.status !== 'SOLD' ? (
-                  <Link href={`/desk/payments?category=PROPERTY&id=${prop.id}`} className="block w-full">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      icon={<CreditCard className="h-3.5 w-3.5" />}
-                    >
-                      Record Sale Payment
-                    </Button>
-                  </Link>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-xs"
+                    onClick={() => setEditingProperty(prop)}
+                    icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                  >
+                    Edit Unit
+                  </Button>
+
+                  {prop.status !== 'SOLD' ? (
                     <Link href={`/desk/payments?category=PROPERTY&id=${prop.id}`} className="block w-full">
-                      <Button size="sm" variant="outline" className="w-full text-xs">
-                        Payment Ledger
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        className="w-full text-xs"
+                        icon={<CreditCard className="h-3.5 w-3.5" />}
+                      >
+                        Record Sale
                       </Button>
                     </Link>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      className="w-full text-xs"
-                      icon={<FileCheck className="h-3.5 w-3.5" />}
-                      onClick={() => setSelectedDeedProp(prop)}
-                    >
-                      Issue / View Deed
-                    </Button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Link href={`/desk/payments?category=PROPERTY&id=${prop.id}`} className="block w-full">
+                        <Button size="sm" variant="outline" className="w-full text-[11px] px-1">
+                          Ledger
+                        </Button>
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        className="w-full text-[11px] px-1"
+                        icon={<FileCheck className="h-3 w-3" />}
+                        onClick={() => setSelectedDeedProp(prop)}
+                      >
+                        Deed
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -479,6 +507,13 @@ function PropertyContent() {
           </div>
         </form>
       </Modal>
+
+      {/* Edit Property Unit Modal */}
+      <EditPropertyModal
+        isOpen={Boolean(editingProperty)}
+        onClose={() => setEditingProperty(null)}
+        property={editingProperty}
+      />
 
       {/* Sale Transfer Deed Modal */}
       {selectedDeedProp && (

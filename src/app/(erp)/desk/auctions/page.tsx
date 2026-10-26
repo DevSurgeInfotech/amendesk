@@ -15,6 +15,7 @@ import { ExtensionModal } from '@/components/erp/ExtensionModal';
 import { WaybillModal } from '@/components/erp/WaybillModal';
 import { SaleTransferModal } from '@/components/erp/SaleTransferModal';
 import { ProductGalleryModal } from '@/components/ui/ProductGalleryModal';
+import { EditAuctionLotModal } from '@/components/erp/EditAuctionLotModal';
 import { syncEngine } from '@/lib/sync/syncEngine';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,6 +34,7 @@ import {
   FileText,
   Images,
   ExternalLink,
+  Pencil,
 } from 'lucide-react';
 
 function generateReceiptNumber(): string {
@@ -73,6 +75,7 @@ function AuctionsContent() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | LotStatus>('ALL');
 
   // Modals state
+  const [editingLot, setEditingLot] = useState<AuctionLot | null>(null);
   const [paymentLot, setPaymentLot] = useState<AuctionLot | null>(null);
   const [extensionLot, setExtensionLot] = useState<AuctionLot | null>(null);
   const [waybillLot, setWaybillLot] = useState<AuctionLot | null>(null);
@@ -374,6 +377,21 @@ function AuctionsContent() {
                     </Badge>
                   </div>
 
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingLot(lot);
+                      }}
+                      className="px-2 py-0.5 rounded bg-white/90 dark:bg-slate-900/90 hover:bg-white text-slate-800 dark:text-slate-100 text-xs font-bold backdrop-blur-xs flex items-center gap-1 shadow-xs transition-colors"
+                      title="Edit Lot Particulars"
+                    >
+                      <Pencil className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
+
                   <div className="absolute bottom-3 left-3">
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs">
                       <Images className="h-3 w-3 text-indigo-400" />
@@ -601,25 +619,45 @@ function AuctionsContent() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {/* Active Yard Bidding Button */}
-                    {lot.status === 'ACTIVE' && (
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        className="w-full"
-                        onClick={() => {
-                          setActiveBidLotId(lot.id);
-                          setQuickBidAmount(lot.currentBidGhs);
-                        }}
-                        icon={<Gavel className="h-4 w-4" />}
-                      >
-                        Open Yard Bid / Hammer
-                      </Button>
+                    {/* Active & Upcoming Yard Bidding */}
+                    {(lot.status === 'ACTIVE' || lot.status === 'UPCOMING') && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingLot(lot)}
+                          icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                        >
+                          Edit Lot
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          className="w-full"
+                          onClick={() => {
+                            setActiveBidLotId(lot.id);
+                            setQuickBidAmount(lot.currentBidGhs);
+                          }}
+                          icon={<Gavel className="h-4 w-4" />}
+                        >
+                          Yard Hammer
+                        </Button>
+                      </div>
                     )}
 
                     {/* Awaiting Balance Actions */}
                     {(lot.status === 'AWAITING_BALANCE' || lot.status === 'OVERDUE') && (
                       <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="px-2.5"
+                          onClick={() => setEditingLot(lot)}
+                          icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                          title="Edit Lot Particulars"
+                        >
+                          Edit
+                        </Button>
                         <Button
                           size="sm"
                           variant="primary"
@@ -642,7 +680,16 @@ function AuctionsContent() {
 
                     {/* Disposal Document Release - Strict Business Rule */}
                     {lot.status === 'FULLY_PAID' && (
-                      <>
+                      <div className="space-y-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setEditingLot(lot)}
+                          icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                        >
+                          Edit Lot Particulars
+                        </Button>
                         {lot.assetType === 'MOVABLE' ? (
                           <Button
                             size="sm"
@@ -664,7 +711,43 @@ function AuctionsContent() {
                             Execute Sale &amp; Transfer Deed
                           </Button>
                         )}
-                      </>
+                      </div>
+                    )}
+
+                    {/* Disposed State Actions */}
+                    {lot.status === 'DISPOSED' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setEditingLot(lot)}
+                          icon={<Pencil className="h-3.5 w-3.5 text-indigo-500" />}
+                        >
+                          Edit Lot Details
+                        </Button>
+                        {lot.assetType === 'MOVABLE' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setWaybillLot(lot)}
+                            icon={<Truck className="h-3.5 w-3.5" />}
+                          >
+                            View Waybill
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setSaleTransferLot(lot)}
+                            icon={<FileCheck className="h-3.5 w-3.5" />}
+                          >
+                            View Deed
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -673,6 +756,13 @@ function AuctionsContent() {
           );
         })}
       </div>
+
+      {/* Edit Auction Lot Modal */}
+      <EditAuctionLotModal
+        isOpen={Boolean(editingLot)}
+        onClose={() => setEditingLot(null)}
+        lot={editingLot}
+      />
 
       {/* Payment Modal */}
       {paymentLot && (
