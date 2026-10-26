@@ -7,10 +7,13 @@ import type { NextRequest } from 'next/server';
  * Directs incoming traffic based on hostname:
  * - ERP Domain (e.g. desk.amenmartgh.com, desk.localhost):
  *     Serves AmenDesk ERP directly. Root "/" rewrites to "/desk",
- *     and module routes ("/payments", "/auctions", etc.) rewrite to "/desk/*".
+ *     and module routes ("/dealership", "/crm", etc.) rewrite to "/desk/*".
+ *     Public marketing & showroom pages ("/showroom", "/about", etc.) are
+ *     served directly without cross-origin redirects.
  * - Website Domain (e.g. amenmartgh.com, localhost):
  *     Serves the public auction & showroom website.
- *     Requests to "/desk" are redirected to the dedicated ERP domain.
+ *     In production, requests to "/desk" are redirected to the dedicated ERP domain.
+ *     In local development, all routes function seamlessly on localhost:3001.
  */
 
 const ERP_DOMAIN = (process.env.ERP_DOMAIN || process.env.NEXT_PUBLIC_ERP_DOMAIN || 'desk.amenmartgh.com').toLowerCase();
@@ -19,13 +22,13 @@ const SITE_DOMAIN = (process.env.SITE_DOMAIN || process.env.NEXT_PUBLIC_SITE_DOM
 const ERP_MODULE_PREFIXES = [
   '/payments',
   '/accounts',
-  '/auctions',
   '/payment-plans',
   '/dealership',
-  '/land',
-  '/property',
   '/inventory',
   '/crm',
+  '/communication',
+  '/hr',
+  '/settings',
   '/migration',
 ];
 
@@ -43,7 +46,6 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || '';
   const hostname = host.split(':')[0].toLowerCase();
-  const port = host.includes(':') ? `:${host.split(':')[1]}` : '';
   const isErp = isErpHostname(hostname) || request.headers.get('x-erp-domain') === '1';
 
   // 1. Bypass static assets and API routes
@@ -71,7 +73,7 @@ export function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // If requesting an ERP module directly (e.g. "/payments", "/auctions", "/crm", etc.)
+    // If requesting an ERP module directly without /desk prefix (e.g. "/dealership", "/crm", etc.)
     const isErpModule = ERP_MODULE_PREFIXES.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
     );
@@ -81,35 +83,29 @@ export function proxy(request: NextRequest) {
       return NextResponse.rewrite(url);
     }
 
-    // Public marketing showroom pages visited on ERP domain -> redirect to public website
-    const isPublicSitePage = ['/about', '/showroom', '/contact', '/properties'].some(
-      (page) => pathname === page || pathname.startsWith(`${page}/`)
-    );
-    if (isPublicSitePage) {
-      const protocol = request.nextUrl.protocol || 'https:';
-      const redirectHost = hostname.includes('localhost') ? `localhost${port}` : SITE_DOMAIN;
-      const redirectUrl = new URL(pathname + request.nextUrl.search, `${protocol}//${redirectHost}`);
-      return NextResponse.redirect(redirectUrl);
-    }
-
+    // Public pages (/showroom, /auctions, /land, /properties, /about, /contact, etc.)
+    // served directly on the ERP domain without cross-origin redirect so staff can
+    // preview live customer-facing catalogs in-browser without CORS or DNS failures.
     return NextResponse.next();
   }
 
-  // 3. Handling requests on Public Website Domain (e.g. amenmartgh.com, localhost:3001)
-  // If a request hits /desk on the website domain, redirect to the dedicated ERP domain
+  // 3. Handling requests on Website Domain (e.g. amenmartgh.com, localhost:3001)
+  // If a request hits /desk on the website domain:
   if (pathname === '/desk' || pathname.startsWith('/desk/')) {
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-    const targetHost = isLocalhost ? `desk.localhost${port}` : ERP_DOMAIN;
-    const protocol = isLocalhost ? request.nextUrl.protocol : 'https:';
 
-    // Allow local development bypass if ?direct=1
-    if (isLocalhost && request.nextUrl.searchParams.has('direct')) {
+    // In local development, allow /desk directly without redirecting to desk.localhost
+    if (isLocalhost) {
       return NextResponse.next();
     }
 
-    const targetPath = pathname === '/desk' ? '/' : pathname.replace(/^\/desk/, '');
-    const redirectUrl = new URL(`${targetPath}${request.nextUrl.search}`, `${protocol}//${targetHost}`);
-    return NextResponse.redirect(redirectUrl, 307);
+    // In production, redirect website domain /desk to dedicated ERP domain
+    const cleanSiteDomain = SITE_DOMAIN.split(':')[0];
+    if (hostname === cleanSiteDomain) {
+      const targetHost = ERP_DOMAIN;
+      const redirectUrl = new URL(pathname + request.nextUrl.search, `https://${targetHost}`);
+      return NextResponse.redirect(redirectUrl, 307);
+    }
   }
 
   return NextResponse.next();

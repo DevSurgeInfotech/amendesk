@@ -226,6 +226,38 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
+### Session: 2026-10-25 (Live Showroom Navigation Remediation & Proxy Routing Subdomain Resolution)
+- **Goal**: Fix broken navigation when clicking "Live Showroom" (top right) in `/desk/dealership` (or `/dealership`) leading to a not working / error page.
+- **Root Cause Identified**:
+  1. **Cross-Origin Redirect & CORS Failure in Next.js App Router**:
+     - In `src/proxy.ts`, requests on the ERP domain (`desk.localhost` or `desk.amenmartgh.com`) matching `/showroom` were redirected via `NextResponse.redirect` to `http://localhost:3001/showroom` (or `https://amenmartgh.com/showroom`).
+     - Because the "Live Showroom" button was rendered as `<Link href="/showroom">`, clicking it triggered Next.js client-side soft navigation via RSC `fetch`.
+     - Cross-origin redirects on `fetch` requests without permissive CORS headers are blocked by browser security policies (`Access-Control-Allow-Origin`), causing Next.js router fetch failures and unhandled runtime exceptions.
+  2. **Unresolved Subdomain & Origin-Partitioned IndexedDB in Local Development**:
+     - In `src/proxy.ts`, local requests to `http://localhost:3001/desk/*` were previously redirected to `http://desk.localhost:3001/*`. On Windows, `*.localhost` subdomains are not mapped by default in system DNS (`ping desk.localhost` fails with `Ping request could not find host desk.localhost`).
+     - Even when resolved by Chromium internal loopbacks, `desk.localhost` and `localhost` are distinct web origins. IndexedDB is strictly partitioned by origin; hence, vehicles created in ERP on `desk.localhost` did not exist on `localhost`, resulting in empty showroom states.
+  3. **Invalid Nested Interactive Elements in DOM**:
+     - The "Live Showroom" trigger in `src/app/(erp)/desk/dealership/page.tsx` was structured as `<Link href="/showroom"><Button ...>Live Showroom</Button></Link>`.
+     - In HTML5, `<button>` cannot be a child of `<a>`, causing event dispatch conflicts and hydration warnings.
+- **Accomplishments**:
+  - **Proxy Routing Normalization (`src/proxy.ts`)**:
+    - Eliminated cross-origin redirects for marketing and showroom pages (`/showroom`, `/auctions`, `/land`, `/properties`, `/about`, `/contact`, etc.) on the ERP domain. The ERP and public website live in the same Next.js application, allowing showroom pages to be served natively without cross-origin boundary crossings.
+    - Updated local development handling so `isLocalhost` (`localhost` and `127.0.0.1`) routes `/desk/*` directly without forcing `desk.localhost` redirection.
+    - Preserved production redirection for public website domain visitors hitting `/desk` directly to `https://${ERP_DOMAIN}`.
+  - **Live Showroom & Catalog Link Ergonomics (`dealership/page.tsx`, `land/page.tsx`, `property/page.tsx`)**:
+    - Replaced nested `<Button>` inside `<Link>` with a dedicated, styled anchor element matching the outline button design system.
+    - Added `target="_blank"` and `rel="noopener noreferrer"` with descriptive titles (`"Open Live Public Showroom in new tab"`), enabling staff to preview customer-facing listings in a new tab without losing their active ERP inventory session, filters, or unsaved drafts.
+  - **Defensive Showroom Null-Safety (`src/app/(site)/showroom/page.tsx`)**:
+    - Added defensive checks for vehicle fields (`(car.make || '').toLowerCase()`, `car.photos?.[0]`, `(car.mileageKm ?? 0).toLocaleString()`, and `photos={galleryVehicle.photos || []}`), preventing runtime crashes if any vehicle entry contains partial or newly created mock data.
+  - **Quality Gates Passed**: Ran mandatory `npm run check` (`tsc --noEmit` + `eslint "src/**/*.{ts,tsx}" --max-warnings 0`) with 0 errors and 0 warnings.
+- **Changed Files**:
+  - `src/proxy.ts` (Eliminated cross-origin redirects on ERP domain; disabled localhost subdomain forcing)
+  - `src/app/(erp)/desk/dealership/page.tsx` (Clean styled Link with new tab preview)
+  - `src/app/(erp)/desk/land/page.tsx` (Clean styled Link with new tab preview)
+  - `src/app/(erp)/desk/property/page.tsx` (Clean styled Link with new tab preview)
+  - `src/app/(site)/showroom/page.tsx` (Defensive null-safety guards on vehicle properties)
+  - `STATE_HANDOFF.md` (Updated continuity ledger and session changelog)
+
 ### Session: 2026-10-25 (Topbar Arrangement for Global Search Real Estate & Photo Avatar Optimization)
 - **Goal**: Re-architect ERP Topbar layout to provide generous horizontal real estate space for Global Search (`Ctrl+K`) by reducing the staff profile button to a sleek photo avatar and displaying the staff member's name and role on the avatar dropdown menu.
 - **Root Cause Identified**:

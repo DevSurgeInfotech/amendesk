@@ -55,10 +55,10 @@ export default function ShowroomPage() {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
-        car.make.toLowerCase().includes(q) ||
-        car.model.toLowerCase().includes(q) ||
-        car.stockNumber.toLowerCase().includes(q) ||
-        car.vin.toLowerCase().includes(q)
+        (car.make || '').toLowerCase().includes(q) ||
+        (car.model || '').toLowerCase().includes(q) ||
+        (car.stockNumber || '').toLowerCase().includes(q) ||
+        (car.vin || '').toLowerCase().includes(q)
       );
     }
     return true;
@@ -274,8 +274,8 @@ export default function ShowroomPage() {
                   title="Click to view all vehicle photos"
                 >
                   <Image
-                    src={car.photos[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
-                    alt={`${car.make} ${car.model}`}
+                    src={car.photos?.[0] || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80'}
+                    alt={`${car.make || 'Vehicle'} ${car.model || ''}`}
                     fill
                     unoptimized
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -315,7 +315,7 @@ export default function ShowroomPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Gauge className="h-3.5 w-3.5 text-indigo-500" />
-                      {car.mileageKm.toLocaleString()} km
+                      {(car.mileageKm ?? 0).toLocaleString()} km
                     </span>
                     <span className="col-span-2 font-mono text-[11px] text-slate-400">
                       VIN: {car.vin}
@@ -471,7 +471,7 @@ export default function ShowroomPage() {
           onClose={() => setGalleryVehicle(null)}
           title={`${galleryVehicle.year} ${galleryVehicle.make} ${galleryVehicle.model}`}
           subtitle={`Stock #${galleryVehicle.stockNumber} • VIN: ${galleryVehicle.vin}`}
-          photos={galleryVehicle.photos}
+          photos={galleryVehicle.photos || []}
         />
       )}
     </div>

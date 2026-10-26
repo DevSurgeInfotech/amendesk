@@ -146,10 +146,15 @@ function LandContent() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/land">
-            <Button variant="outline" size="sm" icon={<ArrowRight className="h-4 w-4" />}>
-              Public Catalog
-            </Button>
+          <Link
+            href="/land"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 text-xs gap-1.5 shadow-xs"
+            title="Open Public Land Catalog in new tab"
+          >
+            <ArrowRight className="h-4 w-4" />
+            Public Catalog
           </Link>
           <Button variant="primary" size="sm" onClick={() => setIsAddOpen(true)} icon={<PlusCircle className="h-4 w-4" />}>
             Add Parcel
