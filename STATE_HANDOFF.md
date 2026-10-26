@@ -1281,8 +1281,13 @@ flowchart TD
     - Displays an active "Scanned Vehicle Sticker" banner with one-click clear button.
   - **Comprehensive Industrial IoT Architecture**:
     - Formulated 5-system enterprise IoT strategy for Amen Mart: OBD-II battery & odometer telematics, BLE/LoRaWAN yard geofencing, RFID smart key cabinets, Edge ANPR automated gate barriers, and generator fuel telematics.
+  - **Next.js Image Configuration & Unoptimized Photo Fallback**:
+    - Configured `unoptimized` on primary photo rendering in [`src/components/erp/VehicleStickerModal.tsx`](file:///d:/amendesk/src/components/erp/VehicleStickerModal.tsx) to natively support client-side base64 offline uploads, camera captures, and remote URLs without server-side image optimization blockage.
+    - Updated [`next.config.ts`](file:///d:/amendesk/next.config.ts) with `images.remotePatterns` configuring `images.unsplash.com` and `**.unsplash.com` hostnames.
   - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + ESLint strict) passing with 0 errors and 0 warnings.
 - **Changed Files**:
+  - `next.config.ts` (Configured remote image patterns for Unsplash hostnames)
+  - `src/components/erp/VehicleStickerModal.tsx` (Added unoptimized prop on vehicle sticker thumbnail)
   - `src/lib/utils/qr.ts` (Pure TypeScript ISO/IEC 18004 QR code matrix & SVG generator)
   - `src/components/ui/QRCodeView.tsx` (Reusable vector QR code component)
   - `src/components/erp/VehicleStickerModal.tsx` (Printable A4 & hang tag Monroney window sticker generator)

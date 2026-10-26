@@ -249,8 +249,8 @@ export function VehicleStickerModal({
                         src={primaryPhoto}
                         alt={title}
                         fill
+                        unoptimized
                         className="object-cover"
-                        sizes="(max-width: 650px) 100vw, 350px"
                       />
                     </div>
                   )}
