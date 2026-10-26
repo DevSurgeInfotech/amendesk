@@ -1543,7 +1543,7 @@ function WorkspaceSettingsContent() {
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
                   >
                     <Bell className="h-3.5 w-3.5" />
-                    <span>Send Test Toast</span>
+                    <span>Test Sound &amp; Windows Alert</span>
                   </button>
                 ) : (
                   <button
@@ -1593,10 +1593,10 @@ function WorkspaceSettingsContent() {
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-900 dark:text-white">
-                    Executive Two-Tone Audio Chime
+                    Notable Executive Chime (ERP &amp; Windows)
                   </div>
                   <div className="text-[11px] text-slate-500 mt-0.5">
-                    Play offline Web Audio chime on incoming website leads
+                    Rings prominent 3-tone bell chime in AmenDesk ERP and Windows Action Center
                   </div>
                 </div>
                 <button

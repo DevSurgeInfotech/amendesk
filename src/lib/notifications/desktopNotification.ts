@@ -8,6 +8,46 @@ const NOTIF_PREF_EVENT = 'amendesk-notification-pref-change';
 // In-memory cache of already notified inquiry IDs to avoid duplicate alerts during session
 const notifiedInquiryIds = new Set<string>();
 
+// Singleton AudioContext for instant, zero-latency playback across ERP
+let sharedAudioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+      sharedAudioCtx = new AudioContextClass();
+    }
+    if (sharedAudioCtx.state === 'suspended') {
+      void sharedAudioCtx.resume();
+    }
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+}
+
+// Auto-unlock AudioContext on first user interaction in the workspace
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    try {
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        void ctx.resume();
+      }
+    } catch {
+      // Ignore
+    }
+  };
+  window.addEventListener('click', unlockAudio, { once: true, passive: true });
+  window.addEventListener('keydown', unlockAudio, { once: true, passive: true });
+  window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+}
+
 /**
  * Checks if the browser / platform supports the HTML5 Web Notification API.
  */
@@ -80,47 +120,61 @@ export function setDesktopNotificationSoundEnabled(enabled: boolean): void {
 }
 
 /**
- * Synthesizes an executive, pleasant two-tone chime via Web Audio API.
- * Runs completely offline with 0 external asset downloads.
+ * Synthesizes a prominent, notable, executive 3-tone chime via Web Audio API.
+ * Combines fundamental warm bells + harmonic overtones for high presence and clarity across both laptop and desktop speakers.
+ * Runs 100% offline with zero external audio assets.
  */
 export function playNotificationChime(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
+  if (!isDesktopNotificationSoundEnabled()) return;
 
-    const ctx = new AudioContextClass();
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
     const now = ctx.currentTime;
 
-    // Tone 1: Fundamental warm bell tone (D5 ~587Hz -> A5 ~880Hz)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(587.33, now);
-    osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-    gain1.gain.setValueAtTime(0.2, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.45);
+    // Helper to play a harmonic bell tone
+    const playBellTone = (
+      freq: number,
+      startTime: number,
+      duration: number,
+      volume: number,
+      type: OscillatorType = 'sine'
+    ) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
-    // Tone 2: Crisp harmonic sparkle (D6 ~1174Hz)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(880, now + 0.08);
-    osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.28);
-    gain2.gain.setValueAtTime(0.14, now + 0.08);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.08);
-    osc2.stop(now + 0.55);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+      // Subtle pitch envelope for metallic chime character
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.008, startTime + duration);
+
+      // Volume envelope with immediate attack and musical exponential decay
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    // Note 1: Clear strike (G5 ~783.99 Hz)
+    playBellTone(783.99, now, 0.45, 0.35, 'sine');
+    playBellTone(1567.98, now, 0.25, 0.12, 'triangle'); // 1st harmonic sparkle
+
+    // Note 2: Uplifting chord step (B5 ~987.77 Hz)
+    playBellTone(987.77, now + 0.11, 0.55, 0.38, 'sine');
+    playBellTone(1975.53, now + 0.11, 0.3, 0.14, 'triangle');
+
+    // Note 3: Executive crest & resolution bell (E6 ~1318.51 Hz) with resonant sustain
+    playBellTone(1318.51, now + 0.22, 1.1, 0.42, 'sine');
+    playBellTone(2637.02, now + 0.22, 0.65, 0.16, 'triangle'); // high shimmer
+    playBellTone(659.25, now + 0.22, 1.2, 0.25, 'sine'); // warm fundamental body (E5)
   } catch {
-    // Web Audio may be restricted if user has not yet interacted with the window
+    // Fallback or restriction handle
   }
 }
 
@@ -154,25 +208,31 @@ export interface DesktopNotificationPayload {
 }
 
 /**
- * Dispatches a native desktop / Windows notification.
+ * Dispatches a native desktop / Windows notification while also playing the notable ERP sound.
+ * Explicitly sets `silent: false` so Windows Action Center sounds its system alert tone as well.
  */
 export function sendDesktopNotification(payload: DesktopNotificationPayload): boolean {
-  if (!isDesktopNotificationEnabled()) return false;
-
   const { title, body, tag, icon, url, playChime = true } = payload;
 
-  // 1. Play offline audio chime if sound preference is active
+  // 1. Play notable sound in ERP (as long as sound is enabled)
   if (playChime && isDesktopNotificationSoundEnabled()) {
     playNotificationChime();
   }
 
-  // 2. Dispatch native Windows toast via Web Notification API
+  // 2. Check if desktop notifications are enabled and permission granted
+  if (!isDesktopNotificationEnabled()) {
+    return false;
+  }
+
+  // 3. Dispatch native Windows toast via Web Notification API with notable Windows system sound
   try {
     const notif = new Notification(title, {
       body,
       tag,
       icon: icon || '/amenmart-app-icon-4k.png',
       badge: '/amenmart-app-icon-4k.png',
+      // Explicitly tell Windows Action Center NOT to silence the system sound
+      silent: false,
     });
 
     notif.onclick = (event) => {
@@ -226,7 +286,9 @@ export function markInquiryNotified(leadId: string): void {
 
 /**
  * Universal dispatcher for inbound customer inquiry notifications.
- * Automatically checks deduplication, age limit, and triggers Windows notifications.
+ * Guarantees a notable sound in BOTH ERP and Windows:
+ * 1. Plays the executive Web Audio chime inside the ERP workspace.
+ * 2. If Windows notifications are enabled, toasts in Windows Action Center with Windows system sound.
  */
 export function notifyInboundInquiry(
   lead: Customer,
@@ -258,12 +320,18 @@ export function notifyInboundInquiry(
 
   markInquiryNotified(lead.id);
 
+  // In ERP: Always play notable sound on new inbound inquiry (even if desktop toasts are not configured yet)
+  if (options?.playChime ?? true) {
+    playNotificationChime();
+  }
+
+  // In Windows: Send desktop notification (which triggers Windows notification chime & toast)
   return sendDesktopNotification({
     title,
     body,
     tag: `lead-${lead.id}`,
     icon: '/amenmart-app-icon-4k.png',
     url,
-    playChime: options?.playChime ?? true,
+    playChime: false, // Already sounded above for ERP
   });
 }

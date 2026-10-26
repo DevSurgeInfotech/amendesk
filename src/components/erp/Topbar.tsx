@@ -950,7 +950,7 @@ export function Topbar() {
                 <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px]">
                   <div className="flex items-center gap-1.5">
                     <Monitor className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-                    <span className="font-bold text-slate-700 dark:text-slate-300">Windows Toasts:</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Alerts &amp; Sound:</span>
                     {desktopNotifsAllowed && desktopNotifsEnabled ? (
                       <span className="font-bold text-emerald-600 dark:text-emerald-400">Active</span>
                     ) : (
@@ -966,7 +966,7 @@ export function Topbar() {
                       }}
                       className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                     >
-                      Test Alert
+                      Test Sound &amp; Alert
                     </button>
                   ) : (
                     <button

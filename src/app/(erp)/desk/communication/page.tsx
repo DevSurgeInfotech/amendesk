@@ -602,7 +602,7 @@ function CommunicationHubContent() {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  New inquiries toast on your PC taskbar even if AmenDesk is minimized or working in another window.
+                  New inquiries trigger a notable chime in ERP and toast with sound on your Windows taskbar.
                 </p>
               </div>
             </div>
@@ -623,16 +623,17 @@ function CommunicationHubContent() {
                 ) : (
                   <VolumeX className="h-3.5 w-3.5 text-slate-400" />
                 )}
-                <span>{desktopNotifsSound ? 'Chime ON' : 'Chime Muted'}</span>
+                <span>{desktopNotifsSound ? 'Sound ON' : 'Muted'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={testDesktopNotification}
                 className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1 cursor-pointer"
+                title="Play notable sound and send sample Windows notification"
               >
                 <Bell className="h-3.5 w-3.5" />
-                <span>Test Alert</span>
+                <span>Test Sound &amp; Alert</span>
               </button>
 
               <button

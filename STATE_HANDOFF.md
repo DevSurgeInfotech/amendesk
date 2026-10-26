@@ -226,12 +226,15 @@ flowchart TD
 
 ## 6. Execution History & Session Changelog
 
-### Session: 2026-10-26 (Windows Desktop & PC Workstation Inbound Inquiry Notifications)
-- **Goal**: Implement native Windows Desktop / Action Center notifications with executive offline two-tone audio chime for inbound inquiries arriving in AmenDesk Communication Hub and CRM from the public showroom, auctions, land/property desks, and Amen AI Assistant.
+### Session: 2026-10-26 (Windows Desktop & PC Workstation Inbound Inquiry Notifications & Notable Sound in ERP & Windows)
+- **Goal**: Implement native Windows Desktop / Action Center notifications with a prominent, notable 3-tone corporate audio chime sounding in both the AmenDesk ERP workspace and Windows Action Center for inbound inquiries arriving from the showroom, auctions, land/property desks, and Amen AI Assistant.
 - **Accomplishments**:
-  - **Dedicated Client Notification Engine ([`src/lib/notifications/desktopNotification.ts`](file:///d:/amendesk/src/lib/notifications/desktopNotification.ts))**:
-    - HTML5 Web Notification API integration feeding directly into Windows Action Center toasts.
-    - Offline two-tone synthesized audio chime using Web Audio API (`AudioContext`, 587Hz -> 880Hz -> 1174Hz bell harmonic) requiring zero external audio file downloads and working 100% offline.
+  - **Notable Audio Chime Engine & Unlocked Web Audio ([`src/lib/notifications/desktopNotification.ts`](file:///d:/amendesk/src/lib/notifications/desktopNotification.ts))**:
+    - Synthesized a multi-harmonic 3-bell ascending chime: G5 (783.99Hz) strike $\rightarrow$ B5 (987.77Hz) lift $\rightarrow$ E6 (1318.51Hz) crest with 659.25Hz warm brass fundamental body and 2637Hz metallic shimmer overtone (1.2s resonant sustain at 0.42 peak gain).
+    - Unlocked audio playback via global `sharedAudioCtx` auto-resumed on initial workspace interaction (click, keydown, pointerdown) so background tab chime playback is never silenced by browser autoplay restrictions.
+    - Guaranteed sound in **BOTH ERP and Windows**:
+      1. **In ERP**: Always sounds the notable Web Audio chime on any new customer inquiry arriving via BroadcastChannel or the 4-second poller, even if Windows desktop toasts are pending user permission.
+      2. **In Windows**: Dispatches the native `Notification` with explicit `silent: false` so the Windows Action Center triggers its native system notification sound alongside the ERP chime.
     - Session-based inquiry deduplication (`Set<string>` + `sessionStorage`) with a 15-minute creation threshold to prevent duplicate alerts or historical inquiry flooding on initial app boot.
     - Direct notification click handling: focuses the AmenDesk window (`window.focus()`) and deep-routes immediately to `/desk/communication?leadId=...` with pre-filled WhatsApp (`wa.me`) and phone actions ready for instant conversion.
   - **Terminal Context Real-Time Synchronization ([`src/context/TerminalContext.tsx`](file:///d:/amendesk/src/context/TerminalContext.tsx))**:
@@ -241,11 +244,11 @@ flowchart TD
   - **Communication Hub Control Strip ([`src/app/(erp)/desk/communication/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/communication/page.tsx))**:
     - Embedded an executive Windows Desktop Notifications status and action bar:
       - Ungranted permission: High-visibility "Enable Windows Alerts" banner highlighting taskbar popups.
-      - Active permission: Emerald live status pill ("Windows Action Center Ready"), Chime Mute/Unmute toggle, Pause/Resume toggle, and one-click "Test Alert" button.
+      - Active permission: Emerald live status pill ("Windows Action Center Ready"), Chime Mute/Unmute toggle, Pause/Resume toggle, and one-click "Test Sound & Alert" button.
   - **Topbar Operational Alerts Popover ([`src/components/erp/Topbar.tsx`](file:///d:/amendesk/src/components/erp/Topbar.tsx))**:
-    - Embedded quick-status strip inside the operational alerts popover showing real-time Windows toast readiness and one-click test/enable trigger.
+    - Embedded quick-status strip inside the operational alerts popover showing real-time Windows toast readiness and one-click "Test Sound & Alert" trigger.
   - **Workspace Settings Integration ([`src/app/(erp)/desk/settings/page.tsx`](file:///d:/amendesk/src/app/(erp)/desk/settings/page.tsx))**:
-    - Added Section 3 under RBAC & Security settings: "Windows Desktop & PC Workstation Alerts" with workstation toggles for desktop toast notifications and audio chimes.
+    - Added Section 3 under RBAC & Security settings: "Windows Desktop & PC Workstation Alerts" with workstation toggles for desktop toast notifications and notable 3-tone executive chime.
   - **Quality Gates Passed**: Ran mandatory `npm run check` (`tsc --noEmit` + strict ESLint `--max-warnings 0`) with 0 errors and 0 warnings.
 - **Changed Files**:
   - `src/lib/notifications/desktopNotification.ts` (New Windows notification & Web Audio chime service)
