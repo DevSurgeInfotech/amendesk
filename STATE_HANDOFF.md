@@ -1441,6 +1441,17 @@ flowchart TD
 - `2151dfc`: Integrated interactive SVG dashboard charts, quick action hub, and A5 waybill print layouts.
 - `d4031e9`: Completed core AmenDesk offline ERP modules and public showroom website.
 
+### Session: 2026-10-30 (News Portal Editorial Cleanup: Inaccurate Gbawe Facility Article Removal)
+- **Goal**: Remove inaccurate news article (`news-gbawe-expansion` / "Amen Mart Operations: Multi-Acre Holding and Staging Yard at Flower Junction, Gbawe, Accra") from `/news` as requested by client.
+- **Accomplishments**:
+  - Located and removed the news item `news-gbawe-expansion` from `newsData` in [`src/app/(site)/news/page.tsx`](file:///d:/amendesk/src/app/(site)/news/page.tsx).
+  - Cleaned up category count derivations and cards list automatically through reactive length filters.
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + strict ESLint) passing 100% with 0 compiler errors and 0 warnings.
+- **Changed Files**:
+  - `src/app/(site)/news/page.tsx` (Removed inaccurate Gbawe staging facility news entry)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+- **Commit Reference**: Pending live git commit and push.
+
 ---
 
 ## 7. Immediate Next Steps & Priority Backlog
