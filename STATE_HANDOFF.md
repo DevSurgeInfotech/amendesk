@@ -1465,6 +1465,20 @@ flowchart TD
   - `public/images/news/amen-mart-gbawe-hq.jpg` (Added high-resolution Amen Mart corporate headquarters and showroom photograph)
   - `public/images/news/kwashieman-anniversary.jpg` (Removed obsolete generic stock photo)
   - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+- **Commit Reference**: `3ef2d2f` (fix(news): remediate corporate heritage context from Kwashieman to Gbawe HQ and update facility photo)
+
+### Session: 2026-10-30 (News Portal Authentic Unsplash Image Replacement)
+- **Goal**: Replace synthetic/AI building photo with an authentic, generic Unsplash stock photograph for the Corporate Heritage news article (`news-kwashieman-headquarters`) per user directive.
+- **Accomplishments**:
+  - Replaced synthetic building image with a genuine, professional Unsplash photograph ([`public/images/news/corporate-heritage.jpg`](file:///d:/amendesk/public/images/news/corporate-heritage.jpg)) depicting an authentic corporate executive handshake and partnership agreement.
+  - Purged synthetic file `amen-mart-gbawe-hq.jpg` from `public/images/news/`.
+  - Updated image metadata and captions in [`src/app/(site)/news/page.tsx`](file:///d:/amendesk/src/app/(site)/news/page.tsx) to celebrate a decade of client trust, commercial partnership, and integrity since 2016.
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + strict ESLint) passing 100% with 0 compiler errors and 0 warnings.
+- **Changed Files**:
+  - `src/app/(site)/news/page.tsx` (Updated image reference and caption)
+  - `public/images/news/corporate-heritage.jpg` (Added genuine Unsplash corporate partnership photograph)
+  - `public/images/news/amen-mart-gbawe-hq.jpg` (Removed synthetic image)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
 - **Commit Reference**: Pending live git commit and push.
 
 ---

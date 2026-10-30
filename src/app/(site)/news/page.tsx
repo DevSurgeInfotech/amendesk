@@ -311,9 +311,9 @@ const newsData: NewsItem[] = [
     sourceCitation: 'Registrar-General’s Department Corporate Filing & Amen Mart Operational Records',
     images: [
       {
-        src: '/images/news/amen-mart-gbawe-hq.jpg',
-        alt: 'Amen Mart Auctioning Services corporate headquarters and showroom facility at Flower Junction, Gbawe, Accra',
-        caption: 'Amen Mart Auctioning Services modern corporate headquarters, cash office, and staging complex at Flower Junction, Gbawe, Accra.',
+        src: '/images/news/corporate-heritage.jpg',
+        alt: 'Professional business partnership and executive handshake representing corporate integrity and client trust',
+        caption: 'Over a decade of commercial integrity: professional partnership and transparent execution reflecting Amen Mart’s corporate growth since 2016.',
       },
     ],
     summary:
