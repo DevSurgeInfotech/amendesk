@@ -1450,6 +1450,21 @@ flowchart TD
 - **Changed Files**:
   - `src/app/(site)/news/page.tsx` (Removed inaccurate Gbawe staging facility news entry)
   - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
+- **Commit Reference**: `aa11ced` (fix(news): remove inaccurate Gbawe staging facility news article)
+
+### Session: 2026-10-30 (News Portal Editorial Context Remediation & Gbawe Facility Photography)
+- **Goal**: Remediate the context of the Corporate Heritage news article (`news-kwashieman-headquarters`) to clarify that Amen Mart is no longer operating from Lofoi Street, Kwashieman, but has relocated its headquarters to Flower Junction, Gbawe, Accra, and replace the generic stock photo with authentic facility photography.
+- **Accomplishments**:
+  - Updated article title to *"Amen Mart Corporate Heritage: From Kwashieman Roots to Current Headquarters at Flower Junction, Gbawe"*.
+  - Refactored thumbnail kicker (`CORPORATE EVOLUTION`), thumbnail title (`From Kwashieman to Gbawe`), badge text (`Founded 2016 • Now at Gbawe`), summary, quotes, highlights, and body paragraphs.
+  - Clearly articulated that Lofoi Street, Kwashieman was the original 2016 founding site, and operations have since completely transitioned to the central complex at Flower Junction, Gbawe, Accra (housing executive offices, cash office, holding yard, and showroom).
+  - Replaced the generic tech stock image (`kwashieman-anniversary.jpg`) with a dedicated architectural editorial photograph of Amen Mart Auctioning Services corporate headquarters and showroom at Flower Junction, Gbawe, Accra ([`public/images/news/amen-mart-gbawe-hq.jpg`](file:///d:/amendesk/public/images/news/amen-mart-gbawe-hq.jpg)).
+  - Ran mandatory quality gates: `npm run check` (TypeScript typecheck + strict ESLint) passing 100% with 0 compiler errors and 0 warnings.
+- **Changed Files**:
+  - `src/app/(site)/news/page.tsx` (Remediated corporate heritage article context, location details, and photo reference)
+  - `public/images/news/amen-mart-gbawe-hq.jpg` (Added high-resolution Amen Mart corporate headquarters and showroom photograph)
+  - `public/images/news/kwashieman-anniversary.jpg` (Removed obsolete generic stock photo)
+  - `STATE_HANDOFF.md` (Updated continuity ledger with session changelog)
 - **Commit Reference**: Pending live git commit and push.
 
 ---
